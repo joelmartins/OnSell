@@ -33,6 +33,9 @@ class ImpersonationController extends Controller
             'type' => 'agency'
         ]);
         
+        // Garantir que a sessão seja salva imediatamente
+        session()->save();
+        
         // Registrar auditoria
         Log::channel('audit')->info('Impersonação iniciada', [
             'user_id' => Auth::id(),
@@ -54,12 +57,31 @@ class ImpersonationController extends Controller
      */
     public function impersonateClient(Client $client)
     {
-        // Guardar dados do usuário original na sessão
-        session()->put('impersonate.original_user', [
-            'id' => Auth::id(),
-            'name' => Auth::user()->name,
-            'role' => Auth::user()->getRoleNames()->first()
-        ]);
+        // Verificar se já existe uma impersonação ativa (caso de impersonação em cascata)
+        if (session()->has('impersonate.original_user')) {
+            // Guardar os dados atuais de impersonação como impersonação em cascata
+            session()->put('impersonate.cascade', [
+                'original_user' => session()->get('impersonate.original_user'),
+                'target' => session()->get('impersonate.target')
+            ]);
+            
+            Log::channel('audit')->info('Impersonação em cascata iniciada', [
+                'original_user' => session()->get('impersonate.original_user'),
+                'intermediate_target' => session()->get('impersonate.target'),
+                'final_target' => [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'type' => 'client'
+                ]
+            ]);
+        } else {
+            // Impersonação normal - guardar dados do usuário original na sessão
+            session()->put('impersonate.original_user', [
+                'id' => Auth::id(),
+                'name' => Auth::user()->name,
+                'role' => Auth::user()->getRoleNames()->first()
+            ]);
+        }
         
         // Guardar dados da entidade impersonada
         session()->put('impersonate.target', [
@@ -67,6 +89,9 @@ class ImpersonationController extends Controller
             'name' => $client->name,
             'type' => 'client'
         ]);
+        
+        // Garantir que a sessão seja salva imediatamente
+        session()->save();
         
         // Definir atributo para permitir acesso via middleware
         request()->attributes->add(['is_impersonating_client' => true]);
@@ -82,9 +107,12 @@ class ImpersonationController extends Controller
             'client_active' => $client->is_active,
             'client_agency_id' => $client->agency_id
         ]);
-        
-        // Redirecionar para o dashboard do cliente
-        return redirect()->route('client.dashboard');
+
+        // Em vez de redirecionar diretamente para o dashboard do cliente,
+        // usamos uma página intermediária de redirecionamento HTML
+        return response()->view('impersonation.redirect', [
+            'redirect_to' => route('client.dashboard')
+        ]);
     }
     
     /**
@@ -97,6 +125,7 @@ class ImpersonationController extends Controller
         // Buscar dados do usuário original
         $originalUser = session()->get('impersonate.original_user');
         $target = session()->get('impersonate.target');
+        $cascade = session()->get('impersonate.cascade');
         
         // Registrar auditoria
         if ($originalUser && $target) {
@@ -104,12 +133,35 @@ class ImpersonationController extends Controller
                 'user_id' => $originalUser['id'],
                 'target_id' => $target['id'],
                 'target_type' => $target['type'],
+                'has_cascade' => !empty($cascade),
                 'ip' => request()->ip(),
                 'user_agent' => request()->userAgent(),
             ]);
         }
         
-        // Limpar dados de impersonação da sessão
+        // Verificar se é uma impersonação em cascata
+        if ($cascade) {
+            // Restaurar o nível anterior de impersonação
+            session()->put('impersonate.original_user', $cascade['original_user']);
+            session()->put('impersonate.target', $cascade['target']);
+            session()->forget('impersonate.cascade');
+            
+            Log::channel('audit')->info('Voltando ao nível anterior de impersonação', [
+                'original_user' => $cascade['original_user'],
+                'target' => $cascade['target'],
+            ]);
+            
+            // Redirecionar para o dashboard apropriado com base no tipo de target
+            if ($cascade['target']['type'] === 'agency') {
+                return redirect()->route('agency.dashboard');
+            } else if ($cascade['target']['type'] === 'client') {
+                return redirect()->route('client.dashboard');
+            }
+            
+            return redirect()->route('dashboard');
+        }
+        
+        // Não é uma cascata, encerrar a impersonação completamente
         session()->forget('impersonate.original_user');
         session()->forget('impersonate.target');
         

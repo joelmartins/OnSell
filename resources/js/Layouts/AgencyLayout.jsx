@@ -22,24 +22,38 @@ import {
 import ImpersonationDropdown from '@/Components/ImpersonationDropdown';
 
 export default function AgencyLayout({ children, title }) {
-  const { auth } = usePage().props;
+  const { auth, impersonation } = usePage().props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonateData, setImpersonateData] = useState(null);
 
   useEffect(() => {
-    // Verificar se está impersonando
-    const impersonateData = sessionStorage.getItem('impersonate.data');
-    setIsImpersonating(!!impersonateData);
-    
-    if (impersonateData) {
-      try {
-        setImpersonateData(JSON.parse(impersonateData));
-      } catch (e) {
-        console.error('Erro ao analisar dados de impersonação:', e);
+    // Verificar se existe impersonação ativa nos dados da página
+    if (impersonation?.active && impersonation?.target) {
+      const newImpersonationData = {
+        id: impersonation.target.id,
+        name: impersonation.target.name,
+        type: impersonation.target.type
+      };
+      
+      // Atualizar os dados no sessionStorage
+      sessionStorage.setItem('impersonate.data', JSON.stringify(newImpersonationData));
+      setImpersonateData(newImpersonationData);
+      setIsImpersonating(true);
+    } else {
+      // Verificar dados no sessionStorage como fallback
+      const impersonateData = sessionStorage.getItem('impersonate.data');
+      setIsImpersonating(!!impersonateData);
+      
+      if (impersonateData) {
+        try {
+          setImpersonateData(JSON.parse(impersonateData));
+        } catch (e) {
+          console.error('Erro ao analisar dados de impersonação:', e);
+        }
       }
     }
-  }, []);
+  }, [impersonation]);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('agency.dashboard') },
@@ -93,8 +107,20 @@ export default function AgencyLayout({ children, title }) {
                 className="w-full mt-2 bg-amber-200/50 dark:bg-amber-700/50 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700"
                 onClick={() => {
                   router.visit(route('stop.impersonating'), {
-                    onSuccess: () => {
-                      sessionStorage.removeItem('impersonate.data');
+                    onSuccess: (page) => {
+                      // Após sair, verificar se ainda há impersonação ativa
+                      if (page.props.impersonation?.active) {
+                        // Se ainda estiver impersonando (voltou para o nível anterior de uma cascata)
+                        const newImpersonationData = {
+                          id: page.props.impersonation.target.id,
+                          name: page.props.impersonation.target.name,
+                          type: page.props.impersonation.target.type
+                        };
+                        sessionStorage.setItem('impersonate.data', JSON.stringify(newImpersonationData));
+                      } else {
+                        // Se não estiver mais impersonando, limpar os dados
+                        sessionStorage.removeItem('impersonate.data');
+                      }
                     }
                   });
                 }}

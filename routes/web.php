@@ -112,7 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     
     // Rotas de Cliente
-    Route::middleware(['auth', 'verified', 'role.client'])->prefix('client')->name('client.')->group(function () {
+    Route::middleware(['auth', 'verified', \App\Http\Middleware\ClientRole::class])->prefix('client')->name('client.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [\App\Http\Controllers\Client\DashboardController::class, 'index'])->name('dashboard');
         

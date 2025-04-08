@@ -93,24 +93,6 @@ export default function ClientsIndex({ clients = { data: [] }, auth }) {
       });
     }
   };
-  
-  const handleImpersonate = (id) => {
-    // Verificar se clients e clients.data existem
-    if (!clients || !clients.data) return;
-    
-    // Salvar dados de impersonação para exibir o banner
-    const client = clients.data.find(c => c.id === id);
-    if (client) {
-      sessionStorage.setItem('impersonate.data', JSON.stringify({
-        id: client.id,
-        name: client.name,
-        type: 'client'
-      }));
-    }
-    
-    // Usar visit em vez de get para redirecionamentos
-    router.visit(route('impersonate.client', { client: id }));
-  };
 
   // Verificar se clients e clients.data existem
   const hasClients = clients && clients.data && clients.data.length > 0;
@@ -193,9 +175,11 @@ export default function ClientsIndex({ clients = { data: [] }, auth }) {
                               <Eye className="mr-2 h-4 w-4" />
                               <span>Visualizar</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleImpersonate(client.id)}>
-                              <LogIn className="mr-2 h-4 w-4" />
-                              <span>Acessar como</span>
+                            <DropdownMenuItem asChild>
+                              <a href={route('impersonate.client', { client: client.id })} className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground">
+                                <LogIn className="mr-2 h-4 w-4" />
+                                <span>Acessar como</span>
+                              </a>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleToggleStatus(client.id)}>
                               {client.is_active ? (

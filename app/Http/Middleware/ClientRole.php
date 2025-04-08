@@ -25,14 +25,16 @@ class ClientRole
             'session_target_type' => session()->get('impersonate.target.type'),
             'session_target_id' => session()->get('impersonate.target.id'),
             'has_attribute_impersonation' => $request->attributes->has('is_impersonating_client'),
+            'session_data' => session()->all('impersonate'),
         ]);
 
         // Verificar se há uma impersonação ativa de cliente na sessão
         $target = session()->get('impersonate.target');
-        if ($target && $target['type'] === 'client') {
+        if ($target && isset($target['type']) && $target['type'] === 'client') {
             Log::channel('audit')->info('Acesso permitido via impersonação na sessão', [
                 'path' => $request->path(),
-                'target_id' => $target['id']
+                'target_id' => $target['id'],
+                'session_data' => $target
             ]);
             return $next($request);
         }

@@ -33,6 +33,16 @@ class HandleImpersonation
             // Adicionar um parâmetro à requisição para indicar que estamos impersonando um cliente
             $request->attributes->add(['is_impersonating_client' => true, 'client_id' => $target['id']]);
             
+            // Log detalhado sobre a solicitação de impersonação do cliente
+            Log::channel('audit')->info('Impersonação de cliente detectada', [
+                'path' => $request->path(),
+                'route' => $request->route() ? $request->route()->getName() : 'none',
+                'target_type' => $target['type'],
+                'target_id' => $target['id'],
+                'user_id' => $user?->id,
+                'session_data' => session()->all('impersonate')
+            ]);
+            
             // Verificar se estamos acessando uma rota de cliente, incluindo /client/dashboard
             // Isso garante que o check seja mais preciso para evitar o erro 403
             if ($request->is('client/*') || $request->is('client')) {
