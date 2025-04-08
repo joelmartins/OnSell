@@ -83,4 +83,23 @@ Route::prefix('campaigns')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/{id}/cancel', [CampaignController::class, 'cancel']);
     Route::get('/{id}/stats', [CampaignController::class, 'stats']);
     Route::get('/{id}/messages', [CampaignController::class, 'messages']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Webhook Routes
+|--------------------------------------------------------------------------
+|
+| Rotas para receber webhooks das integrações externas.
+| Estas rotas são públicas (sem autenticação) para permitir que serviços
+| externos possam enviar dados para o sistema.
+|
+*/
+
+Route::prefix('webhooks')->name('webhooks.')->group(function () {
+    // Webhook da Evolution API (WhatsApp)
+    Route::post('/whatsapp', [App\Http\Controllers\Api\WebhookController::class, 'whatsapp'])->name('whatsapp');
+    
+    // Webhook da VAPI (Telefonia)
+    Route::post('/vapi', [App\Http\Controllers\Api\WebhookController::class, 'vapi'])->name('vapi');
 }); 

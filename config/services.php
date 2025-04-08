@@ -35,4 +35,37 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Evolution API (WhatsApp)
+    |--------------------------------------------------------------------------
+    |
+    | Configurações para a Evolution API, que é usada para integração com
+    | WhatsApp. Inclui URL base da API, chave de autenticação, nome da 
+    | instância padrão e URL do webhook para receber mensagens.
+    |
+    */
+    'evolution_api' => [
+        'url' => env('EVOLUTION_API_URL', 'http://localhost:8080'),
+        'key' => env('EVOLUTION_API_KEY'),
+        'default_instance' => env('EVOLUTION_API_DEFAULT_INSTANCE', 'default'),
+        'webhook_url' => env('EVOLUTION_API_WEBHOOK_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | VAPI (Telefonia)
+    |--------------------------------------------------------------------------
+    |
+    | Configurações para a API de telefonia VAPI, usada para chamadas
+    | de voz, SMS e outras integrações de telefonia. Inclui URL base
+    | da API, chave de autenticação e URL do webhook.
+    |
+    */
+    'vapi' => [
+        'url' => env('VAPI_API_URL', 'https://api.vapi.com/v1'),
+        'key' => env('VAPI_API_KEY'),
+        'webhook_url' => env('VAPI_WEBHOOK_URL'),
+    ],
+
 ];
