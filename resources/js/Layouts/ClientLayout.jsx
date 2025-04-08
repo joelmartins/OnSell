@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,9 +27,28 @@ import {
 } from 'lucide-react';
 
 export default function ClientLayout({ children, title }) {
-  const { auth, ziggy } = usePage().props;
+  const { auth, ziggy, branding } = usePage().props;
   const user = auth.user;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Aplicar as cores do branding via CSS variáveis
+  useEffect(() => {
+    if (branding) {
+      // Definir as variáveis CSS personalizadas
+      document.documentElement.style.setProperty('--primary', branding.primary_color);
+      document.documentElement.style.setProperty('--primary-foreground', getContrastColor(branding.primary_color));
+      
+      document.documentElement.style.setProperty('--secondary', branding.secondary_color);
+      document.documentElement.style.setProperty('--secondary-foreground', getContrastColor(branding.secondary_color));
+      
+      document.documentElement.style.setProperty('--accent', branding.accent_color);
+      document.documentElement.style.setProperty('--accent-foreground', getContrastColor(branding.accent_color));
+
+      // Definir uma cor de fundo sutil para o sidebar baseada na cor primária
+      const sidebarColor = adjustColorBrightness(branding.primary_color, 0.97);
+      document.documentElement.style.setProperty('--sidebar-bg', sidebarColor);
+    }
+  }, [branding]);
 
   const navigation = [
     { 
@@ -90,15 +109,28 @@ export default function ClientLayout({ children, title }) {
             </Button>
             <h1 className="ml-3 text-xl font-semibold">{title || 'Dashboard'}</h1>
           </div>
-          <ProfileDropdown user={user} />
+          <ProfileDropdown user={user} branding={branding} />
         </div>
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-800 border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div 
+        className={`fixed top-0 left-0 z-50 h-full w-64 border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{ backgroundColor: 'var(--sidebar-bg, white)' }}
+      >
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-between border-b">
-            <h1 className="text-xl font-bold">OnSell</h1>
+            {branding?.logo ? (
+              <img 
+                src={branding.logo} 
+                alt={branding.agency_name || 'OnSell'} 
+                className="h-8" 
+              />
+            ) : (
+              <h1 className="text-xl font-bold" style={{ color: branding?.primary_color }}>
+                {branding?.agency_name || 'OnSell'}
+              </h1>
+            )}
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="h-5 w-5" />
             </Button>
@@ -111,7 +143,7 @@ export default function ClientLayout({ children, title }) {
                   href={item.href}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                     isActive(item.href) 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-primary'
+                      ? 'bg-primary/10 text-primary'
                       : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
@@ -128,7 +160,7 @@ export default function ClientLayout({ children, title }) {
             </nav>
           </div>
           <div className="p-4 border-t">
-            <ProfileDropdown user={user} />
+            <ProfileDropdown user={user} branding={branding} />
           </div>
         </div>
       </div>
@@ -136,9 +168,12 @@ export default function ClientLayout({ children, title }) {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Desktop header */}
-        <div className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:bg-white lg:dark:bg-gray-800 lg:items-center lg:justify-between lg:px-6">
+        <div 
+          className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"
+          style={{ backgroundColor: 'var(--sidebar-bg, white)' }}
+        >
           <h1 className="text-xl font-semibold">{title || 'Dashboard'}</h1>
-          <ProfileDropdown user={user} />
+          <ProfileDropdown user={user} branding={branding} />
         </div>
 
         {/* Page content */}
@@ -150,14 +185,18 @@ export default function ClientLayout({ children, title }) {
   );
 }
 
-function ProfileDropdown({ user }) {
+function ProfileDropdown({ user, branding }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
             <AvatarImage src={user?.profile_photo_url} alt={user?.name} />
-            <AvatarFallback>{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback 
+              style={{ backgroundColor: branding?.primary_color, color: getContrastColor(branding?.primary_color) }}
+            >
+              {user?.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -176,4 +215,55 @@ function ProfileDropdown({ user }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+// Função para determinar cor de texto (branco ou preto) baseado na cor de fundo
+function getContrastColor(hexColor) {
+  // Se não houver cor, retorna branco
+  if (!hexColor) return '#ffffff';
+  
+  // Converte hex para RGB
+  let r = 0, g = 0, b = 0;
+  
+  // 3 caracteres
+  if (hexColor.length === 4) {
+    r = parseInt(hexColor[1] + hexColor[1], 16);
+    g = parseInt(hexColor[2] + hexColor[2], 16);
+    b = parseInt(hexColor[3] + hexColor[3], 16);
+  }
+  // 6 caracteres
+  else if (hexColor.length === 7) {
+    r = parseInt(hexColor.substring(1, 3), 16);
+    g = parseInt(hexColor.substring(3, 5), 16);
+    b = parseInt(hexColor.substring(5, 7), 16);
+  } else {
+    return '#ffffff';
+  }
+  
+  // Calcula a luminância
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // Retorna branco ou preto conforme a luminância
+  return luminance > 0.5 ? '#000000' : '#ffffff';
+}
+
+// Função para ajustar o brilho de uma cor
+function adjustColorBrightness(hex, factor) {
+  if (!hex) return '#ffffff';
+  
+  // Remove o hash se existir
+  hex = hex.replace('#', '');
+  
+  // Converte para RGB
+  let r = parseInt(hex.substring(0, 2), 16);
+  let g = parseInt(hex.substring(2, 4), 16);
+  let b = parseInt(hex.substring(4, 6), 16);
+  
+  // Ajusta o brilho
+  r = Math.min(255, Math.floor(r * factor));
+  g = Math.min(255, Math.floor(g * factor));
+  b = Math.min(255, Math.floor(b * factor));
+  
+  // Converte de volta para hex
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 } 

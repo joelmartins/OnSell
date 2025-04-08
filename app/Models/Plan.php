@@ -57,6 +57,45 @@ class Plan extends Model implements Auditable
     ];
 
     /**
+     * Constantes de período
+     */
+    const PERIOD_MONTHLY = 'monthly';
+    const PERIOD_YEARLY = 'yearly';
+
+    /**
+     * Constantes para limites padrão de planos
+     */
+    const DEFAULT_CONTACTS_LIMIT = 100;
+    const DEFAULT_PIPELINES_LIMIT = 3;
+    const DEFAULT_AUTOMATION_FLOWS_LIMIT = 5;
+    const DEFAULT_USERS_LIMIT = 2;
+
+    /**
+     * Opções de período disponíveis
+     *
+     * @return array
+     */
+    public static function periodOptions(): array
+    {
+        return [
+            self::PERIOD_MONTHLY => 'Mensal',
+            self::PERIOD_YEARLY => 'Anual',
+        ];
+    }
+
+    /**
+     * Calcula o desconto para planos anuais
+     *
+     * @param float $monthlyPrice
+     * @return float
+     */
+    public static function calculateYearlyPrice(float $monthlyPrice): float
+    {
+        // 20% de desconto para planos anuais (equivalente a 2 meses grátis)
+        return $monthlyPrice * 12 * 0.8;
+    }
+
+    /**
      * Get the agency that owns the plan.
      */
     public function agency(): BelongsTo

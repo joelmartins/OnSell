@@ -125,9 +125,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('clients.index');
 
         // White Label
-        Route::get('/branding', function () {
-            return Inertia::render('Agency/Branding/Index');
-        })->name('branding.index');
+        Route::get('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'index'])->name('branding.index');
+        Route::put('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'update'])->name('branding.update');
 
         // Planos
         Route::get('/plans', function () {

@@ -15,16 +15,20 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('document')->nullable();
-            $table->string('email')->nullable();
+            $table->string('email');
             $table->string('phone')->nullable();
             $table->text('description')->nullable();
             $table->string('domain')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->foreignId('parent_agency_id')->nullable()->constrained('agencies')->nullOnDelete();
+            
+            // Campos de branding
             $table->string('logo')->nullable();
-            $table->string('primary_color', 20)->nullable();
-            $table->string('secondary_color', 20)->nullable();
-            $table->string('accent_color', 20)->nullable();
+            $table->string('favicon')->nullable();
+            $table->string('primary_color', 20)->default('#3b82f6');
+            $table->string('secondary_color', 20)->default('#10b981');
+            $table->string('accent_color', 20)->default('#f97316');
+            
             $table->timestamps();
             $table->softDeletes();
         });

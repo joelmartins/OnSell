@@ -75,7 +75,39 @@ class ClientController extends Controller
         $validated['agency_id'] = ($validated['agency_id'] === 'null' || empty($validated['agency_id'])) ? null : $validated['agency_id'];
         $validated['plan_id'] = ($validated['plan_id'] === 'null' || empty($validated['plan_id'])) ? null : $validated['plan_id'];
         
+        // Remove os campos de usuário do array de dados do cliente
+        $createUser = isset($validated['create_user']) ? (bool) $validated['create_user'] : false;
+        $userData = null;
+        
+        if ($createUser) {
+            $userData = [
+                'name' => $validated['user_name'],
+                'email' => $validated['user_email'],
+                'password' => $validated['user_password'],
+            ];
+            
+            // Remover campos do usuário para não interferir na criação do cliente
+            unset($validated['create_user']);
+            unset($validated['user_name']);
+            unset($validated['user_email']);
+            unset($validated['user_password']);
+        }
+        
+        // Criar o cliente
         $client = Client::create($validated);
+        
+        // Se solicitado, criar o primeiro usuário do cliente
+        if ($createUser && $userData) {
+            $user = new \App\Models\User([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => bcrypt($userData['password']),
+                'client_id' => $client->id,
+            ]);
+            
+            $user->save();
+            $user->assignRole('client.owner');
+        }
         
         return redirect()
             ->route('admin.clients.index')
@@ -127,7 +159,39 @@ class ClientController extends Controller
         $validated['agency_id'] = ($validated['agency_id'] === 'null' || empty($validated['agency_id'])) ? null : $validated['agency_id'];
         $validated['plan_id'] = ($validated['plan_id'] === 'null' || empty($validated['plan_id'])) ? null : $validated['plan_id'];
         
+        // Remove os campos de usuário do array de dados do cliente
+        $createUser = isset($validated['create_user']) ? (bool) $validated['create_user'] : false;
+        $userData = null;
+        
+        if ($createUser) {
+            $userData = [
+                'name' => $validated['user_name'],
+                'email' => $validated['user_email'],
+                'password' => $validated['user_password'],
+            ];
+            
+            // Remover campos do usuário para não interferir na atualização do cliente
+            unset($validated['create_user']);
+            unset($validated['user_name']);
+            unset($validated['user_email']);
+            unset($validated['user_password']);
+        }
+        
+        // Atualizar o cliente
         $client->update($validated);
+        
+        // Se solicitado, criar um novo usuário para o cliente
+        if ($createUser && $userData) {
+            $user = new \App\Models\User([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => bcrypt($userData['password']),
+                'client_id' => $client->id,
+            ]);
+            
+            $user->save();
+            $user->assignRole('client.owner');
+        }
         
         return redirect()
             ->route('admin.clients.index')

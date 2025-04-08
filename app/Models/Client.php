@@ -2,15 +2,21 @@
 
 namespace App\Models;
 
+use App\Models\Agency;
+use App\Models\ClientUsage;
+use App\Models\Concerns\Auditable;
+use App\Models\Pipeline;
+use App\Models\Plan;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 
-class Client extends Model implements Auditable
+class Client extends Model implements AuditableContract
 {
     use HasFactory, SoftDeletes, AuditableTrait;
 
@@ -78,5 +84,69 @@ class Client extends Model implements Auditable
     public function pipelines(): HasMany
     {
         return $this->hasMany(Pipeline::class);
+    }
+
+    /**
+     * Get the monthly usage records for the client.
+     */
+    public function usages(): HasMany
+    {
+        return $this->hasMany(ClientUsage::class);
+    }
+
+    /**
+     * Get the current month's usage.
+     */
+    public function getCurrentMonthUsage()
+    {
+        return ClientUsage::getCurrentMonthUsage($this->id);
+    }
+
+    /**
+     * Verifica se o cliente já atingiu o limite mensal de contatos
+     */
+    public function hasReachedContactsLimit(): bool
+    {
+        return ClientUsage::hasReachedContactsLimit($this->id);
+    }
+
+    /**
+     * Retorna o número restante de contatos para o mês atual
+     */
+    public function getRemainingContacts(): int
+    {
+        return ClientUsage::getRemainingContacts($this->id);
+    }
+
+    /**
+     * Verifica se o cliente já atingiu o limite mensal de pipelines
+     */
+    public function hasReachedPipelinesLimit(): bool
+    {
+        return ClientUsage::hasReachedPipelinesLimit($this->id);
+    }
+
+    /**
+     * Retorna o número restante de pipelines para o mês atual
+     */
+    public function getRemainingPipelines(): int
+    {
+        return ClientUsage::getRemainingPipelines($this->id);
+    }
+
+    /**
+     * Verifica se o cliente já atingiu o limite mensal de fluxos de automação
+     */
+    public function hasReachedAutomationFlowsLimit(): bool
+    {
+        return ClientUsage::hasReachedAutomationFlowsLimit($this->id);
+    }
+
+    /**
+     * Retorna o número restante de fluxos de automação para o mês atual
+     */
+    public function getRemainingAutomationFlows(): int
+    {
+        return ClientUsage::getRemainingAutomationFlows($this->id);
     }
 } 

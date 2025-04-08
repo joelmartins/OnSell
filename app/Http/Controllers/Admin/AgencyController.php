@@ -62,7 +62,39 @@ class AgencyController extends Controller
         // Convert empty strings to null for foreign keys
         $validated['parent_agency_id'] = $validated['parent_agency_id'] ?? null;
         
+        // Remove os campos de usuário do array de dados da agência
+        $createUser = isset($validated['create_user']) ? (bool) $validated['create_user'] : false;
+        $userData = null;
+        
+        if ($createUser) {
+            $userData = [
+                'name' => $validated['user_name'],
+                'email' => $validated['user_email'],
+                'password' => $validated['user_password'],
+            ];
+            
+            // Remover campos do usuário para não interferir na criação da agência
+            unset($validated['create_user']);
+            unset($validated['user_name']);
+            unset($validated['user_email']);
+            unset($validated['user_password']);
+        }
+        
+        // Criar a agência
         $agency = Agency::create($validated);
+        
+        // Se solicitado, criar o primeiro usuário da agência
+        if ($createUser && $userData) {
+            $user = new \App\Models\User([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => bcrypt($userData['password']),
+                'agency_id' => $agency->id,
+            ]);
+            
+            $user->save();
+            $user->assignRole('agency.owner');
+        }
         
         return redirect()
             ->route('admin.agencies.index')
@@ -113,7 +145,39 @@ class AgencyController extends Controller
         // Convert empty strings to null for foreign keys
         $validated['parent_agency_id'] = $validated['parent_agency_id'] ?? null;
         
+        // Remove os campos de usuário do array de dados da agência
+        $createUser = isset($validated['create_user']) ? (bool) $validated['create_user'] : false;
+        $userData = null;
+        
+        if ($createUser) {
+            $userData = [
+                'name' => $validated['user_name'],
+                'email' => $validated['user_email'],
+                'password' => $validated['user_password'],
+            ];
+            
+            // Remover campos do usuário para não interferir na atualização da agência
+            unset($validated['create_user']);
+            unset($validated['user_name']);
+            unset($validated['user_email']);
+            unset($validated['user_password']);
+        }
+        
+        // Atualizar a agência
         $agency->update($validated);
+        
+        // Se solicitado, criar um novo usuário para a agência
+        if ($createUser && $userData) {
+            $user = new \App\Models\User([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => bcrypt($userData['password']),
+                'agency_id' => $agency->id,
+            ]);
+            
+            $user->save();
+            $user->assignRole('agency.owner');
+        }
         
         return redirect()
             ->route('admin.agencies.index')

@@ -38,6 +38,12 @@ class ClientRequest extends FormRequest
             'is_active' => ['required', 'boolean'],
             'agency_id' => ['nullable', 'exists:agencies,id'],
             'plan_id' => ['nullable', 'exists:plans,id'],
+            
+            // Campos do usuário
+            'create_user' => 'sometimes|boolean',
+            'user_name' => 'required_if:create_user,true|string|min:3|max:255',
+            'user_email' => 'required_if:create_user,true|string|email|max:255|unique:users,email',
+            'user_password' => 'required_if:create_user,true|string|min:8',
         ];
     }
 
@@ -53,6 +59,27 @@ class ClientRequest extends FormRequest
             'email.unique' => 'Este e-mail já está em uso.',
             'agency_id.exists' => 'A agência selecionada não existe.',
             'plan_id.exists' => 'O plano selecionado não existe.',
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nome do cliente',
+            'email' => 'email',
+            'phone' => 'telefone',
+            'document' => 'CNPJ/CPF',
+            'description' => 'descrição',
+            'is_active' => 'status ativo',
+            'agency_id' => 'agência',
+            'plan_id' => 'plano',
+            'create_user' => 'criar usuário',
+            'user_name' => 'nome do usuário',
+            'user_email' => 'email do usuário',
+            'user_password' => 'senha do usuário',
         ];
     }
 } 
