@@ -59,7 +59,7 @@ class ClientController extends Controller
             ->orderBy('name')
             ->get();
             
-        return Inertia::render('Admin/Clients/Form', [
+        return Inertia::render('Admin/Clients/Create', [
             'agencies' => $agencies,
             'plans' => $plans,
         ]);
@@ -110,11 +110,10 @@ class ClientController extends Controller
             ->orderBy('name')
             ->get();
             
-        return Inertia::render('Admin/Clients/Form', [
+        return Inertia::render('Admin/Clients/Edit', [
             'client' => $client,
             'agencies' => $agencies,
             'plans' => $plans,
-            'isEditing' => true,
         ]);
     }
 

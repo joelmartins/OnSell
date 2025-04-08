@@ -18,9 +18,20 @@ Esta atualização implementa funcionalidades CRUD completas para gerenciar clie
   - Toggle de status (ativação/desativação)
 
 ### Novos Componentes
-- Criado componente `Show.jsx` para visualização detalhada de clientes
+- Criado componente `Show.jsx` para visualização detalhada de clientes e agências
+- Criado componentes `Create.jsx` e `Edit.jsx` para clientes (padronização com agências)
 - Componente de paginação reutilizável
 - Padronização de componentes UI com caminhos corretos
+
+### Padronização de Estrutura
+- Uniformização da estrutura de arquivos entre clientes e agências:
+  - `Index.jsx`: Listagem com paginação
+  - `Create.jsx`: Redirecionamento para Form
+  - `Edit.jsx`: Redirecionamento para Form com dados existentes
+  - `Form.jsx`: Formulário reutilizável
+  - `Show.jsx`: Visualização detalhada
+- Relacionamentos adicionados ao modelo `Agency` para melhor visualização:
+  - `parentAgency`: Referência à agência pai
 
 ### Formulários e Validação
 - Adicionado `AgencyRequest` para validação de requisições

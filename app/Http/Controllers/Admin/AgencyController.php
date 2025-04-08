@@ -74,7 +74,7 @@ class AgencyController extends Controller
      */
     public function show(Agency $agency): Response
     {
-        $agency->load(['clients', 'subAgencies']);
+        $agency->load(['clients', 'subAgencies', 'parentAgency']);
         
         return Inertia::render('Admin/Agencies/Show', [
             'agency' => $agency,
