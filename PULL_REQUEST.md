@@ -13,6 +13,14 @@ Esta atualização implementa funcionalidades CRUD completas para gerenciar clie
   - Ativação/Desativação
   - Exclusão (com validações de dependências)
   - Impersonação (estrutura inicial)
+- Controller de Clientes (`ClientController`) atualizado com:
+  - Paginação na listagem
+  - Toggle de status (ativação/desativação)
+
+### Novos Componentes
+- Criado componente `Show.jsx` para visualização detalhada de clientes
+- Componente de paginação reutilizável
+- Padronização de componentes UI com caminhos corretos
 
 ### Formulários e Validação
 - Adicionado `AgencyRequest` para validação de requisições

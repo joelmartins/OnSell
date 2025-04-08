@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import {
   Form,
   FormControl,
@@ -9,17 +9,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from '@/Components/ui/form';
+import { Input } from '@/Components/ui/input';
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+} from '@/Components/ui/select';
+import { Checkbox } from '@/Components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/Components/ui/card';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm as useHookForm } from 'react-hook-form';
 import * as z from 'zod';

@@ -48,6 +48,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->route('admin.agencies.index');
         })->name('impersonate.agency');
 
+        Route::get('/impersonate/client/{client}', function(\App\Models\Client $client) {
+            // Aqui você implementará a lógica de impersonação real no futuro
+            session()->flash('success', 'Você está acessando como o cliente: ' . $client->name);
+            return redirect()->route('admin.clients.index');
+        })->name('impersonate.client');
+
         // Planos
         Route::get('/plans', function () {
             return Inertia::render('Admin/Plans/Index');
