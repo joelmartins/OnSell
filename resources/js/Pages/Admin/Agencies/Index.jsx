@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Button } from '@/Components/ui/button';
@@ -32,7 +32,24 @@ import Pagination from '@/Components/Pagination';
 
 export default function AgenciesIndex({ agencies, auth }) {
   const [search, setSearch] = useState('');
-  
+  const [debounced, setDebounced] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebounced(search);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    if (debounced) {
+      router.get(route('admin.agencies.index', { search: debounced }), {}, { preserveState: true });
+    } else if (debounced === '' && search === '') {
+      router.get(route('admin.agencies.index'), {}, { preserveState: true });
+    }
+  }, [debounced]);
+
   // Filtrar agências com base na pesquisa (apenas no lado do cliente)
   const filteredAgencies = agencies.data.filter(agency => 
     agency.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -41,43 +58,50 @@ export default function AgenciesIndex({ agencies, auth }) {
   );
 
   const handleEdit = (id) => {
-    router.visit(route('admin.agencies.edit', id));
+    router.get(route('admin.agencies.edit', id));
   };
 
   const handleView = (id) => {
-    router.visit(route('admin.agencies.show', id));
+    router.get(route('admin.agencies.show', id));
   };
 
   const handleToggleStatus = (id) => {
     router.put(route('admin.agencies.toggle-status', id), {}, {
       onSuccess: () => {
-        toast.success('Status da agência alterado com sucesso!');
+        toast.success('Status da agência atualizado com sucesso!');
       },
       onError: () => {
-        toast.error('Erro ao alterar status da agência!');
+        toast.error('Ocorreu um erro ao atualizar o status da agência.');
       }
     });
   };
 
   const handleDelete = (id) => {
-    if (confirm('Tem certeza que deseja excluir esta agência?')) {
+    if (confirm('Tem certeza que deseja excluir esta agência? Esta ação não pode ser desfeita.')) {
       router.delete(route('admin.agencies.destroy', id), {
         onSuccess: () => {
           toast.success('Agência excluída com sucesso!');
         },
-        onError: (errors) => {
-          if (errors.error) {
-            toast.error(errors.error);
-          } else {
-            toast.error('Erro ao excluir agência!');
-          }
+        onError: () => {
+          toast.error('Ocorreu um erro ao excluir a agência.');
         }
       });
     }
   };
-
+  
   const handleImpersonate = (id) => {
-    router.visit(route('impersonate.agency', id));
+    // Salvar dados de impersonação para exibir o banner
+    const agency = agencies.data.find(a => a.id === id);
+    if (agency) {
+      sessionStorage.setItem('impersonate.data', JSON.stringify({
+        id: agency.id,
+        name: agency.name,
+        type: 'agency'
+      }));
+    }
+    
+    // Usar visit em vez de get para redirecionamentos
+    router.visit(route('impersonate.agency', { agency: id }));
   };
 
   return (

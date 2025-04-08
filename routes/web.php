@@ -34,19 +34,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('agencies', \App\Http\Controllers\Admin\AgencyController::class);
         Route::put('agencies/{agency}/toggle-status', [\App\Http\Controllers\Admin\AgencyController::class, 'toggleStatus'])->name('agencies.toggle-status');
 
-        // Impersonação
-        Route::get('/impersonate/agency/{agency}', function(\App\Models\Agency $agency) {
-            // Aqui você implementará a lógica de impersonação real no futuro
-            session()->flash('success', 'Você está acessando como a agência: ' . $agency->name);
-            return redirect()->route('admin.agencies.index');
-        })->name('impersonate.agency');
-
-        Route::get('/impersonate/client/{client}', function(\App\Models\Client $client) {
-            // Aqui você implementará a lógica de impersonação real no futuro
-            session()->flash('success', 'Você está acessando como o cliente: ' . $client->name);
-            return redirect()->route('admin.clients.index');
-        })->name('impersonate.client');
-
         // Planos
         Route::get('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'index'])->name('plans.index');
         
@@ -181,24 +168,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Impersonação
-    Route::get('/impersonate', function () {
-        // Lógica de impersonação será implementada
-    })->middleware(\App\Http\Middleware\CheckImpersonationAccess::class)->name('impersonate');
+    Route::get('/impersonate/targets', [\App\Http\Controllers\ImpersonationController::class, 'getImpersonationTargets'])
+        ->name('impersonate.targets');
     
-    Route::get('/impersonate/agency/{agency}', function ($agency) {
-        // Lógica para impersonar agência
-        return redirect()->route('agency.dashboard');
-    })->middleware(\App\Http\Middleware\CheckImpersonationAccess::class)->name('impersonate.agency');
+    Route::get('/impersonate/agency/{agency}', [\App\Http\Controllers\ImpersonationController::class, 'impersonateAgency'])
+        ->middleware(\App\Http\Middleware\CheckImpersonationAccess::class)
+        ->name('impersonate.agency');
     
-    Route::get('/impersonate/client/{client}', function ($client) {
-        // Lógica para impersonar cliente
-        return redirect()->route('client.dashboard');
-    })->middleware(\App\Http\Middleware\CheckImpersonationAccess::class)->name('impersonate.client');
+    Route::get('/impersonate/client/{client}', [\App\Http\Controllers\ImpersonationController::class, 'impersonateClient'])
+        ->middleware(\App\Http\Middleware\CheckImpersonationAccess::class)
+        ->name('impersonate.client');
     
-    Route::get('/stop-impersonating', function () {
-        // Lógica para parar impersonação
-        return redirect()->route('dashboard');
-    })->name('stop.impersonating');
+    Route::get('/stop-impersonating', [\App\Http\Controllers\ImpersonationController::class, 'stopImpersonating'])
+        ->name('stop.impersonating');
 });
 
 require __DIR__.'/auth.php';

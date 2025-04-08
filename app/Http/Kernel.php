@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\CheckImpersonationAccess;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\HandleImpersonation;
 use App\Http\Middleware\LoadAgencyBranding;
 use App\Http\Middleware\RedirectBasedOnRole;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -43,6 +44,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\LoadAgencyBranding::class,
+            \App\Http\Middleware\HandleImpersonation::class,
         ],
 
         'api' => [

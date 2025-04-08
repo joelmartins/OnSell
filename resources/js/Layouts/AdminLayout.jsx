@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -21,10 +21,19 @@ import {
   Plug,
   ChevronDown
 } from 'lucide-react';
+import ImpersonationDropdown from '@/Components/ImpersonationDropdown';
+import ImpersonationBanner from '@/Components/ImpersonationBanner';
 
 export default function AdminLayout({ children, title }) {
   const { auth } = usePage().props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+
+  useEffect(() => {
+    // Verificar se está impersonando
+    const impersonateData = sessionStorage.getItem('impersonate.data');
+    setIsImpersonating(!!impersonateData);
+  }, []);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('admin.dashboard') },
@@ -46,6 +55,9 @@ export default function AdminLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Banner de impersonação */}
+      {isImpersonating && <ImpersonationBanner />}
+      
       {/* Mobile sidebar */}
       <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
@@ -105,6 +117,13 @@ export default function AdminLayout({ children, title }) {
                   )}
                 </div>
               ))}
+              
+              {/* Dropdown de impersonação */}
+              {(auth.user.roles.includes('admin.super') || auth.user.roles.includes('agency.owner')) && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <ImpersonationDropdown />
+                </div>
+              )}
             </nav>
           </div>
           <div className="p-4 border-t">
@@ -114,7 +133,7 @@ export default function AdminLayout({ children, title }) {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className={`lg:pl-64 ${isImpersonating ? 'pt-10' : ''}`}>
         {/* Desktop header */}
         <div className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:bg-white lg:dark:bg-gray-800 lg:items-center lg:justify-between lg:px-6">
           <h1 className="text-xl font-semibold">{title || 'Admin'}</h1>

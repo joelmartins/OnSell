@@ -26,11 +26,13 @@ import {
   X,
   FileText
 } from 'lucide-react';
+import ImpersonationBanner from '@/Components/ImpersonationBanner';
 
 export default function ClientLayout({ children, title }) {
   const { auth, ziggy, branding } = usePage().props;
   const user = auth.user;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   // Aplicar as cores do branding via CSS variáveis
   useEffect(() => {
@@ -49,6 +51,10 @@ export default function ClientLayout({ children, title }) {
       const sidebarColor = adjustColorBrightness(branding.primary_color, 0.97);
       document.documentElement.style.setProperty('--sidebar-bg', sidebarColor);
     }
+    
+    // Verificar se está impersonando
+    const impersonateData = sessionStorage.getItem('impersonate.data');
+    setIsImpersonating(!!impersonateData);
   }, [branding]);
 
   const navigation = [
@@ -106,6 +112,9 @@ export default function ClientLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Banner de impersonação */}
+      {isImpersonating && <ImpersonationBanner />}
+      
       {/* Mobile sidebar */}
       <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
@@ -172,7 +181,7 @@ export default function ClientLayout({ children, title }) {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className={`lg:pl-64 ${isImpersonating ? 'pt-10' : ''}`}>
         {/* Desktop header */}
         <div 
           className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"

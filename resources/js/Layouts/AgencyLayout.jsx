@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,10 +19,19 @@ import {
   Menu, 
   LogOut 
 } from 'lucide-react';
+import ImpersonationDropdown from '@/Components/ImpersonationDropdown';
+import ImpersonationBanner from '@/Components/ImpersonationBanner';
 
 export default function AgencyLayout({ children, title }) {
   const { auth } = usePage().props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isImpersonating, setIsImpersonating] = useState(false);
+
+  useEffect(() => {
+    // Verificar se está impersonando
+    const impersonateData = sessionStorage.getItem('impersonate.data');
+    setIsImpersonating(!!impersonateData);
+  }, []);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('agency.dashboard') },
@@ -34,6 +43,9 @@ export default function AgencyLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Banner de impersonação */}
+      {isImpersonating && <ImpersonationBanner />}
+      
       {/* Mobile sidebar */}
       <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
@@ -51,7 +63,7 @@ export default function AgencyLayout({ children, title }) {
       <div className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-800 border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-between border-b">
-            <h1 className="text-xl font-bold">{auth.user?.agency?.name || 'Agência'}</h1>
+            <h1 className="text-xl font-bold">OnSell</h1>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <Menu className="h-5 w-5" />
             </Button>
@@ -68,6 +80,13 @@ export default function AgencyLayout({ children, title }) {
                   <span className="ml-3">{item.label}</span>
                 </Link>
               ))}
+              
+              {/* Dropdown de impersonação */}
+              {auth.user.roles.includes('agency.owner') && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <ImpersonationDropdown />
+                </div>
+              )}
             </nav>
           </div>
           <div className="p-4 border-t">
@@ -77,7 +96,7 @@ export default function AgencyLayout({ children, title }) {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className={`lg:pl-64 ${isImpersonating ? 'pt-10' : ''}`}>
         {/* Desktop header */}
         <div className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:bg-white lg:dark:bg-gray-800 lg:items-center lg:justify-between lg:px-6">
           <h1 className="text-xl font-semibold">{title || 'Agência'}</h1>

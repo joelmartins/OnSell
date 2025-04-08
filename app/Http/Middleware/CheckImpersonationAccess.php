@@ -30,11 +30,54 @@ class CheckImpersonationAccess
         if ($user->hasRole('agency.owner')) {
             $clientId = $request->route('client');
             
-            // Verificar se o cliente pertence à agência
-            // Lógica será implementada de acordo com o modelo de dados
-            // Por enquanto, vamos apenas verificar se o usuário tem o papel de agência
+            if ($clientId) {
+                $client = Client::find($clientId);
+                
+                if (!$client || $client->agency_id !== $user->agency_id) {
+                    $this->logImpersonation(
+                        $user->id,
+                        $clientId,
+                        'client',
+                        false,
+                        'Tentativa de impersonar cliente que não pertence à agência'
+                    );
+                    return abort(403, 'Você não tem permissão para impersonar este cliente.');
+                }
+                
+                $this->logImpersonation(
+                    $user->id,
+                    $clientId,
+                    'client',
+                    true
+                );
+                
+                return $next($request);
+            }
             
-            return $next($request);
+            // Se não é um cliente, verificar se está tentando impersonar uma agência
+            $agencyId = $request->route('agency');
+            if ($agencyId) {
+                $this->logImpersonation(
+                    $user->id,
+                    $agencyId,
+                    'agency',
+                    false,
+                    'Agências não podem impersonar outras agências'
+                );
+                return abort(403, 'Agências não podem impersonar outras agências.');
+            }
+        }
+        
+        // Cliente não pode impersonar ninguém
+        if ($user->hasRole('client.user')) {
+            $this->logImpersonation(
+                $user->id,
+                null,
+                null,
+                false,
+                'Clientes não têm permissão para impersonar'
+            );
+            return abort(403, 'Você não tem permissão para impersonar.');
         }
         
         return abort(403, 'Acesso não autorizado.');

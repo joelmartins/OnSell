@@ -1,32 +1,50 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import { Head, router } from '@inertiajs/react';
-import AdminLayout from '@/Layouts/AdminLayout';
-import { Button } from '@/Components/ui/button';
-import { Input } from '@/Components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/Components/ui/table';
-import {
+import AgencyLayout from '@/Layouts/AgencyLayout';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle, LogIn } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { toast } from 'react-toastify';
+import { 
+  Search, 
+  UserPlus, 
+  Edit, 
+  Eye, 
+  MoreHorizontal, 
+  XCircle, 
+  CheckCircle,
+  Trash,
+  LogIn
+} from 'lucide-react';
 import Pagination from '@/Components/Pagination';
 
-export default function ClientsIndex({ clients, agencies, auth }) {
+export default function ClientsIndex({ clients, auth }) {
   const [search, setSearch] = useState('');
-  const [agencyFilter, setAgencyFilter] = useState('');
   const [debounced, setDebounced] = useState('');
 
   useEffect(() => {
@@ -38,35 +56,23 @@ export default function ClientsIndex({ clients, agencies, auth }) {
   }, [search]);
 
   useEffect(() => {
-    if (debounced || agencyFilter) {
-      router.get(
-        route('admin.clients.index'), 
-        { search: debounced, agency: agencyFilter }, 
-        { preserveState: true }
-      );
-    } else if (debounced === '' && search === '' && !agencyFilter) {
-      router.get(route('admin.clients.index'), {}, { preserveState: true });
+    if (debounced) {
+      router.get(route('agency.clients.index', { search: debounced }), {}, { preserveState: true });
+    } else if (debounced === '' && search === '') {
+      router.get(route('agency.clients.index'), {}, { preserveState: true });
     }
-  }, [debounced, agencyFilter]);
-
-  const handleSearch = (e) => {
-    setSearch(e.target.value);
-  };
-
-  const handleAdd = () => {
-    router.visit(route('admin.clients.create'));
-  };
+  }, [debounced]);
 
   const handleEdit = (id) => {
-    router.get(route('admin.clients.edit', id));
+    router.get(route('agency.clients.edit', id));
   };
 
   const handleView = (id) => {
-    router.get(route('admin.clients.show', id));
+    router.get(route('agency.clients.show', id));
   };
 
   const handleToggleStatus = (id) => {
-    router.put(route('admin.clients.toggle-status', id), {}, {
+    router.put(route('agency.clients.toggle-status', id), {}, {
       onSuccess: () => {
         toast.success('Status do cliente atualizado com sucesso!');
       },
@@ -78,7 +84,7 @@ export default function ClientsIndex({ clients, agencies, auth }) {
 
   const handleDelete = (id) => {
     if (confirm('Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.')) {
-      router.delete(route('admin.clients.destroy', id), {
+      router.delete(route('agency.clients.destroy', id), {
         onSuccess: () => {
           toast.success('Cliente excluído com sucesso!');
         },
@@ -105,24 +111,22 @@ export default function ClientsIndex({ clients, agencies, auth }) {
   };
 
   return (
-    <AdminLayout title="Clientes">
+    <AgencyLayout title="Clientes">
       <Head title="Clientes" />
       
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold">Clientes</h2>
-          <p className="text-muted-foreground">Gerencie todos os clientes da plataforma</p>
-        </div>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
-      </div>
-
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Todos os Clientes</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+          <div>
+            <CardTitle>Clientes</CardTitle>
+            <CardDescription>Gerencie os clientes da sua agência</CardDescription>
+          </div>
+          <Button onClick={() => router.get(route('agency.clients.create'))}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Novo Cliente
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between mb-4">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -130,23 +134,21 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                 placeholder="Buscar cliente..."
                 className="pl-8 w-full sm:w-64"
                 value={search}
-                onChange={handleSearch}
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+          
+          <div className="rounded-md border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Agência</TableHead>
                   <TableHead>Plano</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Domínio</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Criado em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -155,19 +157,18 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                     <TableRow key={client.id}>
                       <TableCell className="font-medium">{client.name}</TableCell>
                       <TableCell>{client.email}</TableCell>
-                      <TableCell>{client.agency?.name || 'Cliente Direto'}</TableCell>
                       <TableCell>{client.plan?.name || 'Sem plano'}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          client.is_active 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                        }`}>
-                          {client.is_active ? 'Ativo' : 'Inativo'}
-                        </span>
+                      <TableCell className="text-center">
+                        {client.is_active ? (
+                          <Badge variant="success">Ativo</Badge>
+                        ) : (
+                          <Badge variant="destructive">Inativo</Badge>
+                        )}
                       </TableCell>
-                      <TableCell>{client.domain || 'Sem domínio'}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
+                        {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -178,13 +179,13 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleEdit(client.id)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Editar</span>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleView(client.id)}>
                               <Eye className="mr-2 h-4 w-4" />
                               <span>Visualizar</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(client.id)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              <span>Editar</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleImpersonate(client.id)}>
                               <LogIn className="mr-2 h-4 w-4" />
@@ -204,7 +205,10 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleDelete(client.id)} className="text-red-600 focus:text-red-600">
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(client.id)}
+                              className="text-red-600 focus:text-red-600"
+                            >
                               <Trash className="mr-2 h-4 w-4" />
                               <span>Excluir</span>
                             </DropdownMenuItem>
@@ -215,7 +219,7 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
                       {search ? 'Nenhum cliente encontrado para a busca.' : 'Nenhum cliente cadastrado.'}
                     </TableCell>
                   </TableRow>
@@ -231,6 +235,6 @@ export default function ClientsIndex({ clients, agencies, auth }) {
           )}
         </CardContent>
       </Card>
-    </AdminLayout>
+    </AgencyLayout>
   );
 } 
