@@ -47,12 +47,14 @@ class DemoDataSeeder extends Seeder
         $agencyPlans = [
             // Plano Básico da agência
             [
+                'id' => 7,
                 'name' => 'Básico Agência',
                 'description' => 'Plano básico com recursos essenciais para pequenos negócios',
                 'price' => 79.90,
                 'period' => 'monthly',
                 'agency_id' => $agency->id,
                 'is_active' => true,
+                'is_agency_plan' => false,
                 'features' => json_encode([
                     'Acesso ao pipeline',
                     'Acesso ao inbox',
@@ -71,12 +73,14 @@ class DemoDataSeeder extends Seeder
             ],
             // Plano Completo da agência
             [
+                'id' => 8,
                 'name' => 'Completo Agência',
                 'description' => 'Plano completo com todas as ferramentas e suporte personalizado',
                 'price' => 199.90,
                 'period' => 'monthly',
                 'agency_id' => $agency->id,
                 'is_active' => true,
+                'is_agency_plan' => false,
                 'features' => json_encode([
                     'Acesso ao pipeline',
                     'Acesso ao inbox',
@@ -99,7 +103,42 @@ class DemoDataSeeder extends Seeder
 
         $createdAgencyPlans = [];
         foreach ($agencyPlans as $planData) {
-            $createdAgencyPlans[] = Plan::create($planData);
+            $id = $planData['id'];
+            unset($planData['id']); // Remover o ID do array de dados para o updateOrCreate
+            $createdAgencyPlans[] = Plan::updateOrCreate(['id' => $id], $planData);
+        }
+        
+        // Criar planos da agência (para gerenciar clientes)
+        $agencyOwnerPlans = [
+            // Plano Básico para a agência gerenciar clientes
+            [
+                'id' => 9,
+                'name' => 'Agência Personalizada Starter',
+                'description' => 'Plano para agências gerenciarem até 5 clientes',
+                'price' => 297.90,
+                'period' => 'monthly',
+                'agency_id' => $agency->id,
+                'is_active' => true,
+                'is_agency_plan' => true,
+                'features' => json_encode([
+                    'Até 5 clientes',
+                    'Painel administrativo',
+                    'Marca personalizável',
+                    'Domínio personalizado',
+                ]),
+                'max_clients' => 5,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => true,
+            ],
+        ];
+
+        foreach ($agencyOwnerPlans as $planData) {
+            $id = $planData['id'];
+            unset($planData['id']);
+            Plan::updateOrCreate(['id' => $id], $planData);
         }
         
         // 4. Criar cliente 1 associado à agência (com o plano básico da agência)
