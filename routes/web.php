@@ -149,6 +149,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return Inertia::render('Client/Automation/Index');
         })->name('automation');
         
+        // Landing Pages
+        Route::get('/landing-pages', [\App\Http\Controllers\Client\LandingPageController::class, 'index'])->name('landing-pages.index');
+        Route::get('/landing-pages/create', [\App\Http\Controllers\Client\LandingPageController::class, 'create'])->name('landing-pages.create');
+        Route::post('/landing-pages', [\App\Http\Controllers\Client\LandingPageController::class, 'store'])->name('landing-pages.store');
+        Route::get('/landing-pages/{landingPage}/preview', [\App\Http\Controllers\Client\LandingPageController::class, 'preview'])->name('landing-pages.preview');
+        Route::get('/landing-pages/{landingPage}/edit', [\App\Http\Controllers\Client\LandingPageController::class, 'edit'])->name('landing-pages.edit');
+        Route::put('/landing-pages/{landingPage}', [\App\Http\Controllers\Client\LandingPageController::class, 'update'])->name('landing-pages.update');
+        Route::delete('/landing-pages/{landingPage}', [\App\Http\Controllers\Client\LandingPageController::class, 'destroy'])->name('landing-pages.destroy');
+        Route::get('/landing-pages/{landingPage}/duplicate', [\App\Http\Controllers\Client\LandingPageController::class, 'duplicate'])->name('landing-pages.duplicate');
+        
         // Contatos
         Route::get('/contacts', function () {
             return Inertia::render('Client/Contacts/Index');

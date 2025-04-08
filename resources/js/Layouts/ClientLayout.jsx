@@ -23,7 +23,8 @@ import {
   Settings,
   Menu,
   LogOut,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 
 export default function ClientLayout({ children, title }) {
@@ -70,6 +71,11 @@ export default function ClientLayout({ children, title }) {
       name: 'Automação', 
       href: route('client.automation', [], undefined, ziggy), 
       icon: <Zap className="h-5 w-5" />
+    },
+    { 
+      name: 'Landing Pages', 
+      href: route('client.landing-pages.index', [], undefined, ziggy), 
+      icon: <FileText className="h-5 w-5" />
     },
     { 
       name: 'Contatos', 

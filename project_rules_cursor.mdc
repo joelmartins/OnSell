@@ -1,0 +1,152 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+// OnSell - MDC Ruleset for Cursor IDE
+// Versão: 1.0
+// Plataforma SaaS multitenant com estrutura White Label e automação de vendas por IA
+
+// =========================
+// ESTRUTURA MULTITENANT
+// =========================
+system.structure:
+  - A plataforma é multi-tenant, com três tipos principais de usuários: Admin, Agência e Cliente Final.
+  - Cada Agência é um tenant isolado com seu próprio domínio, identidade visual e clientes subordinados.
+  - O Admin tem visão global de todos os tenants.
+  - As Agências só têm acesso aos seus próprios clientes.
+
+
+// =========================
+// PLANOS PARA CLIENTES
+// =========================
+plans.clients:
+  - Cada cliente final possui um plano com as seguintes limitações configuráveis:
+    - leadsMensais: int
+    - landingPages: int
+    - pipelines: int
+    - contatosTotais: int
+  - Três modelos principais de plano:
+    - Starter: até 500 leads/mês, 1 landing page, 1 pipeline, 2.000 contatos
+    - Pro: até 2.000 leads/mês, até 3 landing pages, até 3 pipelines, até 10.000 contatos
+    - Enterprise: ilimitado (configurável sob demanda pela agência ou admin)
+
+
+// =========================
+// PLANOS PARA AGÊNCIAS
+// =========================
+plans.agencies:
+  - As Agências possuem planos limitados por número de clientes que podem gerenciar:
+    - Starter: até 5 clientes
+    - Pro: até 20 clientes
+    - Enterprise: ilimitado
+  - Agências podem criar planos personalizados para seus clientes com configurações dos seguintes parâmetros:
+    - leadsMensais
+    - landingPages
+    - pipelines
+    - contatosTotais
+
+
+// =========================
+// MENUS POR PERFIL
+// =========================
+ui.menu.client:
+  - Painel (Dashboard de Vendas)
+  - Pipeline (Kanban de oportunidades)
+  - Mensagens (Inbox unificado: WhatsApp, e-mail, redes sociais)
+  - Automação (Fluxos automatizados de qualificação e follow-up)
+  - Landing Pages (Criação e edição de páginas de captura)
+  - Contatos (Base de leads e clientes)
+  - Relatórios (Performance, conversão, canais, etc.)
+  - Integrações (WhatsApp, Meta, Google, SMTP, etc.)
+  - Configurações (Usuários, permissões internas, domínios, branding básico)
+
+ui.menu.agency:
+  - Clientes (Gestão de todos os clientes da agência)
+  - Agências (Subagências opcionais, oculto por padrão)
+  - White Label (Cores, logotipo, domínio, certificado SSL)
+  - Planos (Criação e atribuição de planos por cliente)
+  - Configurações (Faturamento, notificações, preferências)
+
+ui.menu.admin:
+  - Clientes (Todos os clientes da plataforma)
+  - Agências (Todas as agências)
+  - Planos (Templates globais para agências e clientes diretos)
+  - Integrações (APIs nativas como Meta, WhatsApp)
+  - Configurações (Branding, segurança, cobrança, logs e auditorias)
+
+
+// =========================
+// PERMISSÕES E ROLES
+// =========================
+auth.roles:
+  - admin.super: Acesso completo a todos os recursos, agências e clientes.
+  - agency.owner: Acesso apenas aos clientes subordinados à agência.
+  - client.user: Acesso apenas às funcionalidades operacionais do sistema.
+
+auth.impersonation:
+  - Admin pode impersonar qualquer conta (agência ou cliente)
+  - Agência pode impersonar apenas seus próprios clientes
+  - Middleware de controle:
+    - if admin.super → acesso livre
+    - if agency.owner → apenas clientes da agência
+    - senão → abortar com 403
+
+auth.limitation:
+  - Todos os acessos devem ser auditáveis com `laravel-auditing`
+  - Impersonação deve registrar logs de entrada e saída
+  - Auditoria deve mostrar ID do impersonador e da conta acessada
+
+
+// =========================
+// SEGURANÇA E INFRA
+// =========================
+infra.ssl:
+  - SSL automático por domínio de tenant via Let's Encrypt + Cloudflare
+
+infra.throttle:
+  - Aplicar rate limiting nas APIs públicas por IP
+  - Diferenciar limites por tipo de usuário
+
+infra.tenant:
+  - Utilizar `stancl/tenancy` para multitenancy isolado por domínio
+  - Separar migrations em `landlord/` e `tenant/`
+
+
+infra.stack:
+  - Laravel 12 (PHP 8.3)
+  - React 18 com Vite
+  - TailwindCSS com shadcn/ui
+  - Autenticação com Laravel Breeze (React) ou Fortify custom
+  - Permissões com spatie/laravel-permission
+  - Impersonação via middleware + laravel-impersonate opcional
+  - Banco de dados: PostgreSQL + Redis
+  - Hospedagem: DigitalOcean com Laravel Forge
+
+
+// =========================
+// ESTRUTURA DE CÓDIGO
+// =========================
+project.structure:
+  - routes/api.php: Rotas protegidas da API
+  - app/Http/Middleware: Impersonation, Tenancy
+  - app/Services: Lógica de WhatsApp, automações e relatórios
+  - database/tenant/: Migrations específicas de clientes/agências
+  - database/landlord/: Migrations globais
+  - resources/js/pages/Admin|Agency|Client: Separação por perfil no frontend
+
+// =========================
+// UI DINÂMICA (React)
+// =========================
+ui.dynamicSidebar:
+  - Sidebar deve ser gerada com base no papel do usuário
+  - Utilizar um `sidebarConfig` como:
+    ```js
+    const sidebarConfig = {
+      admin: [...],
+      agency: [...],
+      client: [...]
+    }
+    ```
+  - Renderizar dinamicamente no componente `<Sidebar />` com base no papel do usuário autenticado (via contexto ou JWT)
+
