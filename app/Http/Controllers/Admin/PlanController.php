@@ -69,12 +69,24 @@ class PlanController extends Controller
         $plan->is_active = $validated['is_active'];
         $plan->is_featured = $validated['is_featured'] ?? false;
         $plan->features = $validated['features'];
-        $plan->monthly_leads = $validated['monthly_leads'];
-        $plan->max_landing_pages = $validated['max_landing_pages'];
-        $plan->max_pipelines = $validated['max_pipelines'];
-        $plan->total_leads = $validated['total_leads'];
         $plan->is_agency_plan = $validated['is_agency_plan'];
-        $plan->max_clients = $validated['max_clients'];
+        
+        // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
+        if ($plan->is_agency_plan) {
+            $plan->max_clients = $validated['max_clients'];
+            $plan->monthly_leads = null;
+            $plan->max_landing_pages = null;
+            $plan->max_pipelines = null;
+            $plan->total_leads = null;
+        } else {
+            // Se for plano de cliente, configurar limites específicos
+            $plan->monthly_leads = $validated['monthly_leads'];
+            $plan->max_landing_pages = $validated['max_landing_pages'];
+            $plan->max_pipelines = $validated['max_pipelines'];
+            $plan->total_leads = $validated['total_leads'];
+            $plan->max_clients = null;
+        }
+        
         $plan->save();
 
         return redirect()->route('admin.plans.index')
@@ -91,12 +103,24 @@ class PlanController extends Controller
         $plan->is_active = $validated['is_active'];
         $plan->is_featured = $validated['is_featured'] ?? false;
         $plan->features = $validated['features'];
-        $plan->monthly_leads = $validated['monthly_leads'];
-        $plan->max_landing_pages = $validated['max_landing_pages'];
-        $plan->max_pipelines = $validated['max_pipelines'];
-        $plan->total_leads = $validated['total_leads'];
         $plan->is_agency_plan = $validated['is_agency_plan'];
-        $plan->max_clients = $validated['max_clients'];
+        
+        // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
+        if ($plan->is_agency_plan) {
+            $plan->max_clients = $validated['max_clients'];
+            $plan->monthly_leads = null;
+            $plan->max_landing_pages = null;
+            $plan->max_pipelines = null;
+            $plan->total_leads = null;
+        } else {
+            // Se for plano de cliente, configurar limites específicos
+            $plan->monthly_leads = $validated['monthly_leads'];
+            $plan->max_landing_pages = $validated['max_landing_pages'];
+            $plan->max_pipelines = $validated['max_pipelines'];
+            $plan->total_leads = $validated['total_leads'];
+            $plan->max_clients = null;
+        }
+        
         $plan->save();
 
         return redirect()->route('admin.plans.index')
@@ -164,7 +188,9 @@ class PlanController extends Controller
 
     protected function validateRequest(): array
     {
-        return request()->validate([
+        $isAgencyPlan = request('is_agency_plan', false);
+        
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:500',
             'price' => 'required|numeric|min:0',
@@ -173,16 +199,29 @@ class PlanController extends Controller
             'is_featured' => 'boolean',
             'is_agency_plan' => 'boolean',
             'features' => 'nullable|array',
-            'monthly_leads' => 'nullable|integer|min:0',
-            'max_landing_pages' => 'nullable|integer|min:0',
-            'max_pipelines' => 'nullable|integer|min:0',
-            'total_leads' => 'nullable|integer|min:0',
-            'max_clients' => 'nullable|integer|min:0',
             'has_whatsapp_integration' => 'boolean',
             'has_email_integration' => 'boolean',
             'has_meta_integration' => 'boolean',
             'has_google_integration' => 'boolean',
             'has_custom_domain' => 'boolean',
-        ]);
+        ];
+        
+        // Regras específicas para planos de agência
+        if ($isAgencyPlan) {
+            $rules['max_clients'] = 'required|integer|min:1';
+            $rules['monthly_leads'] = 'nullable|integer';
+            $rules['max_landing_pages'] = 'nullable|integer';
+            $rules['max_pipelines'] = 'nullable|integer';
+            $rules['total_leads'] = 'nullable|integer';
+        } else {
+            // Regras específicas para planos de cliente
+            $rules['monthly_leads'] = 'required|integer|min:1';
+            $rules['max_landing_pages'] = 'required|integer|min:1';
+            $rules['max_pipelines'] = 'required|integer|min:1';
+            $rules['total_leads'] = 'required|integer|min:1';
+            $rules['max_clients'] = 'nullable|integer';
+        }
+        
+        return request()->validate($rules);
     }
 } 

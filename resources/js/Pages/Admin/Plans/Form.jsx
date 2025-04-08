@@ -13,21 +13,24 @@ import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Save, Building2, User, Star } from 'lucide-react';
 
+// Esquema condicional que se adapta com base no tipo de plano (agência ou cliente)
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
   description: z.string().min(10, { message: 'Descrição deve ter pelo menos 10 caracteres' }),
   price: z.string().min(1, { message: 'Preço é obrigatório' }),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
-  monthly_leads: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 lead' }),
-  total_leads: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 lead' }),
-  max_landing_pages: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 landing page' }),
-  max_pipelines: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 pipeline' }),
+  monthly_leads: z.coerce.number().int().optional(),
+  total_leads: z.coerce.number().int().optional(),
+  max_landing_pages: z.coerce.number().int().optional(),
+  max_pipelines: z.coerce.number().int().optional(),
   features: z.object({
-    users: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 usuário' }),
+    users: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 usuário/cliente' }),
     integrations: z.coerce.number().int().min(0),
     for_agency: z.boolean().default(false)
   }),
+  is_agency_plan: z.boolean().default(false),
+  max_clients: z.coerce.number().int().optional(),
 });
 
 export default function PlanForm({ plan, isEditing = false }) {
@@ -47,9 +50,14 @@ export default function PlanForm({ plan, isEditing = false }) {
         users: 2,
         integrations: 1,
         for_agency: false
-      }
+      },
+      is_agency_plan: false,
+      max_clients: 5
     },
   });
+
+  // Monitora mudanças no campo for_agency
+  const isAgencyPlan = form.watch('features.for_agency');
 
   useEffect(() => {
     if (plan) {
@@ -66,13 +74,37 @@ export default function PlanForm({ plan, isEditing = false }) {
         features: {
           users: plan.features?.users || 2,
           integrations: plan.features?.integrations || 1,
-          for_agency: plan.features?.for_agency || false
-        }
+          for_agency: plan.is_agency_plan || false
+        },
+        is_agency_plan: plan.is_agency_plan || false,
+        max_clients: plan.max_clients || 5
       });
     }
   }, [plan]);
 
+  // Quando o tipo de plano muda, atualize o campo is_agency_plan
+  useEffect(() => {
+    form.setValue('is_agency_plan', isAgencyPlan);
+  }, [isAgencyPlan]);
+
   function onSubmit(values) {
+    // Ajustar os valores antes de enviar
+    if (values.features.for_agency) {
+      // Se for plano de agência, ajustar campos adequadamente
+      values.is_agency_plan = true;
+      values.max_clients = values.features.users;
+      
+      // Zerar campos não usados em planos de agência
+      values.monthly_leads = null;
+      values.total_leads = null;
+      values.max_landing_pages = null;
+      values.max_pipelines = null;
+    } else {
+      // Se for plano de cliente
+      values.is_agency_plan = false;
+      values.max_clients = null;
+    }
+
     if (isEditing) {
       router.put(route('admin.plans.update', plan.id), values);
     } else {
@@ -171,81 +203,86 @@ export default function PlanForm({ plan, isEditing = false }) {
           
         <Separator />
         
-        <h3 className="text-lg font-medium">Limites do Plano</h3>
+        {/* Limites do Plano - Mostrar apenas para planos de cliente final */}
+        {!isAgencyPlan && (
+          <>
+            <h3 className="text-lg font-medium">Limites do Plano</h3>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="monthly_leads"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Leads Mensais</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Número máximo de leads que podem ser capturados por mês
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="total_leads"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Leads Totais</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Capacidade total de armazenamento de leads/contatos
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="monthly_leads"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Leads Mensais</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Número máximo de leads que podem ser capturados por mês
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="total_leads"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Leads Totais</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Capacidade total de armazenamento de leads/contatos
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="max_landing_pages"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Landing Pages</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Número máximo de landing pages permitidas
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="max_pipelines"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pipelines</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Número máximo de pipelines de vendas permitidos
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="max_landing_pages"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Landing Pages</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Número máximo de landing pages permitidas
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="max_pipelines"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pipelines</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Número máximo de pipelines de vendas permitidos
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <Separator />
+            <Separator />
+          </>
+        )}
         
         <h3 className="text-lg font-medium">Recursos Adicionais</h3>
 
@@ -255,34 +292,39 @@ export default function PlanForm({ plan, isEditing = false }) {
             name="features.users"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Usuários</FormLabel>
+                <FormLabel>{isAgencyPlan ? 'Clientes' : 'Usuários'}</FormLabel>
                 <FormControl>
                   <Input type="number" min="1" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Número de usuários permitidos na conta
+                  {isAgencyPlan 
+                    ? 'Número máximo de clientes que a agência pode gerenciar' 
+                    : 'Número de usuários permitidos na conta'
+                  }
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          <FormField
-            control={form.control}
-            name="features.integrations"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Integrações</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Número de integrações externas permitidas
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {!isAgencyPlan && (
+            <FormField
+              control={form.control}
+              name="features.integrations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Integrações</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Número de integrações externas permitidas
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <Separator />
