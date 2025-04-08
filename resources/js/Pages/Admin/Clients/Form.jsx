@@ -31,13 +31,9 @@ const formSchema = z.object({
   phone: z.string().optional(),
   document: z.string().optional(),
   description: z.string().optional(),
-  domain: z.string().optional(),
   is_active: z.boolean().default(true),
   agency_id: z.string().optional(),
   plan_id: z.string().optional(),
-  primary_color: z.string().optional(),
-  secondary_color: z.string().optional(),
-  accent_color: z.string().optional(),
 });
 
 export default function ClientForm({ client, agencies, plans, isEditing = false }) {
@@ -49,13 +45,9 @@ export default function ClientForm({ client, agencies, plans, isEditing = false 
       phone: '',
       document: '',
       description: '',
-      domain: '',
       is_active: true,
       agency_id: '',
       plan_id: '',
-      primary_color: '',
-      secondary_color: '',
-      accent_color: '',
     },
   });
 
@@ -67,13 +59,9 @@ export default function ClientForm({ client, agencies, plans, isEditing = false 
         phone: client.phone || '',
         document: client.document || '',
         description: client.description || '',
-        domain: client.domain || '',
         is_active: client.is_active,
         agency_id: client.agency_id ? String(client.agency_id) : '',
         plan_id: client.plan_id ? String(client.plan_id) : '',
-        primary_color: client.primary_color || '',
-        secondary_color: client.secondary_color || '',
-        accent_color: client.accent_color || '',
       });
     }
   }, [client]);
@@ -218,7 +206,7 @@ export default function ClientForm({ client, agencies, plans, isEditing = false 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Cliente Direto</SelectItem>
+                          <SelectItem value="null">Cliente Direto</SelectItem>
                           {agencies?.map((agency) => (
                             <SelectItem key={agency.id} value={String(agency.id)}>
                               {agency.name}
@@ -248,7 +236,7 @@ export default function ClientForm({ client, agencies, plans, isEditing = false 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sem plano</SelectItem>
+                          <SelectItem value="null">Sem plano</SelectItem>
                           {plans?.map((plan) => (
                             <SelectItem key={plan.id} value={String(plan.id)}>
                               {plan.name}
@@ -264,104 +252,16 @@ export default function ClientForm({ client, agencies, plans, isEditing = false 
             </CardContent>
           </Card>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Personalização</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="domain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Domínio</FormLabel>
-                    <FormControl>
-                      <Input placeholder="cliente.onsell.com.br" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="primary_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cor Primária</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input type="text" placeholder="#3B82F6" {...field} />
-                        </FormControl>
-                        <Input 
-                          type="color" 
-                          value={field.value || '#3B82F6'} 
-                          className="w-10 p-1 h-10"
-                          onChange={(e) => field.onChange(e.target.value)}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="secondary_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cor Secundária</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input type="text" placeholder="#9333EA" {...field} />
-                        </FormControl>
-                        <Input 
-                          type="color" 
-                          value={field.value || '#9333EA'} 
-                          className="w-10 p-1 h-10"
-                          onChange={(e) => field.onChange(e.target.value)}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="accent_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cor de Destaque</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input type="text" placeholder="#10B981" {...field} />
-                        </FormControl>
-                        <Input 
-                          type="color" 
-                          value={field.value || '#10B981'} 
-                          className="w-10 p-1 h-10"
-                          onChange={(e) => field.onChange(e.target.value)}
-                        />
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar
-              </Button>
-              <Button type="submit">
-                <Save className="mr-2 h-4 w-4" />
-                {isEditing ? 'Atualizar' : 'Salvar'}
-              </Button>
-            </CardFooter>
-          </Card>
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+            <Button type="submit">
+              <Save className="mr-2 h-4 w-4" />
+              {isEditing ? 'Atualizar' : 'Salvar'}
+            </Button>
+          </div>
         </form>
       </Form>
     </AdminLayout>

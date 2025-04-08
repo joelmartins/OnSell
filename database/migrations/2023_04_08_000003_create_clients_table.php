@@ -18,14 +18,10 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->text('description')->nullable();
-            $table->string('domain')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->foreignId('agency_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->string('logo')->nullable();
-            $table->string('primary_color', 20)->nullable();
-            $table->string('secondary_color', 20)->nullable();
-            $table->string('accent_color', 20)->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

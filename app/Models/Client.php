@@ -25,14 +25,10 @@ class Client extends Model implements Auditable
         'email',
         'phone',
         'description',
-        'domain',
         'is_active',
         'agency_id',
         'plan_id',
         'logo',
-        'primary_color',
-        'secondary_color',
-        'accent_color',
     ];
 
     /**

@@ -125,76 +125,11 @@ export default function ClientShow({ client }) {
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Domínio</h3>
-                  <Separator className="my-2" />
-                </div>
-                
-                <div className="flex items-center">
-                  <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">
-                    {client.domain || 'Nenhum domínio configurado'}
-                  </span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
         
         <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cores</CardTitle>
-              <CardDescription>Cores personalizadas do cliente</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {client.primary_color && (
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="h-6 w-6 rounded-full border" 
-                    style={{ backgroundColor: client.primary_color }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium">Cor Primária</p>
-                    <p className="text-xs text-muted-foreground">{client.primary_color}</p>
-                  </div>
-                </div>
-              )}
-              
-              {client.secondary_color && (
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="h-6 w-6 rounded-full border" 
-                    style={{ backgroundColor: client.secondary_color }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium">Cor Secundária</p>
-                    <p className="text-xs text-muted-foreground">{client.secondary_color}</p>
-                  </div>
-                </div>
-              )}
-              
-              {client.accent_color && (
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="h-6 w-6 rounded-full border" 
-                    style={{ backgroundColor: client.accent_color }}
-                  />
-                  <div>
-                    <p className="text-sm font-medium">Cor de Destaque</p>
-                    <p className="text-xs text-muted-foreground">{client.accent_color}</p>
-                  </div>
-                </div>
-              )}
-              
-              {!client.primary_color && !client.secondary_color && !client.accent_color && (
-                <p className="text-sm text-muted-foreground">Nenhuma cor personalizada definida</p>
-              )}
-            </CardContent>
-          </Card>
-          
           <Card>
             <CardHeader>
               <CardTitle>Ações Adicionais</CardTitle>

@@ -27,7 +27,6 @@ class ClientController extends Controller
                     'id' => $client->id,
                     'name' => $client->name,
                     'email' => $client->email,
-                    'domain' => $client->domain,
                     'is_active' => $client->is_active,
                     'agency' => $client->agency ? [
                         'id' => $client->agency->id,
@@ -72,9 +71,9 @@ class ClientController extends Controller
     {
         $validated = $request->validated();
         
-        // Convert empty strings to null for foreign keys
-        $validated['agency_id'] = $validated['agency_id'] ?? null;
-        $validated['plan_id'] = $validated['plan_id'] ?? null;
+        // Convert empty strings or "null" strings to null for foreign keys
+        $validated['agency_id'] = ($validated['agency_id'] === 'null' || empty($validated['agency_id'])) ? null : $validated['agency_id'];
+        $validated['plan_id'] = ($validated['plan_id'] === 'null' || empty($validated['plan_id'])) ? null : $validated['plan_id'];
         
         $client = Client::create($validated);
         
@@ -124,9 +123,9 @@ class ClientController extends Controller
     {
         $validated = $request->validated();
         
-        // Convert empty strings to null for foreign keys
-        $validated['agency_id'] = $validated['agency_id'] ?? null;
-        $validated['plan_id'] = $validated['plan_id'] ?? null;
+        // Convert empty strings or "null" strings to null for foreign keys
+        $validated['agency_id'] = ($validated['agency_id'] === 'null' || empty($validated['agency_id'])) ? null : $validated['agency_id'];
+        $validated['plan_id'] = ($validated['plan_id'] === 'null' || empty($validated['plan_id'])) ? null : $validated['plan_id'];
         
         $client->update($validated);
         
