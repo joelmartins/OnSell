@@ -29,7 +29,7 @@ class DemoDataSeeder extends Seeder
             'primary_color' => '#3b82f6',  // Azul
             'secondary_color' => '#10b981', // Verde
             'accent_color' => '#f97316',    // Laranja
-            'logo' => 'https://via.placeholder.com/200x50?text=Agência+Digital+BR',
+            'logo' => 'https://placehold.co/200x50/3b82f6/FFFFFF?text=Agência+Digital+BR',
         ]);
         
         // 2. Criar o usuário administrador da agência

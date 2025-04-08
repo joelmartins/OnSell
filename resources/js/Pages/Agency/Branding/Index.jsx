@@ -37,8 +37,8 @@ export default function BrandingIndex({ agency }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: agency.name || '',
-      logo: agency.logo || '',
-      favicon: agency.favicon || '',
+      logo: agency.logo || 'https://placehold.co/200x50/FAFAFA/6D7280?text=Logo+Agência',
+      favicon: agency.favicon || 'https://placehold.co/32x32/FAFAFA/6D7280?text=F',
       primary_color: agency.primary_color || '#3b82f6',
       secondary_color: agency.secondary_color || '#10b981',
       accent_color: agency.accent_color || '#f97316',

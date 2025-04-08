@@ -155,7 +155,7 @@ CSS;
         <button class="btn btn-primary btn-lg">Aproveitar Agora</button>
       </div>
       <div class="col-lg-6 text-center">
-        <img src="https://via.placeholder.com/600x400" alt="Produto em promoção" class="img-fluid rounded shadow">
+        <img src="https://placehold.co/600x400/EFEFEF/333333" alt="Produto em promoção" class="img-fluid rounded shadow">
       </div>
     </div>
   </div>
@@ -171,7 +171,7 @@ CSS;
     <div class="col-md-4 mb-4">
       <div class="card h-100 product-card">
         <div class="badge bg-danger position-absolute" style="top: 10px; right: 10px">-25%</div>
-        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Produto 1">
+        <img src="https://placehold.co/300x200/FAFAFA/333333" class="card-img-top" alt="Produto 1">
         <div class="card-body">
           <h5 class="card-title">Produto Especial 1</h5>
           <p class="card-text">Descrição breve do produto com seus principais benefícios.</p>
@@ -189,7 +189,7 @@ CSS;
     <div class="col-md-4 mb-4">
       <div class="card h-100 product-card">
         <div class="badge bg-danger position-absolute" style="top: 10px; right: 10px">-30%</div>
-        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Produto 2">
+        <img src="https://placehold.co/300x200/FAFAFA/333333" class="card-img-top" alt="Produto 2">
         <div class="card-body">
           <h5 class="card-title">Produto Especial 2</h5>
           <p class="card-text">Descrição breve do produto com seus principais benefícios.</p>
@@ -207,7 +207,7 @@ CSS;
     <div class="col-md-4 mb-4">
       <div class="card h-100 product-card">
         <div class="badge bg-danger position-absolute" style="top: 10px; right: 10px">-15%</div>
-        <img src="https://via.placeholder.com/300x200" class="card-img-top" alt="Produto 3">
+        <img src="https://placehold.co/300x200/FAFAFA/333333" class="card-img-top" alt="Produto 3">
         <div class="card-body">
           <h5 class="card-title">Produto Especial 3</h5>
           <p class="card-text">Descrição breve do produto com seus principais benefícios.</p>
