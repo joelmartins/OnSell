@@ -16,9 +16,9 @@ return new class extends Migration
             $table->foreignId('client_id')->constrained()->cascadeOnDelete();
             $table->integer('year');
             $table->integer('month');
-            $table->integer('contacts_count')->default(0);
+            $table->integer('leads_count')->default(0)->comment('Contagem de leads capturados mensalmente');
             $table->integer('pipelines_count')->default(0);
-            $table->integer('automation_flows_count')->default(0);
+            $table->integer('landing_pages_count')->default(0)->comment('Contagem de landing pages criadas');
             $table->timestamps();
 
             // Índice único para garantir apenas um registro por cliente/mês/ano

@@ -26,15 +26,22 @@ class Plan extends Model implements Auditable
         'period',
         'agency_id',
         'is_active',
+        'is_agency_plan',
+        'is_featured',
         'features',
-        'max_contacts',
+        'monthly_leads',
+        'max_landing_pages',
         'max_pipelines',
-        'max_automation_flows',
+        'total_leads',
+        'max_clients',
         'has_whatsapp_integration',
         'has_email_integration',
-        'has_meta_integration',
-        'has_google_integration',
-        'has_custom_domain',
+        'has_instagram_integration',
+        'has_telegram_integration',
+        'has_crm_integration',
+        'has_facebook_integration',
+        'has_google_business_integration',
+        'is_agency_plan',
     ];
 
     /**
@@ -44,16 +51,23 @@ class Plan extends Model implements Auditable
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'is_agency_plan' => 'boolean',
+        'is_featured' => 'boolean',
         'price' => 'decimal:2',
         'features' => 'array',
-        'max_contacts' => 'integer',
+        'monthly_leads' => 'integer',
+        'max_landing_pages' => 'integer',
         'max_pipelines' => 'integer',
-        'max_automation_flows' => 'integer',
+        'total_leads' => 'integer',
+        'max_clients' => 'integer',
         'has_whatsapp_integration' => 'boolean',
         'has_email_integration' => 'boolean',
-        'has_meta_integration' => 'boolean',
-        'has_google_integration' => 'boolean',
-        'has_custom_domain' => 'boolean',
+        'has_instagram_integration' => 'boolean',
+        'has_telegram_integration' => 'boolean',
+        'has_crm_integration' => 'boolean',
+        'has_facebook_integration' => 'boolean',
+        'has_google_business_integration' => 'boolean',
+        'is_agency_plan' => 'boolean',
     ];
 
     /**
@@ -65,9 +79,11 @@ class Plan extends Model implements Auditable
     /**
      * Constantes para limites padrão de planos
      */
-    const DEFAULT_CONTACTS_LIMIT = 100;
-    const DEFAULT_PIPELINES_LIMIT = 3;
-    const DEFAULT_AUTOMATION_FLOWS_LIMIT = 5;
+    const DEFAULT_MONTHLY_LEADS = 100;
+    const DEFAULT_MAX_LANDING_PAGES = 1;
+    const DEFAULT_MAX_PIPELINES = 1;
+    const DEFAULT_TOTAL_LEADS = 500;
+    const DEFAULT_MAX_CLIENTS = 5;
     const DEFAULT_USERS_LIMIT = 2;
 
     /**
@@ -87,12 +103,12 @@ class Plan extends Model implements Auditable
      * Calcula o desconto para planos anuais
      *
      * @param float $monthlyPrice
+     * @param float $discountPercentage Percentual de desconto no plano anual (padrão: 20%)
      * @return float
      */
-    public static function calculateYearlyPrice(float $monthlyPrice): float
+    public static function calculateYearlyPrice(float $monthlyPrice, float $discountPercentage = 20): float
     {
-        // 20% de desconto para planos anuais (equivalente a 2 meses grátis)
-        return $monthlyPrice * 12 * 0.8;
+        return $monthlyPrice * 12 * (1 - $discountPercentage / 100);
     }
 
     /**
@@ -112,10 +128,87 @@ class Plan extends Model implements Auditable
     }
 
     /**
-     * Check if this is a system plan (not created by an agency).
+     * Check if this is a system plan (not associated with any agency).
      */
     public function isSystemPlan(): bool
     {
         return is_null($this->agency_id);
+    }
+
+    /**
+     * Check if this plan is meant for agencies.
+     */
+    public function isAgencyPlan(): bool
+    {
+        return $this->is_agency_plan;
+    }
+
+    /**
+     * Check if this plan is for direct clients (system plan and not agency plan).
+     */
+    public function isDirectClientPlan(): bool
+    {
+        return $this->isSystemPlan() && !$this->isAgencyPlan();
+    }
+
+    /**
+     * Get plan type as a human-readable string.
+     * 
+     * @return string
+     */
+    public function getPlanTypeLabel(): string
+    {
+        return $this->isAgencyPlan() ? 'Agência' : 'Cliente';
+    }
+
+    /**
+     * Get the monthly leads limit.
+     * 
+     * @return int
+     */
+    public function getMonthlyLeadsLimit(): int
+    {
+        return $this->monthly_leads ?? self::DEFAULT_MONTHLY_LEADS;
+    }
+
+    /**
+     * Get the landing pages limit.
+     * 
+     * @return int
+     */
+    public function getLandingPagesLimit(): int
+    {
+        return $this->max_landing_pages ?? self::DEFAULT_MAX_LANDING_PAGES;
+    }
+
+    /**
+     * Get the pipelines limit.
+     * 
+     * @return int
+     */
+    public function getPipelinesLimit(): int
+    {
+        return $this->max_pipelines ?? self::DEFAULT_MAX_PIPELINES;
+    }
+
+    /**
+     * Get the total leads limit.
+     * 
+     * @return int
+     */
+    public function getTotalLeadsLimit(): int
+    {
+        return $this->total_leads ?? self::DEFAULT_TOTAL_LEADS;
+    }
+
+    /**
+     * Calculate yearly price with discount for this plan instance.
+     * 
+     * @param float $discountPercentage Percentual de desconto no plano anual (padrão: 20%)
+     * @return float
+     */
+    public function getYearlyPrice(float $discountPercentage = 20): float
+    {
+        return self::calculateYearlyPrice($this->price, $discountPercentage);
     }
 } 

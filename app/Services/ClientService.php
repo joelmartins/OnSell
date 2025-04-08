@@ -68,12 +68,12 @@ public function canCreatePipeline(int $clientId): array
 }
 
 /**
- * Check if a client can create more automation flows based on their plan.
+ * Check if a client can create more landing pages based on their plan.
  *
  * @param int $clientId
  * @return array
  */
-public function canCreateAutomationFlow(int $clientId): array
+public function canCreateLandingPage(int $clientId): array
 {
     $client = Client::find($clientId);
     
@@ -86,27 +86,27 @@ public function canCreateAutomationFlow(int $clientId): array
     
     $currentUsage = ClientUsage::getCurrentMonthUsage($clientId);
     
-    if ($currentUsage->hasReachedAutomationFlowsLimit($clientId)) {
+    if ($currentUsage->hasReachedLandingPagesLimit($clientId)) {
         return [
             'success' => false,
-            'message' => 'Você atingiu o limite de fluxos de automação para o seu plano atual.'
+            'message' => 'Você atingiu o limite de landing pages para o seu plano atual.'
         ];
     }
     
     return [
         'success' => true,
-        'message' => 'Pode criar fluxo de automação.'
+        'message' => 'Pode criar landing page.'
     ];
 }
 
 /**
- * Check if a client can add more contacts based on their plan.
+ * Check if a client can add more leads based on their plan.
  *
  * @param int $clientId
- * @param int $contactsToAdd
+ * @param int $leadsToAdd
  * @return array
  */
-public function canAddContacts(int $clientId, int $contactsToAdd = 1): array
+public function canAddLeads(int $clientId, int $leadsToAdd = 1): array
 {
     $client = Client::find($clientId);
     
@@ -119,19 +119,32 @@ public function canAddContacts(int $clientId, int $contactsToAdd = 1): array
     
     $currentUsage = ClientUsage::getCurrentMonthUsage($clientId);
     
-    $remaining = $currentUsage->getRemainingContacts($clientId);
+    // Verifica o limite mensal
+    $remainingMonthly = $currentUsage->getRemainingMonthlyLeads($clientId);
     
-    if ($remaining < $contactsToAdd) {
+    if ($remainingMonthly < $leadsToAdd) {
         return [
             'success' => false,
-            'message' => "Você só tem {$remaining} contatos disponíveis no seu plano atual.",
-            'remaining' => $remaining
+            'message' => "Você só tem {$remainingMonthly} leads disponíveis no seu plano mensal atual.",
+            'remaining' => $remainingMonthly
+        ];
+    }
+    
+    // Verifica o limite total
+    $remainingTotal = $currentUsage->getRemainingTotalLeads($clientId);
+    
+    if ($remainingTotal < $leadsToAdd) {
+        return [
+            'success' => false,
+            'message' => "Você só tem {$remainingTotal} leads disponíveis no seu limite total do plano.",
+            'remaining' => $remainingTotal
         ];
     }
     
     return [
         'success' => true,
-        'message' => 'Pode adicionar contatos.',
-        'remaining' => $remaining
+        'message' => 'Pode adicionar leads.',
+        'remaining_monthly' => $remainingMonthly,
+        'remaining_total' => $remainingTotal
     ];
 } 

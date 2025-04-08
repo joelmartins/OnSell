@@ -59,9 +59,10 @@ class DemoDataSeeder extends Seeder
                     'Automação básica',
                     'Suporte da agência',
                 ]),
-                'max_contacts' => 300,
+                'monthly_leads' => 300,
+                'max_landing_pages' => 1,
                 'max_pipelines' => 1,
-                'max_automation_flows' => 2,
+                'total_leads' => 1500,
                 'has_whatsapp_integration' => true,
                 'has_email_integration' => true,
                 'has_meta_integration' => false,
@@ -84,9 +85,10 @@ class DemoDataSeeder extends Seeder
                     'Relatórios personalizados',
                     'Suporte prioritário da agência',
                 ]),
-                'max_contacts' => 1500,
+                'monthly_leads' => 1500,
+                'max_landing_pages' => 3,
                 'max_pipelines' => 3,
-                'max_automation_flows' => 5,
+                'total_leads' => 5000,
                 'has_whatsapp_integration' => true,
                 'has_email_integration' => true,
                 'has_meta_integration' => true,
@@ -191,13 +193,13 @@ class DemoDataSeeder extends Seeder
         // 13. Detalhar os planos criados
         $this->command->info('Planos disponíveis:');
         $this->command->table(
-            ['Tipo', 'Nome', 'Preço', 'Contatos Máximos', 'Agência'],
+            ['Tipo', 'Nome', 'Preço', 'Leads Mensais', 'Leads Totais', 'Landing Pages', 'Agência'],
             [
-                ['Sistema', 'Starter', 'R$ 99,90', '500', 'N/A'],
-                ['Sistema', 'Pro', 'R$ 299,90', '2000', 'N/A'],
-                ['Sistema', 'Enterprise', 'R$ 799,90', '10000', 'N/A'],
-                ['Agência', $createdAgencyPlans[0]->name, 'R$ 79,90', '300', $agency->name],
-                ['Agência', $createdAgencyPlans[1]->name, 'R$ 199,90', '1500', $agency->name],
+                ['Sistema', 'Starter', 'R$ 99,90', '500', '2000', '1', 'N/A'],
+                ['Sistema', 'Pro', 'R$ 299,90', '2000', '10000', '3', 'N/A'],
+                ['Sistema', 'Enterprise', 'R$ 799,90', '10000', '50000', '10', 'N/A'],
+                ['Agência', $createdAgencyPlans[0]->name, 'R$ 79,90', '300', '1500', '1', $agency->name],
+                ['Agência', $createdAgencyPlans[1]->name, 'R$ 199,90', '1500', '5000', '3', $agency->name],
             ]
         );
     }

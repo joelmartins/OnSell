@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
@@ -16,93 +16,127 @@ import {
   XCircle,
   Users,
   Database,
-  MessageSquare
+  MessageSquare,
+  Building2,
+  User,
+  Trash2,
+  AlertTriangle,
+  Star,
+  LayoutTemplate
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Link } from '@inertiajs/react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/Components/ui/dropdown-menu';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/Components/ui/select';
+import { toast } from 'react-toastify';
 
-export default function PlansIndex({ auth }) {
-  const [search, setSearch] = useState('');
+export default function PlansIndex({ auth, plans, filters }) {
+  const page = usePage();
+  const flash = page.props.flash || {};
+  const [search, setSearch] = useState(filters?.search || '');
+  const [planTypeFilter, setPlanTypeFilter] = useState(filters?.type || 'all');
+  const [statusFilter, setStatusFilter] = useState(filters?.status || 'all');
+  const [featuredFilter, setFeaturedFilter] = useState(filters?.featured || 'all');
   
-  // Dados de exemplo para planos
-  const plans = [
-    { 
-      id: 1, 
-      name: 'Starter', 
-      description: 'Plano para pequenas empresas com necessidades básicas',
-      price: 'R$ 97,00',
-      is_active: true,
-      features: {
-        leads: 500,
-        pipelines: 1,
-        integrations: 1,
-        users: 2
-      },
-      created_at: '2025-01-10'
-    },
-    { 
-      id: 2, 
-      name: 'Pro', 
-      description: 'Para empresas em crescimento que precisam de mais recursos',
-      price: 'R$ 197,00',
-      is_active: true,
-      features: {
-        leads: 2000,
-        pipelines: 3,
-        integrations: 3,
-        users: 5
-      },
-      created_at: '2025-01-10'
-    },
-    { 
-      id: 3, 
-      name: 'Enterprise', 
-      description: 'Solução completa para empresas consolidadas',
-      price: 'R$ 497,00',
-      is_active: true,
-      features: {
-        leads: 10000,
-        pipelines: 10,
-        integrations: 10,
-        users: 20
-      },
-      created_at: '2025-01-10'
-    },
-    { 
-      id: 4, 
-      name: 'Personalizado (Agência Premium)', 
-      description: 'Plano personalizado para Agência Digital Suprema',
-      price: 'R$ 399,00',
-      is_active: true,
-      features: {
-        leads: 5000,
-        pipelines: 5,
-        integrations: 5,
-        users: 10
-      },
-      created_at: '2025-03-15'
-    },
-    { 
-      id: 5, 
-      name: 'Básico (Descontinuado)', 
-      description: 'Versão antiga do plano Starter',
-      price: 'R$ 79,00',
-      is_active: false,
-      features: {
-        leads: 300,
-        pipelines: 1,
-        integrations: 1,
-        users: 1
-      },
-      created_at: '2025-01-01'
-    },
-  ];
-
-  // Filtrar planos com base na pesquisa
-  const filteredPlans = plans.filter(plan => 
-    plan.name.toLowerCase().includes(search.toLowerCase()) ||
-    plan.description.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    if (flash && flash.success) {
+      toast.success(flash.success);
+    }
+    
+    if (flash && flash.error) {
+      toast.error(flash.error);
+    }
+  }, [flash]);
+  
+  const applyFilters = () => {
+    router.get(route('admin.plans.index'), {
+      search: search || undefined,
+      type: planTypeFilter !== 'all' ? planTypeFilter : undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      featured: featuredFilter !== 'all' ? featuredFilter : undefined,
+    }, {
+      preserveState: true,
+      replace: true
+    });
+  };
+  
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
+  
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      applyFilters();
+    }
+  };
+  
+  const handleTypeFilterChange = (value) => {
+    setPlanTypeFilter(value);
+    router.get(route('admin.plans.index'), {
+      search: search || undefined,
+      type: value !== 'all' ? value : undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      featured: featuredFilter !== 'all' ? featuredFilter : undefined,
+    }, {
+      preserveState: true,
+      replace: true
+    });
+  };
+  
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value);
+    router.get(route('admin.plans.index'), {
+      search: search || undefined,
+      type: planTypeFilter !== 'all' ? planTypeFilter : undefined,
+      status: value !== 'all' ? value : undefined,
+      featured: featuredFilter !== 'all' ? featuredFilter : undefined,
+    }, {
+      preserveState: true,
+      replace: true
+    });
+  };
+  
+  const handleFeaturedFilterChange = (value) => {
+    setFeaturedFilter(value);
+    router.get(route('admin.plans.index'), {
+      search: search || undefined,
+      type: planTypeFilter !== 'all' ? planTypeFilter : undefined,
+      status: statusFilter !== 'all' ? statusFilter : undefined,
+      featured: value !== 'all' ? value : undefined,
+    }, {
+      preserveState: true,
+      replace: true
+    });
+  };
+  
+  const handleToggleStatus = (plan) => {
+    router.put(route('admin.plans.toggle', plan.id));
+  };
+  
+  const handleToggleFeatured = (plan) => {
+    router.put(route('admin.plans.toggle-featured', plan.id));
+  };
+  
+  const confirmDelete = (plan) => {
+    if (plan.clients_count > 0) {
+      toast.error(`Não é possível excluir o plano "${plan.name}" pois possui ${plan.clients_count} cliente(s) associado(s).`);
+      return;
+    }
+    
+    if (confirm(`Tem certeza que deseja excluir o plano "${plan.name}"? Esta ação não poderá ser desfeita.`)) {
+      router.delete(route('admin.plans.destroy', plan.id));
+    }
+  };
 
   return (
     <AdminLayout title="Gerenciamento de Planos">
@@ -110,7 +144,7 @@ export default function PlansIndex({ auth }) {
       
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold">Planos</h2>
+          <h2 className="text-2xl font-semibold">Planos do Sistema</h2>
           <p className="text-muted-foreground">Gerencie os planos disponíveis na plataforma</p>
         </div>
         <Button asChild>
@@ -123,99 +157,214 @@ export default function PlansIndex({ auth }) {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Todos os Planos</CardTitle>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar planos..."
-                className="pl-8 w-full sm:w-64"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <CardTitle>Planos do Sistema</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Select value={planTypeFilter} onValueChange={handleTypeFilterChange}>
+                <SelectTrigger className="w-full sm:w-[160px]">
+                  <SelectValue placeholder="Tipo de plano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os planos</SelectItem>
+                  <SelectItem value="client">Para clientes</SelectItem>
+                  <SelectItem value="agency">Para agências</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="active">Ativos</SelectItem>
+                  <SelectItem value="inactive">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={featuredFilter} onValueChange={handleFeaturedFilterChange}>
+                <SelectTrigger className="w-full sm:w-[140px]">
+                  <SelectValue placeholder="Destaque" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="featured">Em destaque</SelectItem>
+                  <SelectItem value="not-featured">Sem destaque</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Buscar planos..."
+                  className="pl-8 w-full sm:w-64"
+                  value={search}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
+                />
+              </div>
             </div>
           </div>
           <CardDescription>
-            Um total de {plans.length} planos configurados na plataforma.
+            Um total de {plans.length} planos do sistema configurados na plataforma.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Preço</TableHead>
-                  <TableHead className="text-center">Leads</TableHead>
-                  <TableHead className="text-center">Pipelines</TableHead>
-                  <TableHead className="text-center">Usuários</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Destaque</TableHead>
+                  <TableHead>Recursos</TableHead>
+                  <TableHead>Clientes</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPlans.length > 0 ? (
-                  filteredPlans.map((plan) => (
+                {plans.length > 0 ? (
+                  plans.map((plan) => (
                     <TableRow key={plan.id}>
+                      <TableCell className="font-medium">
+                        {plan.name}
+                        {plan.description && (
+                          <p className="text-xs text-muted-foreground truncate max-w-[250px]">{plan.description}</p>
+                        )}
+                      </TableCell>
+                      <TableCell>R$ {parseFloat(plan.price).toFixed(2)}</TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{plan.name}</p>
-                          <p className="text-xs text-muted-foreground">{plan.description}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{plan.price}/mês</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Database className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{plan.features.leads.toLocaleString()}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{plan.features.pipelines}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>{plan.features.users}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {plan.is_active ? (
-                          <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center justify-center gap-1">
-                            <CheckCircle className="h-3.5 w-3.5" />
-                            <span>Ativo</span>
+                        {plan.is_agency_plan ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
+                            <Building2 className="h-3 w-3 mr-1" />
+                            Para Agências
                           </Badge>
                         ) : (
-                          <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center justify-center gap-1">
-                            <XCircle className="h-3.5 w-3.5" />
-                            <span>Inativo</span>
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">
+                            <User className="h-3 w-3 mr-1" />
+                            Para Clientes
                           </Badge>
                         )}
                       </TableCell>
+                      <TableCell>
+                        {plan.is_active ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Ativo
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Inativo
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {plan.is_featured ? (
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">
+                            <Star className="h-3 w-3 mr-1 fill-yellow-500" />
+                            Destaque
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Não destacado
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex items-center text-xs">
+                            <Database className="h-3 w-3 mr-1" />
+                            {plan.monthly_leads || plan.features?.leads || 0} leads mensais
+                          </span>
+                          <span className="inline-flex items-center text-xs">
+                            <Star className="h-3 w-3 mr-1" />
+                            {plan.total_leads || plan.features?.total_leads || 0} leads totais
+                          </span>
+                          <span className="inline-flex items-center text-xs">
+                            <LayoutTemplate className="h-3 w-3 mr-1" />
+                            {plan.max_landing_pages || plan.features?.landing_pages || 0} landing pages
+                          </span>
+                          <span className="inline-flex items-center text-xs">
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {plan.max_pipelines || plan.features?.pipelines || 0} pipelines
+                          </span>
+                          <span className="inline-flex items-center text-xs">
+                            <Users className="h-3 w-3 mr-1" />
+                            {plan.features?.users || 1} usuários
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={plan.clients_count > 0 ? "secondary" : "outline"}>
+                          {plan.clients_count}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon" asChild>
-                            <Link href={route('admin.plans.edit', plan.id)}>
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Editar</span>
-                            </Link>
-                          </Button>
-                          <Button variant="outline" size="icon" asChild>
-                            <Link href={route('admin.plans.duplicate', plan.id)}>
-                              <Copy className="h-4 w-4" />
-                              <span className="sr-only">Duplicar</span>
-                            </Link>
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                Ações
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link href={route('admin.plans.edit', plan.id)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Editar
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={route('admin.plans.duplicate', plan.id)}>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Duplicar
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleFeatured(plan)}>
+                                {plan.is_featured ? (
+                                  <>
+                                    <Star className="h-4 w-4 mr-2" />
+                                    Remover destaque
+                                  </>
+                                ) : (
+                                  <>
+                                    <Star className="h-4 w-4 mr-2 fill-yellow-500" />
+                                    Marcar como destaque
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleStatus(plan)}>
+                                {plan.is_active ? (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Inativar
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Ativar
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => confirmDelete(plan)}
+                                className={plan.clients_count > 0 ? "text-gray-400" : "text-red-600"}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                       Nenhum plano encontrado.
                     </TableCell>
                   </TableRow>

@@ -20,9 +20,9 @@ class ClientUsage extends Model
         'client_id',
         'year',
         'month',
-        'contacts_count',
+        'leads_count',
         'pipelines_count',
-        'automation_flows_count',
+        'landing_pages_count',
     ];
 
     /**
@@ -31,9 +31,9 @@ class ClientUsage extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'contacts_count' => 'integer',
+        'leads_count' => 'integer',
         'pipelines_count' => 'integer',
-        'automation_flows_count' => 'integer',
+        'landing_pages_count' => 'integer',
         'year' => 'integer',
         'month' => 'integer',
     ];
@@ -67,21 +67,21 @@ class ClientUsage extends Model
         return self::firstOrCreate(
             ['client_id' => $clientId, 'year' => $year, 'month' => $month],
             [
-                'contacts_count' => 0,
+                'leads_count' => 0,
                 'pipelines_count' => 0,
-                'automation_flows_count' => 0,
+                'landing_pages_count' => 0,
             ]
         );
     }
 
     /**
-     * Increment the contacts count for a client.
+     * Increment the leads count for a client.
      *
      * @param int $clientId
      * @param int $amount
      * @return bool
      */
-    public static function incrementContactsCount(int $clientId, int $amount = 1): bool
+    public static function incrementLeadsCount(int $clientId, int $amount = 1): bool
     {
         // Verifica se a quantidade é positiva
         if ($amount < 1) {
@@ -89,7 +89,7 @@ class ClientUsage extends Model
         }
 
         $usage = self::getCurrentMonthUsage($clientId);
-        $usage->contacts_count += $amount;
+        $usage->leads_count += $amount;
         return $usage->save();
     }
 
@@ -113,13 +113,13 @@ class ClientUsage extends Model
     }
 
     /**
-     * Increment the automation flows count for a client.
+     * Increment the landing pages count for a client.
      *
      * @param int $clientId
      * @param int $amount
      * @return bool
      */
-    public static function incrementAutomationFlowsCount(int $clientId, int $amount = 1): bool
+    public static function incrementLandingPagesCount(int $clientId, int $amount = 1): bool
     {
         // Verifica se a quantidade é positiva
         if ($amount < 1) {
@@ -127,17 +127,17 @@ class ClientUsage extends Model
         }
 
         $usage = self::getCurrentMonthUsage($clientId);
-        $usage->automation_flows_count += $amount;
+        $usage->landing_pages_count += $amount;
         return $usage->save();
     }
 
     /**
-     * Check if a client has reached their monthly contacts limit.
+     * Check if a client has reached their monthly leads limit.
      *
      * @param int $clientId
      * @return bool
      */
-    public function hasReachedContactsLimit(int $clientId): bool
+    public function hasReachedMonthlyLeadsLimit(int $clientId): bool
     {
         $client = Client::find($clientId);
         
@@ -145,7 +145,28 @@ class ClientUsage extends Model
             return true; // Se o cliente não existe, consideramos que atingiu o limite
         }
         
-        return $this->contacts_count >= $client->plan->contacts_limit;
+        return $this->leads_count >= $client->plan->monthly_leads;
+    }
+
+    /**
+     * Check if a client has reached their total leads limit.
+     *
+     * @param int $clientId
+     * @return bool
+     */
+    public function hasReachedTotalLeadsLimit(int $clientId): bool
+    {
+        $client = Client::find($clientId);
+        
+        if (!$client) {
+            return true; // Se o cliente não existe, consideramos que atingiu o limite
+        }
+        
+        // Aqui precisamos somar todos os leads do cliente em todos os meses
+        $totalLeads = self::where('client_id', $clientId)
+            ->sum('leads_count');
+            
+        return $totalLeads >= $client->plan->total_leads;
     }
 
     /**
@@ -162,16 +183,16 @@ class ClientUsage extends Model
             return true; // Se o cliente não existe, consideramos que atingiu o limite
         }
         
-        return $this->pipelines_count >= $client->plan->pipelines_limit;
+        return $this->pipelines_count >= $client->plan->max_pipelines;
     }
 
     /**
-     * Check if a client has reached their monthly automation flows limit.
+     * Check if a client has reached their landing pages limit.
      *
      * @param int $clientId
      * @return bool
      */
-    public function hasReachedAutomationFlowsLimit(int $clientId): bool
+    public function hasReachedLandingPagesLimit(int $clientId): bool
     {
         $client = Client::find($clientId);
         
@@ -179,24 +200,46 @@ class ClientUsage extends Model
             return true; // Se o cliente não existe, consideramos que atingiu o limite
         }
         
-        return $this->automation_flows_count >= $client->plan->automation_flows_limit;
+        return $this->landing_pages_count >= $client->plan->max_landing_pages;
     }
 
     /**
-     * Get the remaining contacts a client can add for the month.
+     * Get the remaining monthly leads a client can add.
      *
      * @param int $clientId
      * @return int
      */
-    public function getRemainingContacts(int $clientId): int
+    public function getRemainingMonthlyLeads(int $clientId): int
     {
         $client = Client::find($clientId);
         
         if (!$client) {
-            return 0; // Se o cliente não existe, não há contatos restantes
+            return 0; // Se o cliente não existe, não há leads restantes
         }
         
-        $remaining = $client->plan->contacts_limit - $this->contacts_count;
+        $remaining = $client->plan->monthly_leads - $this->leads_count;
+        
+        return max(0, $remaining);
+    }
+
+    /**
+     * Get the remaining total leads a client can add.
+     *
+     * @param int $clientId
+     * @return int
+     */
+    public function getRemainingTotalLeads(int $clientId): int
+    {
+        $client = Client::find($clientId);
+        
+        if (!$client) {
+            return 0; // Se o cliente não existe, não há leads restantes
+        }
+        
+        $totalLeads = self::where('client_id', $clientId)
+            ->sum('leads_count');
+            
+        $remaining = $client->plan->total_leads - $totalLeads;
         
         return max(0, $remaining);
     }
@@ -216,27 +259,27 @@ class ClientUsage extends Model
         }
         
         $currentUsage = self::getCurrentMonthUsage($clientId);
-        $remaining = $client->plan->pipelines_limit - $currentUsage->pipelines_count;
+        $remaining = $client->plan->max_pipelines - $currentUsage->pipelines_count;
         
         return max(0, $remaining);
     }
 
     /**
-     * Get the remaining automation flows a client can add for the month.
+     * Get the remaining landing pages a client can add.
      *
      * @param int $clientId
      * @return int
      */
-    public static function getRemainingAutomationFlows(int $clientId): int
+    public static function getRemainingLandingPages(int $clientId): int
     {
         $client = Client::find($clientId);
         
         if (!$client) {
-            return 0; // Se o cliente não existe, não há fluxos restantes
+            return 0; // Se o cliente não existe, não há landing pages restantes
         }
         
         $currentUsage = self::getCurrentMonthUsage($clientId);
-        $remaining = $client->plan->automation_flows_limit - $currentUsage->automation_flows_count;
+        $remaining = $client->plan->max_landing_pages - $currentUsage->landing_pages_count;
         
         return max(0, $remaining);
     }
@@ -252,12 +295,12 @@ class ClientUsage extends Model
     }
 
     /**
-     * Incrementa o contador de fluxos de automação para o mês atual
+     * Incrementa o contador de landing pages para o mês atual
      */
-    public static function incrementAutomationFlows(int $clientId): void
+    public static function incrementLandingPages(int $clientId): void
     {
         $currentUsage = self::getCurrentMonthUsage($clientId);
-        $currentUsage->automation_flows_count++;
+        $currentUsage->landing_pages_count++;
         $currentUsage->save();
     }
 }

@@ -103,19 +103,39 @@ class Client extends Model implements AuditableContract
     }
 
     /**
-     * Verifica se o cliente já atingiu o limite mensal de contatos
+     * Verifica se o cliente já atingiu o limite mensal de leads
      */
-    public function hasReachedContactsLimit(): bool
+    public function hasReachedMonthlyLeadsLimit(): bool
     {
-        return ClientUsage::hasReachedContactsLimit($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->hasReachedMonthlyLeadsLimit($this->id);
     }
 
     /**
-     * Retorna o número restante de contatos para o mês atual
+     * Verifica se o cliente já atingiu o limite total de leads
      */
-    public function getRemainingContacts(): int
+    public function hasReachedTotalLeadsLimit(): bool
     {
-        return ClientUsage::getRemainingContacts($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->hasReachedTotalLeadsLimit($this->id);
+    }
+
+    /**
+     * Retorna o número restante de leads mensais
+     */
+    public function getRemainingMonthlyLeads(): int
+    {
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->getRemainingMonthlyLeads($this->id);
+    }
+
+    /**
+     * Retorna o número restante de leads totais
+     */
+    public function getRemainingTotalLeads(): int
+    {
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->getRemainingTotalLeads($this->id);
     }
 
     /**
@@ -123,7 +143,8 @@ class Client extends Model implements AuditableContract
      */
     public function hasReachedPipelinesLimit(): bool
     {
-        return ClientUsage::hasReachedPipelinesLimit($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->hasReachedPipelinesLimit($this->id);
     }
 
     /**
@@ -131,22 +152,25 @@ class Client extends Model implements AuditableContract
      */
     public function getRemainingPipelines(): int
     {
-        return ClientUsage::getRemainingPipelines($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->getRemainingPipelines($this->id);
     }
 
     /**
-     * Verifica se o cliente já atingiu o limite mensal de fluxos de automação
+     * Verifica se o cliente já atingiu o limite mensal de landing pages
      */
-    public function hasReachedAutomationFlowsLimit(): bool
+    public function hasReachedLandingPagesLimit(): bool
     {
-        return ClientUsage::hasReachedAutomationFlowsLimit($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->hasReachedLandingPagesLimit($this->id);
     }
 
     /**
-     * Retorna o número restante de fluxos de automação para o mês atual
+     * Retorna o número restante de landing pages para o mês atual
      */
-    public function getRemainingAutomationFlows(): int
+    public function getRemainingLandingPages(): int
     {
-        return ClientUsage::getRemainingAutomationFlows($this->id);
+        $usage = $this->getCurrentMonthUsage();
+        return $usage->getRemainingLandingPages($this->id);
     }
 } 

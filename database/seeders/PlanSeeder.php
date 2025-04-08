@@ -13,82 +13,160 @@ class PlanSeeder extends Seeder
     public function run(): void
     {
         // Plano Starter
-        Plan::create([
-            'name' => 'Starter',
-            'description' => 'Ideal para pequenas empresas com necessidades básicas de automação e volume limitado de leads.',
-            'price' => 99.90,
-            'period' => 'monthly',
-            'agency_id' => null, // Plano do sistema
-            'is_active' => true,
-            'features' => json_encode([
-                'Acesso ao pipeline',
-                'Acesso ao inbox',
-                'Qualificação básica de leads',
-                'Relatórios básicos',
-            ]),
-            'max_contacts' => 500,
-            'max_pipelines' => 1,
-            'max_automation_flows' => 2,
-            'has_whatsapp_integration' => true,
-            'has_email_integration' => true,
-            'has_meta_integration' => false,
-            'has_google_integration' => false,
-            'has_custom_domain' => false,
-        ]);
+        Plan::updateOrCreate(
+            ['id' => 1],
+            [
+                'name' => 'Starter',
+                'description' => 'Ideal para pequenos negócios',
+                'price' => 97,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => false,
+                'features' => json_encode([
+                    'feature_1' => 'Funil de vendas',
+                    'feature_2' => 'Landing pages ilimitadas',
+                    'feature_3' => 'Integrações básicas',
+                ]),
+                'monthly_leads' => 50,
+                'max_landing_pages' => 5,
+                'max_pipelines' => 2,
+                'total_leads' => 1000,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => false,
+                'has_google_integration' => false,
+                'has_custom_domain' => false,
+            ]
+        );
 
         // Plano Pro
-        Plan::create([
-            'name' => 'Pro',
-            'description' => 'Para empresas em crescimento, com maiores volumes e necessidade de mais automações e integrações.',
-            'price' => 299.90,
-            'period' => 'monthly',
-            'agency_id' => null, // Plano do sistema
-            'is_active' => true,
-            'features' => json_encode([
-                'Acesso ao pipeline',
-                'Acesso ao inbox',
-                'Qualificação avançada de leads',
-                'Automação completa',
-                'Relatórios detalhados',
-                'Integrações com redes sociais',
-            ]),
-            'max_contacts' => 2000,
-            'max_pipelines' => 3,
-            'max_automation_flows' => 10,
-            'has_whatsapp_integration' => true,
-            'has_email_integration' => true,
-            'has_meta_integration' => true,
-            'has_google_integration' => true,
-            'has_custom_domain' => false,
-        ]);
+        Plan::updateOrCreate(
+            ['id' => 2],
+            [
+                'name' => 'Pro',
+                'description' => 'Para empresas em crescimento',
+                'price' => 197,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => false,
+                'features' => json_encode([
+                    'feature_1' => 'Tudo do Starter',
+                    'feature_2' => 'Automações avançadas',
+                    'feature_3' => 'Integrações avançadas',
+                ]),
+                'monthly_leads' => 200,
+                'max_landing_pages' => 15,
+                'max_pipelines' => 5,
+                'total_leads' => 5000,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => false,
+            ]
+        );
 
         // Plano Enterprise
-        Plan::create([
-            'name' => 'Enterprise',
-            'description' => 'Empresas consolidadas com necessidades específicas, maior personalização e alto volume operacional.',
-            'price' => 799.90,
-            'period' => 'monthly',
-            'agency_id' => null, // Plano do sistema
-            'is_active' => true,
-            'features' => json_encode([
-                'Acesso ao pipeline',
-                'Acesso ao inbox',
-                'Qualificação avançada de leads',
-                'Automação completa',
-                'Relatórios detalhados',
-                'Integrações com redes sociais',
-                'APIs customizadas',
-                'Domínio personalizado',
-                'Suporte dedicado',
-            ]),
-            'max_contacts' => 10000,
-            'max_pipelines' => 10,
-            'max_automation_flows' => 50,
-            'has_whatsapp_integration' => true,
-            'has_email_integration' => true,
-            'has_meta_integration' => true,
-            'has_google_integration' => true,
-            'has_custom_domain' => true,
-        ]);
+        Plan::updateOrCreate(
+            ['id' => 3],
+            [
+                'name' => 'Enterprise',
+                'description' => 'Para grandes empresas',
+                'price' => 497,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => false,
+                'features' => json_encode([
+                    'feature_1' => 'Tudo do Pro',
+                    'feature_2' => 'Domínio personalizado',
+                    'feature_3' => 'Suporte prioritário',
+                ]),
+                'monthly_leads' => 1000,
+                'max_landing_pages' => 50,
+                'max_pipelines' => 15,
+                'total_leads' => 20000,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => true,
+            ]
+        );
+
+        // Planos de agência
+        Plan::updateOrCreate(
+            ['id' => 4],
+            [
+                'name' => 'Agência Starter',
+                'description' => 'Para agências iniciantes',
+                'price' => 297,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => true,
+                'features' => json_encode([
+                    'feature_1' => 'Até 5 clientes',
+                    'feature_2' => 'Marca personalizável',
+                    'feature_3' => 'Domínio personalizado',
+                ]),
+                'max_clients' => 5,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => true,
+            ]
+        );
+
+        Plan::updateOrCreate(
+            ['id' => 5],
+            [
+                'name' => 'Agência Pro',
+                'description' => 'Para agências em crescimento',
+                'price' => 597,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => true,
+                'features' => json_encode([
+                    'feature_1' => 'Até 15 clientes',
+                    'feature_2' => 'Todos os recursos da Starter',
+                    'feature_3' => 'Suporte prioritário',
+                ]),
+                'max_clients' => 15,
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => true,
+            ]
+        );
+
+        Plan::updateOrCreate(
+            ['id' => 6],
+            [
+                'name' => 'Agência Enterprise',
+                'description' => 'Para agências de grande porte',
+                'price' => 997,
+                'period' => 'monthly',
+                'agency_id' => null,
+                'is_active' => true,
+                'is_agency_plan' => true,
+                'features' => json_encode([
+                    'feature_1' => 'Clientes ilimitados',
+                    'feature_2' => 'Todos os recursos da Pro',
+                    'feature_3' => 'Consultoria personalizada',
+                ]),
+                'max_clients' => null, // Ilimitado
+                'has_whatsapp_integration' => true,
+                'has_email_integration' => true,
+                'has_meta_integration' => true,
+                'has_google_integration' => true,
+                'has_custom_domain' => true,
+            ]
+        );
     }
 } 

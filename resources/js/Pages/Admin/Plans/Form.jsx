@@ -11,18 +11,22 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Switch } from '@/Components/ui/switch';
 import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
-import { Save } from 'lucide-react';
+import { Save, Building2, User, Star } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
   description: z.string().min(10, { message: 'Descrição deve ter pelo menos 10 caracteres' }),
   price: z.string().min(1, { message: 'Preço é obrigatório' }),
   is_active: z.boolean().default(true),
+  is_featured: z.boolean().default(false),
+  monthly_leads: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 lead' }),
+  total_leads: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 lead' }),
+  max_landing_pages: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 landing page' }),
+  max_pipelines: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 pipeline' }),
   features: z.object({
-    leads: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 lead' }),
-    pipelines: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 pipeline' }),
-    integrations: z.coerce.number().int().min(0),
     users: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 usuário' }),
+    integrations: z.coerce.number().int().min(0),
+    for_agency: z.boolean().default(false)
   }),
 });
 
@@ -34,11 +38,15 @@ export default function PlanForm({ plan, isEditing = false }) {
       description: '',
       price: 'R$ 97,00',
       is_active: true,
+      is_featured: false,
+      monthly_leads: 500,
+      total_leads: 500,
+      max_landing_pages: 1,
+      max_pipelines: 1,
       features: {
-        leads: 500,
-        pipelines: 1,
+        users: 2,
         integrations: 1,
-        users: 2
+        for_agency: false
       }
     },
   });
@@ -50,11 +58,15 @@ export default function PlanForm({ plan, isEditing = false }) {
         description: plan.description || '',
         price: plan.price || '',
         is_active: plan.is_active,
+        is_featured: plan.is_featured || false,
+        monthly_leads: plan.monthly_leads || 500,
+        total_leads: plan.total_leads || 500,
+        max_landing_pages: plan.max_landing_pages || 1,
+        max_pipelines: plan.max_pipelines || 1,
         features: {
-          leads: plan.features?.leads || 500,
-          pipelines: plan.features?.pipelines || 1,
+          users: plan.features?.users || 2,
           integrations: plan.features?.integrations || 1,
-          users: plan.features?.users || 2
+          for_agency: plan.features?.for_agency || false
         }
       });
     }
@@ -125,20 +137,54 @@ export default function PlanForm({ plan, isEditing = false }) {
 
         <Separator />
         
-        <h3 className="text-lg font-medium">Recursos Incluídos</h3>
+        <h3 className="text-lg font-medium">Tipo de Plano</h3>
+
+        <FormField
+          control={form.control}
+          name="features.for_agency"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <div className="flex items-center gap-2">
+                  <FormLabel>{field.value ? 'Plano para Agência' : 'Plano para Cliente Final'}</FormLabel>
+                  {field.value ? 
+                    <Building2 className="h-4 w-4 text-indigo-600" /> : 
+                    <User className="h-4 w-4 text-emerald-600" />
+                  }
+                </div>
+                <FormDescription>
+                  {field.value 
+                    ? 'Este plano será disponibilizado para agências parceiras' 
+                    : 'Este plano será disponibilizado para clientes finais'
+                  }
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+          
+        <Separator />
+        
+        <h3 className="text-lg font-medium">Limites do Plano</h3>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
             control={form.control}
-            name="features.leads"
+            name="monthly_leads"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantidade de Leads</FormLabel>
+                <FormLabel>Leads Mensais</FormLabel>
                 <FormControl>
                   <Input type="number" min="1" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Número máximo de contatos permitidos
+                  Número máximo de leads que podem ser capturados por mês
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -147,7 +193,43 @@ export default function PlanForm({ plan, isEditing = false }) {
           
           <FormField
             control={form.control}
-            name="features.pipelines"
+            name="total_leads"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Leads Totais</FormLabel>
+                <FormControl>
+                  <Input type="number" min="1" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Capacidade total de armazenamento de leads/contatos
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="max_landing_pages"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Landing Pages</FormLabel>
+                <FormControl>
+                  <Input type="number" min="1" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Número máximo de landing pages permitidas
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="max_pipelines"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Pipelines</FormLabel>
@@ -155,13 +237,17 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <Input type="number" min="1" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Número de pipelines de vendas permitidos
+                  Número máximo de pipelines de vendas permitidos
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        <Separator />
+        
+        <h3 className="text-lg font-medium">Recursos Adicionais</h3>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
@@ -201,33 +287,59 @@ export default function PlanForm({ plan, isEditing = false }) {
 
         <Separator />
 
-        <FormField
-          control={form.control}
-          name="is_active"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Plano ativo</FormLabel>
-                <FormDescription>
-                  Quando ativado, o plano estará disponível para assinatura
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="is_active"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Status do Plano</FormLabel>
+                  <FormDescription>
+                    {field.value ? 'Plano ativo e disponível para assinatura' : 'Plano inativo (não aparecerá para os usuários)'}
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
 
-        <div className="flex justify-end">
-          <Button type="submit" className="flex items-center gap-2">
-            <Save className="h-4 w-4" />
-            {isEditing ? 'Atualizar Plano' : 'Criar Plano'}
-          </Button>
+          <FormField
+            control={form.control}
+            name="is_featured"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <div className="flex items-center gap-2">
+                    <FormLabel>
+                      {field.value ? 'Plano em Destaque' : 'Plano sem Destaque'}
+                    </FormLabel>
+                    {field.value && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
+                  </div>
+                  <FormDescription>
+                    {field.value ? 'Este plano será destacado na seção de preços da home' : 'Este plano não aparecerá em destaque na home'}
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
         </div>
+
+        <Button type="submit" className="mt-4">
+          <Save className="mr-2 h-4 w-4" />
+          {isEditing ? 'Atualizar Plano' : 'Criar Plano'}
+        </Button>
       </form>
     </Form>
   );

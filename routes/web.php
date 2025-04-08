@@ -6,14 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Rota inicial pública
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Rotas autenticadas
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -55,18 +48,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('impersonate.client');
 
         // Planos
-        Route::get('/plans', function () {
-            return Inertia::render('Admin/Plans/Index');
-        })->name('plans.index');
+        Route::get('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'index'])->name('plans.index');
         
         Route::get('/plans/create', function () {
             return Inertia::render('Admin/Plans/Create');
         })->name('plans.create');
         
-        Route::post('/plans', function () {
-            // Lógica para salvar plano
-            return redirect()->route('admin.plans.index');
-        })->name('plans.store');
+        Route::post('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'store'])->name('plans.store');
         
         Route::get('/plans/{plan}/edit', function ($plan) {
             return Inertia::render('Admin/Plans/Edit', [
@@ -74,15 +62,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]);
         })->name('plans.edit');
         
-        Route::put('/plans/{plan}', function ($plan) {
-            // Lógica para atualizar plano
-            return redirect()->route('admin.plans.index');
-        })->name('plans.update');
+        Route::put('/plans/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'update'])->name('plans.update');
         
-        Route::get('/plans/{plan}/duplicate', function ($plan) {
-            // Lógica para duplicar plano
-            return redirect()->route('admin.plans.index');
-        })->name('plans.duplicate');
+        Route::delete('/plans/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'destroy'])->name('plans.destroy');
+
+        Route::put('/plans/{plan}/toggle', [\App\Http\Controllers\Admin\PlanController::class, 'toggle'])->name('plans.toggle');
+        
+        Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Admin\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
+        
+        Route::get('/plans/{plan}/duplicate', [\App\Http\Controllers\Admin\PlanController::class, 'duplicate'])->name('plans.duplicate');
 
         // Integrações
         Route::get('/integrations', [\App\Http\Controllers\Admin\IntegrationsController::class, 'index'])->name('integrations.index');
