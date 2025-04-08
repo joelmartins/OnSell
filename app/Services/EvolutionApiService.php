@@ -54,14 +54,16 @@ class EvolutionApiService
                 'Content-Type' => 'application/json'
             ])->post("{$this->getBaseUrl()}/instance/create", [
                 'instanceName' => $instanceName,
+                'integration' => 'baileys',
                 'webhook' => [
                     'url' => $this->getWebhookUrl(),
                     'enabled' => true,
                 ],
+                'webhook_by_events' => false,
                 'events' => [
-                    'message' => true,
+                    'messages' => true,
                     'qr' => true,
-                    'connection' => true,
+                    'connection' => true
                 ]
             ]);
             
@@ -105,12 +107,18 @@ class EvolutionApiService
         $instanceName = $instanceName ?? $this->getDefaultInstance();
         
         try {
+            // Primeiro verificar se a instância existe
+            $instanceStatus = $this->checkInstanceStatus($instanceName);
+            
+            // Se a instância não existir, criá-la
+            if (!$instanceStatus['success']) {
+                $this->startInstance($instanceName);
+            }
+            
             $response = Http::withHeaders([
                 'apikey' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->get("{$this->getBaseUrl()}/instance/qrcode", [
-                'instanceName' => $instanceName
-            ]);
+            ])->get("{$this->getBaseUrl()}/instance/qrcode/{$instanceName}");
             
             if ($response->successful()) {
                 $data = $response->json();
@@ -165,18 +173,30 @@ class EvolutionApiService
             $response = Http::withHeaders([
                 'apikey' => $this->getApiKey(),
                 'Content-Type' => 'application/json'
-            ])->get("{$this->getBaseUrl()}/instance/connectionState", [
-                'instanceName' => $instanceName
-            ]);
+            ])->get("{$this->getBaseUrl()}/instance/fetchInstances");
             
             if ($response->successful()) {
                 $data = $response->json();
                 
+                // Verifica se a instância existe na lista
+                if (isset($data['instances']) && is_array($data['instances'])) {
+                    foreach ($data['instances'] as $instance) {
+                        if ($instance['instance']['instanceName'] === $instanceName) {
+                            return [
+                                'success' => true,
+                                'status' => $instance['instance']['state'] ?? 'UNKNOWN',
+                                'connected' => ($instance['instance']['state'] ?? '') === 'open',
+                                'data' => $instance
+                            ];
+                        }
+                    }
+                }
+                
+                // Instância não encontrada
                 return [
-                    'success' => true,
-                    'status' => $data['state'] ?? 'UNKNOWN',
-                    'connected' => ($data['state'] ?? '') === 'open',
-                    'data' => $data
+                    'success' => false,
+                    'error' => 'Instância não encontrada',
+                    'status' => 'NOT_FOUND'
                 ];
             }
             
