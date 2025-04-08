@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -20,17 +20,25 @@ import {
   LogOut 
 } from 'lucide-react';
 import ImpersonationDropdown from '@/Components/ImpersonationDropdown';
-import ImpersonationBanner from '@/Components/ImpersonationBanner';
 
 export default function AgencyLayout({ children, title }) {
   const { auth } = usePage().props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonateData, setImpersonateData] = useState(null);
 
   useEffect(() => {
     // Verificar se está impersonando
     const impersonateData = sessionStorage.getItem('impersonate.data');
     setIsImpersonating(!!impersonateData);
+    
+    if (impersonateData) {
+      try {
+        setImpersonateData(JSON.parse(impersonateData));
+      } catch (e) {
+        console.error('Erro ao analisar dados de impersonação:', e);
+      }
+    }
   }, []);
 
   const sidebarItems = [
@@ -43,9 +51,6 @@ export default function AgencyLayout({ children, title }) {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Banner de impersonação */}
-      {isImpersonating && <ImpersonationBanner />}
-      
       {/* Mobile sidebar */}
       <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
@@ -68,6 +73,37 @@ export default function AgencyLayout({ children, title }) {
               <Menu className="h-5 w-5" />
             </Button>
           </div>
+          
+          {/* Banner de impersonação na sidebar */}
+          {isImpersonating && (
+            <div className="bg-amber-100 dark:bg-amber-800/30 p-3 border-b">
+              <div className="flex items-center text-amber-800 dark:text-amber-300 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2 flex-shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <span className="font-medium">
+                  {impersonateData?.name 
+                    ? `Impersonando: ${impersonateData.name}` 
+                    : 'Impersonando agência'}
+                </span>
+              </div>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 bg-amber-200/50 dark:bg-amber-700/50 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700"
+                onClick={() => {
+                  router.visit(route('stop.impersonating'), {
+                    onSuccess: () => {
+                      sessionStorage.removeItem('impersonate.data');
+                    }
+                  });
+                }}
+              >
+                Sair da impersonação
+              </Button>
+            </div>
+          )}
+          
           <div className="overflow-y-auto flex-1 py-4">
             <nav className="space-y-1 px-2">
               {sidebarItems.map((item, index) => (
@@ -82,7 +118,7 @@ export default function AgencyLayout({ children, title }) {
               ))}
               
               {/* Dropdown de impersonação */}
-              {auth.user.roles.includes('agency.owner') && (
+              {auth.user?.roles?.includes('agency.owner') && (
                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <ImpersonationDropdown />
                 </div>
@@ -96,7 +132,7 @@ export default function AgencyLayout({ children, title }) {
       </div>
 
       {/* Main content */}
-      <div className={`lg:pl-64 ${isImpersonating ? 'pt-10' : ''}`}>
+      <div className="lg:pl-64">
         {/* Desktop header */}
         <div className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:bg-white lg:dark:bg-gray-800 lg:items-center lg:justify-between lg:px-6">
           <h1 className="text-xl font-semibold">{title || 'Agência'}</h1>
@@ -113,13 +149,30 @@ export default function AgencyLayout({ children, title }) {
 }
 
 function ProfileDropdown({ user }) {
+  // Função segura para gerar rotas mesmo durante impersonação
+  const safeRoute = (name, params = [], absolute = undefined) => {
+    try {
+      return route(name, params, absolute);
+    } catch (error) {
+      console.error(`Erro ao gerar rota ${name}:`, error);
+      
+      // Fallbacks para rotas comuns
+      const routeMap = {
+        'profile.edit': '/profile/edit',
+        'logout': '/logout'
+      };
+      
+      return routeMap[name] || '/';
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
             <AvatarImage src={user?.profile_photo_url} alt={user?.name} />
-            <AvatarFallback>{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -127,10 +180,10 @@ function ProfileDropdown({ user }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={route('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('profile.edit')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={route('logout')} method="post" as="button" className="w-full text-left">
+          <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
           </Link>

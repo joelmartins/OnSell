@@ -88,7 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Rotas de Agência
-    Route::middleware([\Spatie\Permission\Middleware\RoleMiddleware::class.':agency.owner'])->prefix('agency')->name('agency.')->group(function () {
+    Route::middleware(['auth', 'verified', \App\Http\Middleware\AgencyRole::class])->prefix('agency')->name('agency.')->group(function () {
         // Dashboard
         Route::get('/dashboard', function () {
             return Inertia::render('Agency/Dashboard/Index');
@@ -115,7 +115,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     
     // Rotas de Cliente
-    Route::middleware([\Spatie\Permission\Middleware\RoleMiddleware::class.':client.user'])->prefix('client')->name('client.')->group(function () {
+    Route::middleware(['auth', 'verified', 'role.client'])->prefix('client')->name('client.')->group(function () {
         // Dashboard
         Route::get('/dashboard', function () {
             return Inertia::render('Client/Dashboard/Index');

@@ -2,8 +2,10 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\AgencyRole;
 use App\Http\Middleware\CheckImpersonationAccess;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\ClientRole;
 use App\Http\Middleware\HandleImpersonation;
 use App\Http\Middleware\LoadAgencyBranding;
 use App\Http\Middleware\RedirectBasedOnRole;
@@ -72,10 +74,12 @@ class Kernel extends HttpKernel
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'impersonation' => CheckImpersonationAccess::class,
+        'impersonation' => \App\Http\Middleware\CheckImpersonationAccess::class,
         'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         'redirect.role' => \App\Http\Middleware\RedirectBasedOnRole::class,
+        'role.agency' => \App\Http\Middleware\AgencyRole::class,
+        'role.client' => \App\Http\Middleware\ClientRole::class,
     ];
 } 

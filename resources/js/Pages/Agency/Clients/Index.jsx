@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
 import { 
   Card, 
@@ -43,7 +43,7 @@ import {
 } from 'lucide-react';
 import Pagination from '@/Components/Pagination';
 
-export default function ClientsIndex({ clients, auth }) {
+export default function ClientsIndex({ clients = { data: [] }, auth }) {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
 
@@ -96,6 +96,9 @@ export default function ClientsIndex({ clients, auth }) {
   };
   
   const handleImpersonate = (id) => {
+    // Verificar se clients e clients.data existem
+    if (!clients || !clients.data) return;
+    
     // Salvar dados de impersonação para exibir o banner
     const client = clients.data.find(c => c.id === id);
     if (client) {
@@ -109,6 +112,10 @@ export default function ClientsIndex({ clients, auth }) {
     // Usar visit em vez de get para redirecionamentos
     router.visit(route('impersonate.client', { client: id }));
   };
+
+  // Verificar se clients e clients.data existem
+  const hasClients = clients && clients.data && clients.data.length > 0;
+  const clientsArray = clients?.data || [];
 
   return (
     <AgencyLayout title="Clientes">
@@ -152,8 +159,8 @@ export default function ClientsIndex({ clients, auth }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.data?.length > 0 ? (
-                  clients.data.map((client) => (
+                {hasClients ? (
+                  clientsArray.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="font-medium">{client.name}</TableCell>
                       <TableCell>{client.email}</TableCell>
@@ -228,7 +235,7 @@ export default function ClientsIndex({ clients, auth }) {
             </Table>
           </div>
           
-          {clients.data?.length > 0 && !search && (
+          {hasClients && !search && clients.links && (
             <div className="mt-4">
               <Pagination links={clients.links} />
             </div>

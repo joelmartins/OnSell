@@ -19,6 +19,11 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.jsx'),
         ),
     setup({ el, App, props }) {
+        // Garantir que props.initialPage.version sempre existe para evitar erros durante impersonação
+        if (props.initialPage && !props.initialPage.version) {
+            props.initialPage.version = document.querySelector('meta[name="inertia-version"]')?.getAttribute('content') || Date.now().toString();
+        }
+      
         const root = createRoot(el);
 
         root.render(

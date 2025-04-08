@@ -39,6 +39,7 @@ class ImpersonationController extends Controller
             'agency_id' => $agency->id,
             'ip' => request()->ip(),
             'user_agent' => request()->userAgent(),
+            'session_data' => session()->get('impersonate'),
         ]);
         
         // Redirecionar para o dashboard da agência
@@ -73,6 +74,7 @@ class ImpersonationController extends Controller
             'client_id' => $client->id,
             'ip' => request()->ip(),
             'user_agent' => request()->userAgent(),
+            'session_data' => session()->get('impersonate'),
         ]);
         
         // Redirecionar para o dashboard do cliente
@@ -89,42 +91,6 @@ class ImpersonationController extends Controller
         // Buscar dados do usuário original
         $originalUser = session()->get('impersonate.original_user');
         $target = session()->get('impersonate.target');
-        $user = Auth::user();
-        
-        // Remover papéis temporários
-        if ($target) {
-            if ($target['type'] === 'client') {
-                $user->removeRole('client.user');
-            }
-            
-            if ($target['type'] === 'agency') {
-                $user->removeRole('agency.owner');
-            }
-            
-            // Restaurar papéis originais
-            $originalRoles = session()->get('impersonate.original_roles', []);
-            
-            if (!empty($originalRoles)) {
-                if (isset($originalRoles['admin']) && $originalRoles['admin']) {
-                    $user->assignRole('admin.super');
-                }
-                
-                if (isset($originalRoles['agency']) && $originalRoles['agency']) {
-                    $user->assignRole('agency.owner');
-                }
-                
-                if (isset($originalRoles['client']) && $originalRoles['client']) {
-                    $user->assignRole('client.user');
-                }
-                
-                session()->forget('impersonate.original_roles');
-            } else {
-                // Caso não tenha guardado informações de papéis, restaurar baseado no papel original
-                if ($originalUser && isset($originalUser['role'])) {
-                    $user->assignRole($originalUser['role']);
-                }
-            }
-        }
         
         // Registrar auditoria
         if ($originalUser && $target) {

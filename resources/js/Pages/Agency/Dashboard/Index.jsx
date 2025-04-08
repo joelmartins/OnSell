@@ -49,7 +49,7 @@ export default function AgencyDashboard({ auth }) {
       <Head title="Dashboard da Agência" />
       
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-2">Bem-vindo, {auth.user.name}!</h2>
+        <h2 className="text-2xl font-semibold mb-2">Bem-vindo, {auth?.user?.name || 'Usuário'}!</h2>
         <p className="text-muted-foreground">Gerencie sua agência com facilidade</p>
       </div>
       

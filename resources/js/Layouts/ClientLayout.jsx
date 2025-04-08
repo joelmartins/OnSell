@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -26,13 +26,13 @@ import {
   X,
   FileText
 } from 'lucide-react';
-import ImpersonationBanner from '@/Components/ImpersonationBanner';
 
 export default function ClientLayout({ children, title }) {
   const { auth, ziggy, branding } = usePage().props;
   const user = auth.user;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
+  const [impersonateData, setImpersonateData] = useState(null);
 
   // Aplicar as cores do branding via CSS variáveis
   useEffect(() => {
@@ -57,64 +57,135 @@ export default function ClientLayout({ children, title }) {
     setIsImpersonating(!!impersonateData);
   }, [branding]);
 
+  // Buscar dados de impersonação
+  useEffect(() => {
+    const data = sessionStorage.getItem('impersonate.data');
+    if (data) {
+      try {
+        setImpersonateData(JSON.parse(data));
+      } catch (e) {
+        console.error('Erro ao analisar dados de impersonação:', e);
+      }
+    }
+  }, []);
+
+  // Função segura para gerar rotas mesmo durante impersonação
+  const safeRoute = (name, params = [], absolute = undefined) => {
+    try {
+      return route(name, params, absolute, ziggy);
+    } catch (error) {
+      console.error(`Erro ao gerar rota ${name}:`, error);
+      
+      // Fallbacks para rotas comuns
+      const routeMap = {
+        'client.dashboard': '/client/dashboard',
+        'client.pipeline': '/client/pipeline',
+        'client.messages': '/client/messages',
+        'client.automation': '/client/automation',
+        'client.landing-pages.index': '/client/landing-pages',
+        'client.contacts': '/client/contacts',
+        'client.reports': '/client/reports',
+        'client.integrations': '/client/integrations',
+        'client.settings': '/client/settings',
+        'profile.edit': '/profile/edit',
+        'logout': '/logout'
+      };
+      
+      return routeMap[name] || '/';
+    }
+  };
+
   const navigation = [
     { 
       name: 'Painel', 
-      href: route('client.dashboard', [], undefined, ziggy), 
+      href: safeRoute('client.dashboard'), 
       icon: <LayoutDashboard className="h-5 w-5" />
     },
     { 
       name: 'Pipeline', 
-      href: route('client.pipeline', [], undefined, ziggy), 
+      href: safeRoute('client.pipeline'), 
       icon: <Kanban className="h-5 w-5" />
     },
     { 
       name: 'Mensagens', 
-      href: route('client.messages', [], undefined, ziggy), 
+      href: safeRoute('client.messages'), 
       icon: <MessageSquare className="h-5 w-5" />
     },
     { 
       name: 'Automação', 
-      href: route('client.automation', [], undefined, ziggy), 
+      href: safeRoute('client.automation'), 
       icon: <Zap className="h-5 w-5" />
     },
     { 
       name: 'Landing Pages', 
-      href: route('client.landing-pages.index', [], undefined, ziggy), 
+      href: safeRoute('client.landing-pages.index'), 
       icon: <FileText className="h-5 w-5" />
     },
     { 
       name: 'Contatos', 
-      href: route('client.contacts', [], undefined, ziggy), 
+      href: safeRoute('client.contacts'), 
       icon: <Users className="h-5 w-5" />
     },
     { 
       name: 'Relatórios', 
-      href: route('client.reports', [], undefined, ziggy), 
+      href: safeRoute('client.reports'), 
       icon: <BarChart className="h-5 w-5" />
     },
     { 
       name: 'Integrações', 
-      href: route('client.integrations', [], undefined, ziggy), 
+      href: safeRoute('client.integrations'), 
       icon: <Plug className="h-5 w-5" />
     },
     { 
       name: 'Configurações', 
-      href: route('client.settings', [], undefined, ziggy), 
+      href: safeRoute('client.settings'), 
       icon: <Settings className="h-5 w-5" />
     },
   ];
 
   // Função para verificar se o link está ativo
   const isActive = (href) => {
-    return route().current(href.replace(`${ziggy.url}/`, '').split('?')[0]);
+    if (!href) return false;
+    
+    try {
+      // Modo seguro que não depende do ziggy.url
+      const currentPath = window.location.pathname;
+      
+      // Verificar se o pathname atual corresponde ao href fornecido
+      if (href === currentPath) return true;
+      
+      // Extrair a rota do href (remover domínio e parâmetros de consulta)
+      let routePath = href;
+      
+      // Se ziggy existe e tem url, limpar o href
+      if (ziggy && ziggy.url) {
+        routePath = href.replace(`${ziggy.url}/`, '').split('?')[0];
+      } else {
+        // Se não temos ziggy.url, remover qualquer domínio que possa existir
+        routePath = href.replace(/^https?:\/\/[^\/]+\//, '').split('?')[0];
+      }
+      
+      // Limpa o currentPath também
+      const cleanCurrentPath = currentPath.replace(/^\//, '').split('?')[0];
+      
+      // Verificar correspondência direta
+      if (routePath === cleanCurrentPath) return true;
+      
+      // Verificar usando o route().current() se possível
+      try {
+        return route().current(routePath);
+      } catch (e) {
+        // Fallback: verificar se a rota começa com o mesmo padrão
+        return cleanCurrentPath.startsWith(routePath);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar rota ativa:', error);
+      return false;
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Banner de impersonação */}
-      {isImpersonating && <ImpersonationBanner />}
-      
       {/* Mobile sidebar */}
       <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
@@ -150,6 +221,37 @@ export default function ClientLayout({ children, title }) {
               <X className="h-5 w-5" />
             </Button>
           </div>
+          
+          {/* Banner de impersonação na sidebar */}
+          {isImpersonating && (
+            <div className="bg-amber-100 dark:bg-amber-800/30 p-3 border-b">
+              <div className="flex items-center text-amber-800 dark:text-amber-300 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2 flex-shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                <span className="font-medium">
+                  {impersonateData?.name 
+                    ? `Impersonando: ${impersonateData.name}` 
+                    : 'Impersonando cliente'}
+                </span>
+              </div>
+              <Button 
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 bg-amber-200/50 dark:bg-amber-700/50 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-700"
+                onClick={() => {
+                  router.visit(route('stop.impersonating'), {
+                    onSuccess: () => {
+                      sessionStorage.removeItem('impersonate.data');
+                    }
+                  });
+                }}
+              >
+                Sair da impersonação
+              </Button>
+            </div>
+          )}
+          
           <div className="overflow-y-auto flex-1 py-4">
             <nav className="space-y-1 px-2">
               {navigation.map((item) => (
@@ -181,7 +283,7 @@ export default function ClientLayout({ children, title }) {
       </div>
 
       {/* Main content */}
-      <div className={`lg:pl-64 ${isImpersonating ? 'pt-10' : ''}`}>
+      <div className="lg:pl-64">
         {/* Desktop header */}
         <div 
           className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"
@@ -201,6 +303,23 @@ export default function ClientLayout({ children, title }) {
 }
 
 function ProfileDropdown({ user, branding }) {
+  // Função segura para gerar rotas mesmo durante impersonação
+  const safeRoute = (name, params = [], absolute = undefined) => {
+    try {
+      return route(name, params, absolute);
+    } catch (error) {
+      console.error(`Erro ao gerar rota ${name}:`, error);
+      
+      // Fallbacks para rotas comuns
+      const routeMap = {
+        'profile.edit': '/profile/edit',
+        'logout': '/logout'
+      };
+      
+      return routeMap[name] || '/';
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -210,7 +329,7 @@ function ProfileDropdown({ user, branding }) {
             <AvatarFallback 
               style={{ backgroundColor: branding?.primary_color, color: getContrastColor(branding?.primary_color) }}
             >
-              {user?.name.charAt(0).toUpperCase()}
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -219,10 +338,10 @@ function ProfileDropdown({ user, branding }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={route('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('profile.edit')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={route('logout')} method="post" as="button" className="w-full text-left">
+          <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
           </Link>
