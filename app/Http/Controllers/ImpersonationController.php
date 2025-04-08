@@ -68,13 +68,19 @@ class ImpersonationController extends Controller
             'type' => 'client'
         ]);
         
+        // Definir atributo para permitir acesso via middleware
+        request()->attributes->add(['is_impersonating_client' => true]);
+        
         // Registrar auditoria
-        Log::channel('audit')->info('Impersonação iniciada', [
+        Log::channel('audit')->info('Impersonação de cliente iniciada', [
             'user_id' => Auth::id(),
             'client_id' => $client->id,
+            'user_role' => Auth::user()->getRoleNames()->first(),
             'ip' => request()->ip(),
             'user_agent' => request()->userAgent(),
             'session_data' => session()->get('impersonate'),
+            'client_active' => $client->is_active,
+            'client_agency_id' => $client->agency_id
         ]);
         
         // Redirecionar para o dashboard do cliente

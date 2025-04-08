@@ -95,18 +95,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard');
         
         // Clientes
-        Route::get('/clients', function () {
-            return Inertia::render('Agency/Clients/Index');
-        })->name('clients.index');
+        Route::resource('clients', \App\Http\Controllers\Agency\ClientController::class);
+        Route::put('/clients/{client}/toggle-status', [\App\Http\Controllers\Agency\ClientController::class, 'toggleStatus'])->name('clients.toggle-status');
 
         // White Label
         Route::get('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'index'])->name('branding.index');
         Route::put('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'update'])->name('branding.update');
 
         // Planos
-        Route::get('/plans', function () {
-            return Inertia::render('Agency/Plans/Index');
-        })->name('plans.index');
+        Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);
 
         // Configurações
         Route::get('/settings', function () {
@@ -117,9 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Rotas de Cliente
     Route::middleware(['auth', 'verified', 'role.client'])->prefix('client')->name('client.')->group(function () {
         // Dashboard
-        Route::get('/dashboard', function () {
-            return Inertia::render('Client/Dashboard/Index');
-        })->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\Client\DashboardController::class, 'index'])->name('dashboard');
         
         // Pipeline
         Route::get('/pipeline', function () {

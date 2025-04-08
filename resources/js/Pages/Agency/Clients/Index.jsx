@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
 import { 
   Card, 
@@ -45,30 +46,28 @@ import Pagination from '@/Components/Pagination';
 
 export default function ClientsIndex({ clients = { data: [] }, auth }) {
   const [search, setSearch] = useState('');
-  const [debounced, setDebounced] = useState('');
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebounced(search);
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    
+    // Debounce the search with setTimeout
+    const timeoutId = setTimeout(() => {
+      router.get(
+        route('agency.clients.index'), 
+        { search: e.target.value }, 
+        { preserveState: true, preserveScroll: true }
+      );
     }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  useEffect(() => {
-    if (debounced) {
-      router.get(route('agency.clients.index', { search: debounced }), {}, { preserveState: true });
-    } else if (debounced === '' && search === '') {
-      router.get(route('agency.clients.index'), {}, { preserveState: true });
-    }
-  }, [debounced]);
+    
+    return () => clearTimeout(timeoutId);
+  };
 
   const handleEdit = (id) => {
-    router.get(route('agency.clients.edit', id));
+    router.visit(route('agency.clients.edit', id));
   };
 
   const handleView = (id) => {
-    router.get(route('agency.clients.show', id));
+    router.visit(route('agency.clients.show', id));
   };
 
   const handleToggleStatus = (id) => {
@@ -127,7 +126,7 @@ export default function ClientsIndex({ clients = { data: [] }, auth }) {
             <CardTitle>Clientes</CardTitle>
             <CardDescription>Gerencie os clientes da sua agência</CardDescription>
           </div>
-          <Button onClick={() => router.get(route('agency.clients.create'))}>
+          <Button onClick={() => router.visit(route('agency.clients.create'))}>
             <UserPlus className="h-4 w-4 mr-2" />
             Novo Cliente
           </Button>
@@ -141,7 +140,7 @@ export default function ClientsIndex({ clients = { data: [] }, auth }) {
                 placeholder="Buscar cliente..."
                 className="pl-8 w-full sm:w-64"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={handleSearch}
               />
             </div>
           </div>
@@ -235,7 +234,7 @@ export default function ClientsIndex({ clients = { data: [] }, auth }) {
             </Table>
           </div>
           
-          {hasClients && !search && clients.links && (
+          {hasClients && clients.links && (
             <div className="mt-4">
               <Pagination links={clients.links} />
             </div>

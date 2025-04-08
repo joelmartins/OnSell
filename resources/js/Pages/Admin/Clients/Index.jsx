@@ -24,7 +24,7 @@ import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle,
 import { toast } from 'react-toastify';
 import Pagination from '@/Components/Pagination';
 
-export default function ClientsIndex({ clients, agencies, auth }) {
+export default function ClientsIndex({ clients = { data: [] }, agencies = [], auth }) {
   const [search, setSearch] = useState('');
   const [agencyFilter, setAgencyFilter] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -90,6 +90,9 @@ export default function ClientsIndex({ clients, agencies, auth }) {
   };
   
   const handleImpersonate = (id) => {
+    // Verificar se clients e clients.data existem
+    if (!clients || !clients.data) return;
+    
     // Salvar dados de impersonação para exibir o banner
     const client = clients.data.find(c => c.id === id);
     if (client) {
@@ -103,6 +106,10 @@ export default function ClientsIndex({ clients, agencies, auth }) {
     // Usar visit em vez de get para redirecionamentos
     router.visit(route('impersonate.client', { client: id }));
   };
+
+  // Verificar se clients e clients.data existem
+  const hasClients = clients && clients.data && clients.data.length > 0;
+  const clientsArray = clients?.data || [];
 
   return (
     <AdminLayout title="Clientes">
@@ -150,8 +157,8 @@ export default function ClientsIndex({ clients, agencies, auth }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.data?.length > 0 ? (
-                  clients.data.map((client) => (
+                {hasClients ? (
+                  clientsArray.map((client) => (
                     <TableRow key={client.id}>
                       <TableCell className="font-medium">{client.name}</TableCell>
                       <TableCell>{client.email}</TableCell>
@@ -224,7 +231,7 @@ export default function ClientsIndex({ clients, agencies, auth }) {
             </Table>
           </div>
           
-          {clients.data?.length > 0 && !search && (
+          {hasClients && !search && clients.links && (
             <div className="mt-4">
               <Pagination links={clients.links} />
             </div>

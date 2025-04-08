@@ -24,24 +24,24 @@ const formSchema = z.object({
   accent_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, { message: 'Cor inválida, use formato hexadecimal' }),
 });
 
-export default function BrandingIndex() {
+export default function BrandingIndex({ agency }) {
   const { auth } = usePage().props;
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState({
-    primary_color: '#3b82f6',
-    secondary_color: '#10b981',
-    accent_color: '#f97316'
+    primary_color: agency.primary_color || '#3b82f6',
+    secondary_color: agency.secondary_color || '#10b981',
+    accent_color: agency.accent_color || '#f97316'
   });
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: auth.user.agency.name || '',
-      logo: auth.user.agency.logo || '',
-      favicon: auth.user.agency.favicon || '',
-      primary_color: auth.user.agency.primary_color || '#3b82f6',
-      secondary_color: auth.user.agency.secondary_color || '#10b981',
-      accent_color: auth.user.agency.accent_color || '#f97316',
+      name: agency.name || '',
+      logo: agency.logo || '',
+      favicon: agency.favicon || '',
+      primary_color: agency.primary_color || '#3b82f6',
+      secondary_color: agency.secondary_color || '#10b981',
+      accent_color: agency.accent_color || '#f97316',
     },
   });
 

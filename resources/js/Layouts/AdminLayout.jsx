@@ -155,7 +155,7 @@ export default function AdminLayout({ children, title }) {
               ))}
               
               {/* Dropdown de impersonação */}
-              {(auth.user.roles.includes('admin.super') || auth.user.roles.includes('agency.owner')) && (
+              {auth.user?.roles && (auth.user.roles.includes('admin.super') || auth.user.roles.includes('agency.owner')) && (
                 <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
                   <ImpersonationDropdown />
                 </div>
@@ -186,13 +186,30 @@ export default function AdminLayout({ children, title }) {
 }
 
 function ProfileDropdown({ user }) {
+  // Função segura para gerar rotas mesmo durante impersonação
+  const safeRoute = (name, params = [], absolute = undefined) => {
+    try {
+      return route(name, params, absolute);
+    } catch (error) {
+      console.error(`Erro ao gerar rota ${name}:`, error);
+      
+      // Fallbacks para rotas comuns
+      const routeMap = {
+        'profile.edit': '/profile/edit',
+        'logout': '/logout'
+      };
+      
+      return routeMap[name] || '/';
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
             <AvatarImage src={user?.profile_photo_url} alt={user?.name} />
-            <AvatarFallback>{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -200,10 +217,10 @@ function ProfileDropdown({ user }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={route('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('profile.edit')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={route('logout')} method="post" as="button" className="w-full text-left">
+          <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>
           </Link>
