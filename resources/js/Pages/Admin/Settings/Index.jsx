@@ -108,12 +108,6 @@ export default function SettingsIndex({ auth }) {
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" asChild>
-            <Link href={route('admin.settings.security')}>
-              <Shield className="mr-2 h-4 w-4" />
-              Segurança
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
             <Link href={route('admin.settings.logs')}>
               <FileText className="mr-2 h-4 w-4" />
               Logs

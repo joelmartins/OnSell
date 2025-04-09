@@ -1,0 +1,1 @@
+<?php use Illuminate\Support\Facades\Log; Log::channel("debug")->debug("Este é um log de debug para testes"); Log::channel("debug")->debug("Informações de debug do sistema", ["user_id" => 1, "action" => "teste"]);

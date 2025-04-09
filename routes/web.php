@@ -4,6 +4,13 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Admin\AgencyController;
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\LogsController;
+use App\Http\Controllers\Agency\AutomationController;
 
 // Rota inicial pública
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -62,6 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/verify-email', [\App\Http\Controllers\Admin\UserController::class, 'verifyEmail'])->name('users.verify-email');
         Route::put('/users/{user}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('/users/{user}/generate-password', [\App\Http\Controllers\Admin\UserController::class, 'generatePassword'])->name('users.generate-password');
 
         // Integrações
         Route::get('/integrations', [\App\Http\Controllers\Admin\IntegrationsController::class, 'index'])->name('integrations.index');
@@ -78,17 +86,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/integrations/google', [\App\Http\Controllers\Admin\IntegrationsController::class, 'google'])->name('integrations.google');
 
         // Configurações
-        Route::get('/settings', function () {
-            return Inertia::render('Admin/Settings/Index');
-        })->name('settings.index');
-        
-        Route::get('/settings/security', function () {
-            return Inertia::render('Admin/Settings/Security');
-        })->name('settings.security');
-        
-        Route::get('/settings/logs', function () {
-            return Inertia::render('Admin/Settings/Logs');
-        })->name('settings.logs');
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [SettingsController::class, 'index'])->name('index');
+            Route::get('/logs', [LogsController::class, 'index'])->name('logs');
+            Route::get('/get-logs', [LogsController::class, 'getLogs'])->name('get-logs');
+            Route::get('/export-logs', [LogsController::class, 'exportLogs'])->name('export-logs');
+            Route::post('/clear-old-logs', [LogsController::class, 'clearOldLogs'])->name('clear-old-logs');
+        });
+
+        Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
     });
 
     // Rotas de Agência

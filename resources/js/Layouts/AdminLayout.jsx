@@ -70,7 +70,6 @@ export default function AdminLayout({ children, title }) {
       href: route('admin.settings.index'),
       submenu: [
         { label: 'Geral', href: route('admin.settings.index') },
-        { label: 'Segurança', href: route('admin.settings.security') },
         { label: 'Logs', href: route('admin.settings.logs') },
       ]
     },
