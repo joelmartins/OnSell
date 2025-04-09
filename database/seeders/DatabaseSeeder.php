@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PlanSeeder::class,
             AdminSeeder::class,
-            UserSeeder::class,
             DemoDataSeeder::class,
             LandingPageTemplateSeeder::class,
         ]);
