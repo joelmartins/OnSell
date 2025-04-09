@@ -1,0 +1,9 @@
+# ✅ Validação e exibição de erros nos formulários
+Melhorias implementadas:
+1. Corrigido problema de validação do campo period nos formulários de planos
+2. Adicionado component para formatação de preço (R$) e telefones
+3. Implementado exibição explícita de erros de validação nos formulários
+4. Criado componente de breadcrumb para navegação
+5. Adicionado formulário completo para planos da agência com gestão de recursos
+6. Corrigido layout administrativo com sidebar em todas as páginas
+7. Implementado tratamento de exceções nos controllers
