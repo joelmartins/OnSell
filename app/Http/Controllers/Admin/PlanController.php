@@ -60,71 +60,99 @@ class PlanController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $this->validateRequest();
+        try {
+            $validated = $this->validateRequest();
+            
+            // Converter preço do formato brasileiro para float
+            if (isset($validated['price']) && is_string($validated['price'])) {
+                $validated['price'] = $this->convertBrazilianCurrencyToFloat($validated['price']);
+            }
 
-        $plan = new Plan();
-        $plan->name = $validated['name'];
-        $plan->description = $validated['description'];
-        $plan->price = $validated['price'];
-        $plan->is_active = $validated['is_active'];
-        $plan->is_featured = $validated['is_featured'] ?? false;
-        $plan->features = $validated['features'];
-        $plan->is_agency_plan = $validated['is_agency_plan'];
-        
-        // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
-        if ($plan->is_agency_plan) {
-            $plan->max_clients = $validated['max_clients'];
-            $plan->monthly_leads = null;
-            $plan->max_landing_pages = null;
-            $plan->max_pipelines = null;
-            $plan->total_leads = null;
-        } else {
-            // Se for plano de cliente, configurar limites específicos
-            $plan->monthly_leads = $validated['monthly_leads'];
-            $plan->max_landing_pages = $validated['max_landing_pages'];
-            $plan->max_pipelines = $validated['max_pipelines'];
-            $plan->total_leads = $validated['total_leads'];
-            $plan->max_clients = null;
+            $plan = new Plan();
+            $plan->name = $validated['name'];
+            $plan->description = $validated['description'];
+            $plan->price = $validated['price'];
+            $plan->is_active = $validated['is_active'];
+            $plan->is_featured = $validated['is_featured'] ?? false;
+            $plan->features = $validated['features'];
+            $plan->is_agency_plan = $validated['is_agency_plan'];
+            
+            // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
+            if ($plan->is_agency_plan) {
+                $plan->max_clients = $validated['max_clients'];
+                $plan->monthly_leads = null;
+                $plan->max_landing_pages = null;
+                $plan->max_pipelines = null;
+                $plan->total_leads = null;
+            } else {
+                // Se for plano de cliente, configurar limites específicos
+                $plan->monthly_leads = $validated['monthly_leads'];
+                $plan->max_landing_pages = $validated['max_landing_pages'];
+                $plan->max_pipelines = $validated['max_pipelines'];
+                $plan->total_leads = $validated['total_leads'];
+                $plan->max_clients = null;
+            }
+            
+            $plan->save();
+
+            return redirect()->route('admin.plans.index')
+                ->with('success', 'Plano criado com sucesso!');
+                
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors([
+                'error' => 'Erro ao criar plano: ' . $e->getMessage()
+            ])->withInput();
         }
-        
-        $plan->save();
-
-        return redirect()->route('admin.plans.index')
-            ->with('success', 'Plano criado com sucesso!');
     }
 
     public function update(Request $request, Plan $plan)
     {
-        $validated = $this->validateRequest();
+        try {
+            $validated = $this->validateRequest();
 
-        $plan->name = $validated['name'];
-        $plan->description = $validated['description'];
-        $plan->price = $validated['price'];
-        $plan->is_active = $validated['is_active'];
-        $plan->is_featured = $validated['is_featured'] ?? false;
-        $plan->features = $validated['features'];
-        $plan->is_agency_plan = $validated['is_agency_plan'];
-        
-        // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
-        if ($plan->is_agency_plan) {
-            $plan->max_clients = $validated['max_clients'];
-            $plan->monthly_leads = null;
-            $plan->max_landing_pages = null;
-            $plan->max_pipelines = null;
-            $plan->total_leads = null;
-        } else {
-            // Se for plano de cliente, configurar limites específicos
-            $plan->monthly_leads = $validated['monthly_leads'];
-            $plan->max_landing_pages = $validated['max_landing_pages'];
-            $plan->max_pipelines = $validated['max_pipelines'];
-            $plan->total_leads = $validated['total_leads'];
-            $plan->max_clients = null;
+            // Converter preço do formato brasileiro para float
+            if (isset($validated['price']) && is_string($validated['price'])) {
+                $validated['price'] = $this->convertBrazilianCurrencyToFloat($validated['price']);
+            }
+
+            $plan->name = $validated['name'];
+            $plan->description = $validated['description'];
+            $plan->price = $validated['price'];
+            $plan->is_active = $validated['is_active'];
+            $plan->is_featured = $validated['is_featured'] ?? false;
+            $plan->features = $validated['features'];
+            $plan->is_agency_plan = $validated['is_agency_plan'];
+            
+            // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
+            if ($plan->is_agency_plan) {
+                $plan->max_clients = $validated['max_clients'];
+                $plan->monthly_leads = null;
+                $plan->max_landing_pages = null;
+                $plan->max_pipelines = null;
+                $plan->total_leads = null;
+            } else {
+                // Se for plano de cliente, configurar limites específicos
+                $plan->monthly_leads = $validated['monthly_leads'];
+                $plan->max_landing_pages = $validated['max_landing_pages'];
+                $plan->max_pipelines = $validated['max_pipelines'];
+                $plan->total_leads = $validated['total_leads'];
+                $plan->max_clients = null;
+            }
+            
+            $plan->save();
+
+            return redirect()->route('admin.plans.index')
+                ->with('success', 'Plano atualizado com sucesso!');
+                
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors([
+                'error' => 'Erro ao atualizar plano: ' . $e->getMessage()
+            ])->withInput();
         }
-        
-        $plan->save();
-
-        return redirect()->route('admin.plans.index')
-            ->with('success', 'Plano atualizado com sucesso!');
     }
     
     /**
@@ -173,17 +201,58 @@ class PlanController extends Controller
     }
     
     /**
-     * Duplica um plano existente
+     * Duplica um plano existente para criar um novo.
+     *
+     * @param \App\Models\Plan $plan
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function duplicate(Plan $plan)
     {
+        // Criar uma cópia do plano com os mesmos atributos
         $newPlan = $plan->replicate();
         $newPlan->name = $plan->name . ' (Cópia)';
-        $newPlan->is_featured = false; // A cópia não é destacada automaticamente
+        $newPlan->is_active = false; // Define o novo plano como inativo por padrão
+        $newPlan->is_featured = false; // Remove o status de destaque 
         $newPlan->save();
-        
-        return redirect()->route('admin.plans.edit', $newPlan->id)
-            ->with('success', 'Plano duplicado com sucesso! Você pode editar os detalhes abaixo.');
+
+        return redirect()->route('admin.plans.index')
+            ->with('success', 'Plano duplicado com sucesso!');
+    }
+
+    /**
+     * Exibe o formulário para edição de um plano
+     *
+     * @param \App\Models\Plan $plan
+     * @return \Inertia\Response
+     */
+    public function edit(Plan $plan)
+    {
+        // Formatar o preço para o formato brasileiro (R$ X,XX)
+        $priceFormatted = 'R$ ' . number_format((float)$plan->price, 2, ',', '.');
+
+        return Inertia::render('Admin/Plans/Edit', [
+            'plan' => [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'price' => $priceFormatted,
+                'period' => $plan->period,
+                'is_active' => $plan->is_active,
+                'is_featured' => $plan->is_featured,
+                'features' => $plan->features,
+                'is_agency_plan' => $plan->is_agency_plan,
+                'monthly_leads' => $plan->monthly_leads,
+                'max_landing_pages' => $plan->max_landing_pages,
+                'max_pipelines' => $plan->max_pipelines,
+                'total_leads' => $plan->total_leads,
+                'max_clients' => $plan->max_clients,
+                'has_whatsapp_integration' => $plan->has_whatsapp_integration,
+                'has_email_integration' => $plan->has_email_integration,
+                'has_meta_integration' => $plan->has_meta_integration,
+                'has_google_integration' => $plan->has_google_integration,
+                'has_custom_domain' => $plan->has_custom_domain,
+            ]
+        ]);
     }
 
     protected function validateRequest(): array
@@ -193,7 +262,7 @@ class PlanController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:500',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|string',
             'period' => 'required|in:monthly,yearly',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
@@ -223,5 +292,26 @@ class PlanController extends Controller
         }
         
         return request()->validate($rules);
+    }
+
+    /**
+     * Converte valor de moeda brasileira (R$ 1.999,99) para float (1999.99)
+     * 
+     * @param string $value
+     * @return float
+     */
+    private function convertBrazilianCurrencyToFloat(string $value): float
+    {
+        // Remove o símbolo da moeda e possíveis espaços
+        $value = trim(str_replace('R$', '', $value));
+        
+        // Substitui pontos por nada (remover separador de milhares)
+        $value = str_replace('.', '', $value);
+        
+        // Substitui vírgula por ponto (separador decimal)
+        $value = str_replace(',', '.', $value);
+        
+        // Converte para float
+        return (float) $value;
     }
 } 

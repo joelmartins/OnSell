@@ -1,7 +1,7 @@
 "use client";
 
 import { Head } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,37 @@ import {
 } from 'lucide-react';
 
 export default function DashboardIndex({ auth }) {
+  const { branding } = usePage().props;
+  
+  // Função para determinar cor de texto baseado na cor de fundo
+  function getContrastColor(hexColor) {
+    if (!hexColor) return '#ffffff';
+    
+    // Converte hex para RGB
+    let r = 0, g = 0, b = 0;
+    
+    // 3 caracteres
+    if (hexColor.length === 4) {
+      r = parseInt(hexColor[1] + hexColor[1], 16);
+      g = parseInt(hexColor[2] + hexColor[2], 16);
+      b = parseInt(hexColor[3] + hexColor[3], 16);
+    }
+    // 6 caracteres
+    else if (hexColor.length === 7) {
+      r = parseInt(hexColor.substring(1, 3), 16);
+      g = parseInt(hexColor.substring(3, 5), 16);
+      b = parseInt(hexColor.substring(5, 7), 16);
+    } else {
+      return '#ffffff';
+    }
+    
+    // Calcula a luminância
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // Retorna branco ou preto conforme a luminância
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  }
+  
   const dashboardItems = [
     { 
       title: 'Pipeline',
@@ -72,15 +103,34 @@ export default function DashboardIndex({ auth }) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardItems.map((item, index) => (
           <Card key={index} className="overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader 
+              className="flex flex-row items-center justify-between space-y-0 pb-2"
+              style={branding?.primary_color ? {
+                backgroundColor: branding.primary_color,
+                color: getContrastColor(branding.primary_color)
+              } : {}}
+            >
               <CardTitle className="text-lg font-medium">{item.title}</CardTitle>
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+              <div 
+                className="h-8 w-8 rounded-full flex items-center justify-center"
+                style={branding?.accent_color ? {
+                  backgroundColor: branding.accent_color,
+                  color: getContrastColor(branding.accent_color)
+                } : { backgroundColor: "var(--muted)" }}
+              >
                 {item.icon}
               </div>
             </CardHeader>
             <CardContent>
               <CardDescription className="mt-2 mb-5">{item.description}</CardDescription>
-              <Button asChild variant="outline" className="w-full">
+              <Button 
+                asChild 
+                className="w-full"
+                style={branding?.secondary_color ? {
+                  backgroundColor: branding.secondary_color,
+                  color: getContrastColor(branding.secondary_color)
+                } : {}}
+              >
                 <Link href={item.href}>
                   {item.label}
                   <span className="sr-only">{item.title}</span>

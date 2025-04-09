@@ -61,6 +61,7 @@ export default function AdminLayout({ children, title }) {
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('admin.dashboard') },
     { label: 'Clientes', icon: <Users className="h-5 w-5" />, href: route('admin.clients.index') },
     { label: 'Agências', icon: <Building2 className="h-5 w-5" />, href: route('admin.agencies.index') },
+    { label: 'Usuários', icon: <Users className="h-5 w-5" />, href: route('admin.users.index') },
     { label: 'Planos', icon: <PackageOpen className="h-5 w-5" />, href: route('admin.plans.index') },
     { label: 'Integrações', icon: <Plug className="h-5 w-5" />, href: route('admin.integrations.index') },
     { 

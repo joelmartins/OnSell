@@ -58,6 +58,7 @@ export default function AgencyLayout({ children, title }) {
   const sidebarItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('agency.dashboard') },
     { label: 'Clientes', icon: <Users className="h-5 w-5" />, href: route('agency.clients.index') },
+    { label: 'Usuários', icon: <Users className="h-5 w-5" />, href: route('agency.users.index') },
     { label: 'White Label', icon: <Palette className="h-5 w-5" />, href: route('agency.branding.index') },
     { label: 'Planos', icon: <PackageOpen className="h-5 w-5" />, href: route('agency.plans.index') },
     { label: 'Configurações', icon: <Settings className="h-5 w-5" />, href: route('agency.settings.index') },

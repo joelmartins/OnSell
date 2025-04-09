@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm as useHookForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Textarea } from '@/Components/ui/textarea';
@@ -13,6 +13,7 @@ import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Save, Building2, User, Star } from 'lucide-react';
 import { CurrencyInput } from '@/Components/ui/currency-input';
+import { PhoneInput } from '@/Components/ui/phone-input';
 
 // Esquema condicional que se adapta com base no tipo de plano (agência ou cliente)
 const formSchema = z.object({
@@ -32,15 +33,27 @@ const formSchema = z.object({
   }),
   is_agency_plan: z.boolean().default(false),
   max_clients: z.coerce.number().int().optional(),
+  period: z.string().min(1, { message: 'Período é obrigatório' }),
 });
 
 export default function PlanForm({ plan, isEditing = false }) {
+  const { errors: serverErrors } = usePage().props;
+  const [generalError, setGeneralError] = useState(null);
+
+  // Ao carregar o componente, verificar se há erros gerais
+  useEffect(() => {
+    if (serverErrors && serverErrors.error) {
+      setGeneralError(serverErrors.error);
+    }
+  }, [serverErrors]);
+
   const form = useHookForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       description: '',
       price: 'R$ 97,00',
+      period: 'monthly',
       is_active: true,
       is_featured: false,
       monthly_leads: 500,
@@ -88,6 +101,19 @@ export default function PlanForm({ plan, isEditing = false }) {
     form.setValue('is_agency_plan', isAgencyPlan);
   }, [isAgencyPlan]);
 
+  // Efeito para mostrar os erros do servidor no formulário
+  useEffect(() => {
+    if (serverErrors) {
+      // Mapear os erros do servidor para os campos do formulário
+      Object.keys(serverErrors).forEach(key => {
+        form.setError(key, {
+          type: 'server',
+          message: serverErrors[key]
+        });
+      });
+    }
+  }, [serverErrors]);
+
   function onSubmit(values) {
     // Ajustar os valores antes de enviar
     if (values.features.for_agency) {
@@ -107,14 +133,42 @@ export default function PlanForm({ plan, isEditing = false }) {
     }
 
     if (isEditing) {
-      router.put(route('admin.plans.update', plan.id), values);
+      router.put(route('admin.plans.update', plan.id), values, {
+        onError: (errors) => {
+          // Os erros serão processados pelo useEffect acima
+          console.error('Erros de validação:', errors);
+        }
+      });
     } else {
-      router.post(route('admin.plans.store'), values);
+      router.post(route('admin.plans.store'), values, {
+        onError: (errors) => {
+          // Os erros serão processados pelo useEffect acima
+          console.error('Erros de validação:', errors);
+        }
+      });
     }
   }
 
   return (
     <Form {...form}>
+      {generalError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6" role="alert">
+          <p className="font-medium">Erro ao processar o formulário</p>
+          <p>{generalError}</p>
+        </div>
+      )}
+      
+      {serverErrors && Object.keys(serverErrors).length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded mb-6" role="alert">
+          <p className="font-medium">Por favor, corrija os erros abaixo:</p>
+          <ul className="list-disc list-inside">
+            {Object.keys(serverErrors).map(key => (
+              <li key={key}>{serverErrors[key]}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
@@ -126,6 +180,9 @@ export default function PlanForm({ plan, isEditing = false }) {
                 <FormControl>
                   <Input placeholder="Ex: Plano Starter" {...field} />
                 </FormControl>
+                {serverErrors && serverErrors.name && (
+                  <p className="text-sm font-medium text-red-500 mt-1">{serverErrors.name}</p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
@@ -148,6 +205,9 @@ export default function PlanForm({ plan, isEditing = false }) {
                     className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700"
                   />
                 </FormControl>
+                {serverErrors && serverErrors.price && (
+                  <p className="text-sm font-medium text-red-500 mt-1">{serverErrors.price}</p>
+                )}
                 <FormDescription>
                   Formato: R$ 0,00 (use vírgula como separador decimal)
                 </FormDescription>
@@ -157,24 +217,56 @@ export default function PlanForm({ plan, isEditing = false }) {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descreva brevemente os benefícios do plano..." 
-                  className="resize-none" 
-                  rows={3} 
-                  {...field} 
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="period"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Período</FormLabel>
+                <FormControl>
+                  <select 
+                    {...field}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700"
+                  >
+                    <option value="">Selecione um período</option>
+                    <option value="monthly">Mensal</option>
+                    <option value="yearly">Anual</option>
+                  </select>
+                </FormControl>
+                {serverErrors && serverErrors.period && (
+                  <p className="text-sm font-medium text-red-500 mt-1">{serverErrors.period}</p>
+                )}
+                <FormDescription>
+                  Período de cobrança do plano
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Descrição</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Descreva brevemente os benefícios do plano..." 
+                    className="resize-none" 
+                    rows={3} 
+                    {...field} 
+                  />
+                </FormControl>
+                {serverErrors && serverErrors.description && (
+                  <p className="text-sm font-medium text-red-500 mt-1">{serverErrors.description}</p>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Separator />
         

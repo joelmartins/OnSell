@@ -8,6 +8,24 @@ use Inertia\Inertia;
 // Rota inicial pública
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
+// Rotas públicas de landing pages e cadastro
+// Rotas para landing pages públicas de agências
+Route::get('/agency/{id}/landing', [\App\Http\Controllers\PublicLandingPageController::class, 'showById'])->name('agency.landing');
+
+// Rotas para cadastro via landing page
+Route::get('/agency/{agencyId}/signup', [\App\Http\Controllers\AgencySignupController::class, 'showSignupForm'])->name('agency.signup');
+Route::get('/agency/{agencyId}/signup/{planId}', [\App\Http\Controllers\AgencySignupController::class, 'showSignupForm'])->name('agency.signup.plan');
+Route::post('/agency/{agencyId}/signup', [\App\Http\Controllers\AgencySignupController::class, 'processSignup'])->name('agency.signup.process');
+
+// Rota para o subdomínio das agências
+Route::domain('{subdomain}.'.config('app.url'))->group(function () {
+    Route::get('/', [\App\Http\Controllers\PublicLandingPageController::class, 'showBySubdomain'])->name('agency.landing.subdomain');
+    // Rotas para cadastro via subdomínio
+    Route::get('/signup', [\App\Http\Controllers\AgencySignupController::class, 'showSignupFormBySubdomain'])->name('agency.subdomain.signup');
+    Route::get('/signup/plan/{planId}', [\App\Http\Controllers\AgencySignupController::class, 'showSignupFormBySubdomain'])->name('agency.subdomain.signup.plan');
+    Route::post('/signup', [\App\Http\Controllers\AgencySignupController::class, 'processSignupBySubdomain'])->name('agency.subdomain.signup.process');
+});
+
 // Rotas autenticadas
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard e perfil
@@ -35,29 +53,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('agencies/{agency}/toggle-status', [\App\Http\Controllers\Admin\AgencyController::class, 'toggleStatus'])->name('agencies.toggle-status');
 
         // Planos
-        Route::get('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'index'])->name('plans.index');
-        
-        Route::get('/plans/create', function () {
-            return Inertia::render('Admin/Plans/Create');
-        })->name('plans.create');
-        
-        Route::post('/plans', [\App\Http\Controllers\Admin\PlanController::class, 'store'])->name('plans.store');
-        
-        Route::get('/plans/{plan}/edit', function ($plan) {
-            return Inertia::render('Admin/Plans/Edit', [
-                'plan' => \App\Models\Plan::findOrFail($plan)
-            ]);
-        })->name('plans.edit');
-        
-        Route::put('/plans/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'update'])->name('plans.update');
-        
-        Route::delete('/plans/{plan}', [\App\Http\Controllers\Admin\PlanController::class, 'destroy'])->name('plans.destroy');
+        Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class);
+        Route::get('plans/{plan}/duplicate', [\App\Http\Controllers\Admin\PlanController::class, 'duplicate'])->name('plans.duplicate');
+        Route::put('plans/{plan}/toggle', [\App\Http\Controllers\Admin\PlanController::class, 'toggle'])->name('plans.toggle');
+        Route::put('plans/{plan}/toggle-featured', [\App\Http\Controllers\Admin\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
 
-        Route::put('/plans/{plan}/toggle', [\App\Http\Controllers\Admin\PlanController::class, 'toggle'])->name('plans.toggle');
-        
-        Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Admin\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
-        
-        Route::get('/plans/{plan}/duplicate', [\App\Http\Controllers\Admin\PlanController::class, 'duplicate'])->name('plans.duplicate');
+        // Usuários
+        Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/verify-email', [\App\Http\Controllers\Admin\UserController::class, 'verifyEmail'])->name('users.verify-email');
+        Route::put('/users/{user}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
         // Integrações
         Route::get('/integrations', [\App\Http\Controllers\Admin\IntegrationsController::class, 'index'])->name('integrations.index');
@@ -106,6 +110,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Planos
         Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);
+        Route::put('/plans/{plan}/toggle', [\App\Http\Controllers\Agency\PlanController::class, 'toggle'])->name('plans.toggle');
+        Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Agency\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
+
+        // Usuários
+        Route::get('/users', [\App\Http\Controllers\Agency\UserController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/verify-email', [\App\Http\Controllers\Agency\UserController::class, 'verifyEmail'])->name('users.verify-email');
+        Route::put('/users/{user}/toggle-status', [\App\Http\Controllers\Agency\UserController::class, 'toggleStatus'])->name('users.toggle-status');
 
         // Configurações
         Route::get('/settings', function () {

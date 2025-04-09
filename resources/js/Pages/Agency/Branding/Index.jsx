@@ -16,6 +16,7 @@ import { Save, Upload, Globe, Layout, Palette } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Textarea } from '@/Components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const brandingSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),
@@ -47,6 +48,7 @@ const landingPageSchema = z.object({
     description: z.string().min(10, { message: 'Descrição do recurso deve ter pelo menos 10 caracteres' }),
     icon: z.string().optional(),
   })).min(1, { message: 'Adicione pelo menos um recurso' }),
+  display_plans: z.boolean().optional(),
 });
 
 export default function BrandingIndex({ agency }) {
@@ -106,6 +108,7 @@ export default function BrandingIndex({ agency }) {
           icon: 'BarChart'
         }
       ],
+      display_plans: agency.landing_page?.display_plans || false,
     },
   });
 
@@ -682,6 +685,89 @@ export default function BrandingIndex({ agency }) {
                         >
                           Adicionar Recurso
                         </Button>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Planos</h3>
+                      
+                      <FormField
+                        control={landingPageForm.control}
+                        name="display_plans"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>
+                                Exibir planos na landing page
+                              </FormLabel>
+                              <FormDescription>
+                                Os planos marcados como destaque serão exibidos na sua landing page
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Link da Landing Page</h3>
+                      
+                      <div className="p-4 bg-gray-50 border rounded-md space-y-4">
+                        <div>
+                          <h4 className="font-medium">URL personalizada:</h4>
+                          {domainForm.watch('subdomain') ? (
+                            <div className="mt-2 flex items-center space-x-2">
+                              <code className="px-2 py-1 bg-gray-200 rounded text-sm">
+                                https://{domainForm.watch('subdomain')}.{window.location.hostname.replace(/^www\./, '')}
+                              </code>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`https://${domainForm.watch('subdomain')}.${window.location.hostname.replace(/^www\./, '')}`);
+                                  toast.success('URL copiada para a área de transferência!');
+                                }}
+                              >
+                                Copiar
+                              </Button>
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground text-sm mt-2">
+                              Configure um subdomínio na aba "Domínio" para ter uma URL personalizada
+                            </p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium">URL alternativa:</h4>
+                          <div className="mt-2 flex items-center space-x-2">
+                            <code className="px-2 py-1 bg-gray-200 rounded text-sm">
+                              {window.location.origin}/agency/{agency.id}/landing
+                            </code>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/agency/${agency.id}/landing`);
+                                toast.success('URL copiada para a área de transferência!');
+                              }}
+                            >
+                              Copiar
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

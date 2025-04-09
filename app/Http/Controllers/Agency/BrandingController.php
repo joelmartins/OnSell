@@ -189,6 +189,7 @@ class BrandingController extends Controller
             'features' => 'required|array|min:1',
             'features.*.title' => 'required|string|min:3',
             'features.*.description' => 'required|string|min:10',
+            'display_plans' => 'boolean',
         ]);
 
         if ($validator->fails()) {
