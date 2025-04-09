@@ -221,7 +221,7 @@ function ProfileDropdown({ user }) {
       
       // Fallbacks para rotas comuns
       const routeMap = {
-        'profile.edit': '/profile/edit',
+        'admin.settings.profile': '/admin/settings/profile',
         'logout': '/logout'
       };
       
@@ -243,7 +243,7 @@ function ProfileDropdown({ user }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={safeRoute('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('admin.settings.profile')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">

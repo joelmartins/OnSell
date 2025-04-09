@@ -185,7 +185,7 @@ function ProfileDropdown({ user }) {
       
       // Fallbacks para rotas comuns
       const routeMap = {
-        'profile.edit': '/profile/edit',
+        'agency.settings.profile': '/agency/settings/profile',
         'logout': '/logout'
       };
       
@@ -207,7 +207,7 @@ function ProfileDropdown({ user }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={safeRoute('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('agency.settings.profile')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">

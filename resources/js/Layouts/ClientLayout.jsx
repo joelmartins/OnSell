@@ -126,8 +126,8 @@ export default function ClientLayout({ children, title }) {
         'client.contacts': '/client/contacts',
         'client.reports': '/client/reports',
         'client.integrations': '/client/integrations',
-        'client.settings': '/client/settings',
-        'profile.edit': '/profile/edit',
+        'client.settings.index': '/client/settings',
+        'client.settings.profile': '/client/settings/profile',
         'logout': '/logout'
       };
       
@@ -178,7 +178,7 @@ export default function ClientLayout({ children, title }) {
     },
     { 
       name: 'Configurações', 
-      href: safeRoute('client.settings'), 
+      href: safeRoute('client.settings.index'), 
       icon: <Settings className="h-5 w-5" />
     },
   ];
@@ -378,7 +378,7 @@ function ProfileDropdown({ user, branding }) {
       
       // Fallbacks para rotas comuns
       const routeMap = {
-        'profile.edit': '/profile/edit',
+        'client.settings.profile': '/client/settings/profile',
         'logout': '/logout'
       };
       
@@ -404,7 +404,7 @@ function ProfileDropdown({ user, branding }) {
         <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={safeRoute('profile.edit')}>Perfil</Link>
+          <Link href={safeRoute('client.settings.profile')}>Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href={safeRoute('logout')} method="post" as="button" className="w-full text-left">

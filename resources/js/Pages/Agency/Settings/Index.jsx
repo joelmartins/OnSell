@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
 import { useForm } from 'react-hook-form';
@@ -88,6 +88,15 @@ export default function AgencySettings() {
       <div className="mb-8">
         <h2 className="text-2xl font-semibold">Configurações da Agência</h2>
         <p className="text-muted-foreground">Gerencie as configurações da sua agência</p>
+      </div>
+      
+      <div className="mb-6 flex justify-end">
+        <Button variant="outline" asChild className="mb-4">
+          <Link href={route('agency.settings.profile')}>
+            <UserCog className="mr-2 h-4 w-4" />
+            Editar Perfil de Usuário
+          </Link>
+        </Button>
       </div>
       
       <Form {...form}>

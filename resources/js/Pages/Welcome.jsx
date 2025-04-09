@@ -85,11 +85,11 @@ export default function Welcome() {
                                 <div className="mx-auto lg:order-last">
                                     <div className="rounded-lg border bg-background p-2 shadow-lg">
                                         <img
-                                            src="/img/dashboard-demo.png"
+                                            src="/img/onsell-banner.png"
                                             alt="Dashboard do OnSell"
                                             className="aspect-video overflow-hidden rounded-lg object-cover"
                                             width={600}
-                                            height={500}
+                                            height={300}
                                         />
                                     </div>
                                 </div>

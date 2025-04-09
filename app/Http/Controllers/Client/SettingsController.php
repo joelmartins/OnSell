@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProfileUpdateRequest;
@@ -17,17 +17,16 @@ use Inertia\Response;
 class SettingsController extends Controller
 {
     /**
-     * Exibe a página principal de configurações
+     * Display the settings page.
      */
     public function index(Request $request)
     {
-        // Registro de auditoria do acesso à página de configurações
-        Log::channel('audit')->info('Acessando página de configurações do sistema', [
+        Log::channel('audit')->info('Acessou configurações do cliente', [
             'user_id' => auth()->id(),
-            'user_email' => auth()->user()->email,
+            'ip' => request()->ip(),
         ]);
-
-        return Inertia::render('Admin/Settings/Index');
+        
+        return Inertia::render('Client/Settings/Index');
     }
     
     /**
@@ -35,7 +34,12 @@ class SettingsController extends Controller
      */
     public function profile(Request $request): Response
     {
-        return Inertia::render('Admin/Settings/Profile', [
+        Log::channel('audit')->info('Acessou página de perfil do cliente', [
+            'user_id' => auth()->id(),
+            'ip' => request()->ip(),
+        ]);
+        
+        return Inertia::render('Client/Settings/Profile', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'user' => $request->user(),
@@ -56,12 +60,12 @@ class SettingsController extends Controller
 
         $user->save();
         
-        Log::channel('audit')->info('Atualizou perfil de usuário', [
+        Log::channel('audit')->info('Atualizou perfil de usuário (cliente)', [
             'user_id' => auth()->id(),
             'ip' => request()->ip()
         ]);
 
-        return Redirect::route('admin.settings.profile')->with('success', 'Perfil atualizado com sucesso.');
+        return Redirect::route('client.settings.profile')->with('success', 'Perfil atualizado com sucesso.');
     }
     
     /**
@@ -78,11 +82,11 @@ class SettingsController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
         
-        Log::channel('audit')->info('Atualizou senha', [
+        Log::channel('audit')->info('Atualizou senha (cliente)', [
             'user_id' => auth()->id(),
             'ip' => request()->ip()
         ]);
 
-        return Redirect::route('admin.settings.profile')->with('success', 'Senha atualizada com sucesso.');
+        return Redirect::route('client.settings.profile')->with('success', 'Senha atualizada com sucesso.');
     }
 } 

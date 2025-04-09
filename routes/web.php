@@ -35,14 +35,10 @@ Route::domain('{subdomain}.'.config('app.url'))->group(function () {
 
 // Rotas autenticadas
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard e perfil
+    // Dashboard
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->middleware(\App\Http\Middleware\RedirectBasedOnRole::class)->name('dashboard');
-
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Rotas de Admin
     Route::middleware([\Spatie\Permission\Middleware\RoleMiddleware::class.':admin.super'])->prefix('admin')->name('admin.')->group(function () {
@@ -92,6 +88,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/get-logs', [LogsController::class, 'getLogs'])->name('get-logs');
             Route::get('/export-logs', [LogsController::class, 'exportLogs'])->name('export-logs');
             Route::post('/clear-old-logs', [LogsController::class, 'clearOldLogs'])->name('clear-old-logs');
+            
+            // Perfil
+            Route::get('/profile', [\App\Http\Controllers\Admin\SettingsController::class, 'profile'])->name('profile');
+            Route::patch('/profile', [\App\Http\Controllers\Admin\SettingsController::class, 'updateProfile'])->name('update-profile');
+            Route::put('/password', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePassword'])->name('update-password');
         });
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
@@ -130,9 +131,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/users/{user}', [\App\Http\Controllers\Agency\UserController::class, 'update'])->name('users.update');
 
         // Configurações
-        Route::get('/settings', function () {
-            return Inertia::render('Agency/Settings/Index');
-        })->name('settings.index');
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Agency\SettingsController::class, 'index'])->name('index');
+            
+            // Perfil
+            Route::get('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'profile'])->name('profile');
+            Route::patch('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'updateProfile'])->name('update-profile');
+            Route::put('/password', [\App\Http\Controllers\Agency\SettingsController::class, 'updatePassword'])->name('update-password');
+        });
     });
     
     // Rotas de Cliente
@@ -181,9 +187,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('integrations');
         
         // Configurações
-        Route::get('/settings', function () {
-            return Inertia::render('Client/Settings/Index');
-        })->name('settings');
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Client\SettingsController::class, 'index'])->name('index');
+            
+            // Perfil
+            Route::get('/profile', [\App\Http\Controllers\Client\SettingsController::class, 'profile'])->name('profile');
+            Route::patch('/profile', [\App\Http\Controllers\Client\SettingsController::class, 'updateProfile'])->name('update-profile');
+            Route::put('/password', [\App\Http\Controllers\Client\SettingsController::class, 'updatePassword'])->name('update-password');
+        });
     });
 
     // Impersonação
