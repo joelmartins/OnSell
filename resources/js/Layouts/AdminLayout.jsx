@@ -94,7 +94,7 @@ export default function AdminLayout({ children, title }) {
       <div className={`fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-gray-800 border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-between border-b">
-            <h1 className="text-xl font-bold">OnSell</h1>
+            <img src="/img/onsell_logo.svg" alt="OnSell" className="h-8" />
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <Menu className="h-5 w-5" />
             </Button>

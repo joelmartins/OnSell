@@ -9,10 +9,9 @@ export default function Welcome() {
             <div className="flex flex-col min-h-screen">
                 <header className="border-b">
                     <div className="container mx-auto max-w-6xl flex h-16 items-center justify-between px-4">
-                        <div className="flex items-center gap-2 font-bold text-xl">
-                            <Zap className="h-5 w-5 text-primary" />
-                            <span>OnSell</span>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <img src="/img/onsell_logo.svg" alt="OnSell" className="h-8" />
+                        </div>
                         <nav className="hidden md:flex items-center gap-6">
                             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4">
                                 Funcionalidades
