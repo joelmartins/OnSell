@@ -525,7 +525,15 @@ export default function Welcome() {
                                                 <div className="flex-1">
                                                     <h3 className="text-2xl font-bold">{plan.name}</h3>
                                                     <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
-                                                    <div className="mt-2 text-4xl font-bold">R$ {plan.price}<span className="text-base font-normal text-gray-500">/mês</span></div>
+                                                    <div className="mt-2 text-4xl font-bold">
+                                                        {typeof plan.price === 'string' && plan.price.startsWith('R$') 
+                                                            ? plan.price 
+                                                            : `R$ ${typeof plan.price === 'number' 
+                                                                ? plan.price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
+                                                                : parseFloat(plan.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                                                        }
+                                                        <span className="text-base font-normal text-gray-500">/mês</span>
+                                                    </div>
                                                     <p className="mt-3 text-gray-500">{plan.leads_limit ? `Até ${plan.leads_limit} leads/mês` : 'Leads ilimitados'}</p>
                                                     <ul className="mt-6 space-y-2">
                                                         {plan.features && plan.features.split(',').map((feature, i) => (

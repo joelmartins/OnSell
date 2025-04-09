@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Agency;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Middleware;
@@ -33,6 +34,7 @@ class HandleInertiaRequests extends Middleware
     {
         // Verificar se estamos impersonando
         $isImpersonating = $request->session()->has('impersonate.target');
+        $target = $request->session()->get('impersonate.target');
         
         $defaultShared = [
             ...parent::share($request),
@@ -48,36 +50,79 @@ class HandleInertiaRequests extends Middleware
             ],
             'impersonation' => [
                 'active' => $isImpersonating,
-                'target' => $request->session()->get('impersonate.target'),
+                'target' => $target,
                 'original' => $request->session()->get('impersonate.original_user'),
             ],
         ];
         
-        // Adicionar informações de branding da agência para os clientes
-        $user = $request->user();
-        if ($user && $user->client_id) {
-            // Se o usuário pertence a um cliente, buscar a agência associada
-            $client = $user->client;
-            
+        // Obter o branding da agência
+        $agencyId = null;
+        $clientId = null;
+        
+        // Cenário 1: Impersonando um cliente diretamente
+        if ($isImpersonating && $target && $target['type'] === 'client') {
+            $clientId = $target['id'];
+            Log::channel('audit')->info('Impersonando cliente, buscando agência associada', [
+                'target_id' => $clientId,
+                'target_type' => 'client'
+            ]);
+        }
+        // Cenário 2: Impersonando via cascata (admin -> agência -> cliente)
+        elseif ($isImpersonating && $target && $target['type'] === 'client' && $request->session()->has('impersonate.cascade')) {
+            $clientId = $target['id'];
+            $cascade = $request->session()->get('impersonate.cascade');
+            Log::channel('audit')->info('Impersonando cliente via cascata', [
+                'target_id' => $clientId,
+                'cascade' => $cascade
+            ]);
+        }
+        // Cenário 3: Usuário normal de cliente
+        elseif ($request->user() && $request->user()->client_id) {
+            $clientId = $request->user()->client_id;
+        }
+        
+        // Se temos um ID de cliente, buscar a agência associada
+        if ($clientId) {
+            $client = Client::find($clientId);
             if ($client && $client->agency_id) {
-                $agency = Agency::find($client->agency_id);
+                $agencyId = $client->agency_id;
+            }
+        }
+        // Cenário 4: Impersonando uma agência
+        elseif ($isImpersonating && $target && $target['type'] === 'agency') {
+            $agencyId = $target['id'];
+        }
+        // Cenário 5: Usuário normal de agência
+        elseif ($request->user() && $request->user()->agency_id) {
+            $agencyId = $request->user()->agency_id;
+        }
+        
+        // Se temos um ID de agência, buscar as informações de branding
+        if ($agencyId) {
+            $agency = Agency::find($agencyId);
+            
+            if ($agency) {
+                Log::channel('audit')->info('Aplicando branding da agência', [
+                    'agency_id' => $agencyId,
+                    'agency_name' => $agency->name,
+                    'request_path' => $request->path(),
+                    'is_client_route' => strpos($request->path(), 'client') === 0,
+                ]);
                 
-                if ($agency) {
-                    // Adicionar informações de branding às props compartilhadas
-                    $defaultShared['branding'] = [
-                        'agency_name' => $agency->name,
-                        'logo' => $agency->logo,
-                        'favicon' => $agency->favicon,
-                        'primary_color' => $agency->primary_color,
-                        'secondary_color' => $agency->secondary_color,
-                        'accent_color' => $agency->accent_color,
-                    ];
-                    
-                    // Se o navegador solicita o favicon, configurar
-                    if ($request->path() === 'favicon.ico' && $agency->favicon) {
-                        header('Location: ' . $agency->favicon);
-                        exit;
-                    }
+                // Adicionar informações de branding às props compartilhadas
+                $defaultShared['branding'] = [
+                    'agency_name' => $agency->name,
+                    'logo' => $agency->logo,
+                    'favicon' => $agency->favicon,
+                    'primary_color' => $agency->primary_color,
+                    'secondary_color' => $agency->secondary_color,
+                    'accent_color' => $agency->accent_color,
+                ];
+                
+                // Se o navegador solicita o favicon, configurar
+                if ($request->path() === 'favicon.ico' && $agency->favicon) {
+                    header('Location: ' . $agency->favicon);
+                    exit;
                 }
             }
         }
@@ -88,9 +133,11 @@ class HandleInertiaRequests extends Middleware
                 'user_id' => $request->user()?->id,
                 'path' => $request->path(),
                 'session_data' => [
-                    'target' => $request->session()->get('impersonate.target'),
+                    'target' => $target,
                     'original_user' => $request->session()->get('impersonate.original_user'),
+                    'cascade' => $request->session()->has('impersonate.cascade') ? $request->session()->get('impersonate.cascade') : null,
                 ],
+                'has_branding' => isset($defaultShared['branding']),
                 'has_ziggy' => array_key_exists('ziggy', parent::share($request)),
             ]);
             

@@ -37,19 +37,46 @@ export default function ClientLayout({ children, title }) {
   // Aplicar as cores do branding via CSS variáveis
   useEffect(() => {
     if (branding) {
-      // Definir as variáveis CSS personalizadas
-      document.documentElement.style.setProperty('--primary', branding.primary_color);
-      document.documentElement.style.setProperty('--primary-foreground', getContrastColor(branding.primary_color));
+      // Extrair a cor primária
+      const primaryColor = branding.primary_color;
+      const secondaryColor = branding.secondary_color;
+      const accentColor = branding.accent_color;
       
-      document.documentElement.style.setProperty('--secondary', branding.secondary_color);
-      document.documentElement.style.setProperty('--secondary-foreground', getContrastColor(branding.secondary_color));
-      
-      document.documentElement.style.setProperty('--accent', branding.accent_color);
-      document.documentElement.style.setProperty('--accent-foreground', getContrastColor(branding.accent_color));
+      // Definir variações da cor primária
+      document.documentElement.style.setProperty('--primary', primaryColor);
+      document.documentElement.style.setProperty('--primary-foreground', getContrastColor(primaryColor));
+      document.documentElement.style.setProperty('--primary-hover', adjustColorBrightness(primaryColor, 0.9));
+      document.documentElement.style.setProperty('--primary-focus', adjustColorBrightness(primaryColor, 1.1));
+      document.documentElement.style.setProperty('--primary-lighter', adjustColorBrightness(primaryColor, 1.3));
+      document.documentElement.style.setProperty('--primary-lightest', adjustColorBrightness(primaryColor, 1.6));
 
-      // Definir uma cor de fundo sutil para o sidebar baseada na cor primária
-      const sidebarColor = adjustColorBrightness(branding.primary_color, 0.97);
-      document.documentElement.style.setProperty('--sidebar-bg', sidebarColor);
+      // Definir variações da cor secundária
+      document.documentElement.style.setProperty('--secondary', secondaryColor);
+      document.documentElement.style.setProperty('--secondary-foreground', getContrastColor(secondaryColor));
+      document.documentElement.style.setProperty('--secondary-hover', adjustColorBrightness(secondaryColor, 0.9));
+      document.documentElement.style.setProperty('--secondary-focus', adjustColorBrightness(secondaryColor, 1.1));
+      document.documentElement.style.setProperty('--secondary-lighter', adjustColorBrightness(secondaryColor, 1.3));
+      
+      // Definir variações da cor de destaque
+      document.documentElement.style.setProperty('--accent', accentColor);
+      document.documentElement.style.setProperty('--accent-foreground', getContrastColor(accentColor));
+      document.documentElement.style.setProperty('--accent-hover', adjustColorBrightness(accentColor, 0.9));
+      document.documentElement.style.setProperty('--accent-focus', adjustColorBrightness(accentColor, 1.1));
+      
+      // Cores para o sidebar
+      const sidebarGradientStart = adjustColorBrightness(primaryColor, 0.97);
+      const sidebarGradientEnd = adjustColorBrightness(primaryColor, 0.95);
+      document.documentElement.style.setProperty('--sidebar-bg-start', sidebarGradientStart);
+      document.documentElement.style.setProperty('--sidebar-bg-end', sidebarGradientEnd);
+      
+      // Cores para cards e elementos de UI
+      const cardBgColor = adjustColorBrightness(primaryColor, 0.98);
+      document.documentElement.style.setProperty('--card-bg', cardBgColor);
+      document.documentElement.style.setProperty('--card-border', adjustColorBrightness(primaryColor, 0.9));
+      
+      // Cores para hover e estado ativo
+      document.documentElement.style.setProperty('--hover-bg', adjustColorBrightness(primaryColor, 0.95));
+      document.documentElement.style.setProperty('--active-bg', adjustColorBrightness(primaryColor, 0.9));
     }
   }, [branding]);
 
@@ -215,7 +242,9 @@ export default function ClientLayout({ children, title }) {
       {/* Sidebar */}
       <div 
         className={`fixed top-0 left-0 z-50 h-full w-64 border-r transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ backgroundColor: 'var(--sidebar-bg, white)' }}
+        style={{ 
+          background: 'linear-gradient(135deg, var(--sidebar-bg-start), var(--sidebar-bg-end))'
+        }}
       >
         <div className="flex flex-col h-full">
           <div className="p-4 flex items-center justify-between border-b">
@@ -283,16 +312,16 @@ export default function ClientLayout({ children, title }) {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                     isActive(item.href) 
                       ? 'bg-primary/10 text-primary'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-var(--hover-bg) hover:text-primary/80'
                   }`}
                 >
-                  <div className={`mr-3 flex-shrink-0 ${
+                  <div className={`mr-3 flex-shrink-0 transition-colors duration-200 ${
                     isActive(item.href)
                       ? 'text-primary'
-                      : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500'
+                      : 'text-gray-400 dark:text-gray-500 group-hover:text-primary/70'
                   }`}>
                     {item.icon}
                   </div>
@@ -312,7 +341,9 @@ export default function ClientLayout({ children, title }) {
         {/* Desktop header */}
         <div 
           className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"
-          style={{ backgroundColor: 'var(--sidebar-bg, white)' }}
+          style={{ 
+            background: 'linear-gradient(135deg, var(--sidebar-bg-start), var(--sidebar-bg-end))'
+          }}
         >
           <h1 className="text-xl font-semibold">{title || 'Dashboard'}</h1>
           <ProfileDropdown user={user} branding={branding} />
@@ -320,7 +351,17 @@ export default function ClientLayout({ children, title }) {
 
         {/* Page content */}
         <main className="py-6 px-4 sm:px-6 lg:px-8 mt-12 lg:mt-0">
-          {children}
+          <div 
+            className="animate-fadeIn" 
+            style={{ 
+              '--card-bg': 'var(--card-bg)',
+              '--card-border': 'var(--card-border)',
+              '--hover-bg': 'var(--hover-bg)',
+              '--active-bg': 'var(--active-bg)'
+            }}
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

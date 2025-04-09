@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
-import { Motion, Crosshair } from 'lucide-react';
+import { ActivityIcon, Crosshair } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
@@ -116,7 +116,7 @@ export default function TriggerNode({ id, data, selected }) {
       <Card className="w-[280px] bg-amber-50 shadow-sm border-amber-200">
         <CardHeader className="p-3 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium flex items-center">
-            <Motion className="w-4 h-4 mr-2 text-amber-600" />
+            <ActivityIcon className="w-4 h-4 mr-2 text-amber-600" />
             Gatilho: {data.label || 'Início do Fluxo'}
           </CardTitle>
           <CollapsibleTrigger

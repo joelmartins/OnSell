@@ -234,7 +234,14 @@ export default function PlansIndex({ auth, plans, filters }) {
                           <p className="text-xs text-muted-foreground truncate max-w-[250px]">{plan.description}</p>
                         )}
                       </TableCell>
-                      <TableCell>R$ {parseFloat(plan.price).toFixed(2)}</TableCell>
+                      <TableCell>
+                        {typeof plan.price === 'string' && plan.price.startsWith('R$') 
+                          ? plan.price 
+                          : `R$ ${typeof plan.price === 'number' 
+                              ? plan.price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
+                              : parseFloat(plan.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                        }
+                      </TableCell>
                       <TableCell>
                         {plan.is_agency_plan ? (
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-50">

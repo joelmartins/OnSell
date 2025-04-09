@@ -161,7 +161,12 @@ export default function PlansIndex({ plans = [] }) {
                       </TableCell>
                       <TableCell>{plan.description}</TableCell>
                       <TableCell>
-                        R${typeof plan.price === 'number' ? plan.price.toFixed(2) : parseFloat(plan.price).toFixed(2)}
+                        {typeof plan.price === 'string' && plan.price.startsWith('R$') 
+                          ? plan.price 
+                          : `R$ ${typeof plan.price === 'number' 
+                              ? plan.price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
+                              : parseFloat(plan.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                        }
                       </TableCell>
                       <TableCell>
                         {plan.period === 'monthly' && 'Mensal'}

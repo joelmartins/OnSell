@@ -253,7 +253,12 @@ export default function ClientForm({ client = null, plans = [], mode = 'create' 
                         <SelectItem value="none">Sem plano</SelectItem>
                         {plans.map((plan) => (
                           <SelectItem key={plan.id} value={plan.id.toString()}>
-                            {plan.name} - R$ {parseFloat(plan.price).toFixed(2)}/{plan.period === 'monthly' ? 'mês' : 'ano'}
+                            {plan.name} - {typeof plan.price === 'string' && plan.price.startsWith('R$') 
+                              ? plan.price 
+                              : `R$ ${typeof plan.price === 'number' 
+                                  ? plan.price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
+                                  : parseFloat(plan.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                            }/{plan.period === 'monthly' ? 'mês' : 'ano'}
                           </SelectItem>
                         ))}
                       </SelectContent>

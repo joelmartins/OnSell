@@ -12,6 +12,7 @@ import { Switch } from '@/Components/ui/switch';
 import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Save, Building2, User, Star } from 'lucide-react';
+import { CurrencyInput } from '@/Components/ui/currency-input';
 
 // Esquema condicional que se adapta com base no tipo de plano (agência ou cliente)
 const formSchema = z.object({
@@ -137,7 +138,15 @@ export default function PlanForm({ plan, isEditing = false }) {
               <FormItem>
                 <FormLabel>Preço</FormLabel>
                 <FormControl>
-                  <Input placeholder="R$ 97,00" {...field} />
+                  <CurrencyInput
+                    id="price"
+                    name="price"
+                    placeholder="R$ 0,00"
+                    decimalScale={2}
+                    value={field.value}
+                    onValueChange={(value) => field.onChange(value || '')}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700"
+                  />
                 </FormControl>
                 <FormDescription>
                   Formato: R$ 0,00 (use vírgula como separador decimal)

@@ -1,4 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
+import React from 'react';
+import { Head, Link, router } from '@inertiajs/react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/Components/ui/card';
@@ -135,24 +136,32 @@ export default function ClientShow({ client }) {
               <CardTitle>Ações Adicionais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full justify-start" asChild>
-                <Link href={route('impersonate.client', client.id)}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mr-2 h-4 w-4"
-                  >
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                  </svg>
-                  Acessar como Cliente
-                </Link>
+              <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => {
+                // Salvar dados de impersonação para exibir o banner
+                sessionStorage.setItem('impersonate.data', JSON.stringify({
+                  id: client.id,
+                  name: client.name,
+                  type: 'client'
+                }));
+                
+                // Usar visit em vez de Link para redirecionamentos
+                router.visit(route('impersonate.client', { client: client.id }));
+              }}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mr-2 h-4 w-4"
+                >
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                Acessar como Cliente
               </Button>
             </CardContent>
           </Card>
