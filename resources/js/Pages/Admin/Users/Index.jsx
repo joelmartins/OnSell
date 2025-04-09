@@ -41,12 +41,13 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import { toast } from 'react-toastify';
 
-export default function Index({ auth, users, filters, flash }) {
+export default function Index({ auth, users, filters, flash, agencies }) {
   const { post, put, processing } = useForm();
   const [searchTerm, setSearchTerm] = useState(filters?.search || '');
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [filterRole, setFilterRole] = useState(filters?.role || 'all');
   const [filterStatus, setFilterStatus] = useState(filters?.status || 'all');
+  const [filterAgency, setFilterAgency] = useState(filters?.agency_id || 'all');
 
   // Verificar se há mensagem de senha gerada para exibir
   useEffect(() => {
@@ -87,6 +88,7 @@ export default function Index({ auth, users, filters, flash }) {
         if (value) url.searchParams.append('search', value);
         if (filterRole !== 'all') url.searchParams.append('role', filterRole);
         if (filterStatus !== 'all') url.searchParams.append('status', filterStatus);
+        if (filterAgency !== 'all') url.searchParams.append('agency_id', filterAgency);
         
         // Navegar para a URL construída
         window.location.href = url.toString();
@@ -98,9 +100,10 @@ export default function Index({ auth, users, filters, flash }) {
   };
 
   // Aplicar filtros
-  const applyFilters = (role, status) => {
+  const applyFilters = (role, status, agency) => {
     setFilterRole(role);
     setFilterStatus(status);
+    setFilterAgency(agency);
     
     try {
       const url = new URL(route('admin.users.index'), window.location.origin);
@@ -109,6 +112,7 @@ export default function Index({ auth, users, filters, flash }) {
       if (searchTerm) url.searchParams.append('search', searchTerm);
       if (role !== 'all') url.searchParams.append('role', role);
       if (status !== 'all') url.searchParams.append('status', status);
+      if (agency !== 'all') url.searchParams.append('agency_id', agency);
       
       // Navegar para a URL construída
       window.location.href = url.toString();
@@ -235,7 +239,7 @@ export default function Index({ auth, users, filters, flash }) {
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <select
                 value={filterRole}
-                onChange={(e) => applyFilters(e.target.value, filterStatus)}
+                onChange={(e) => applyFilters(e.target.value, filterStatus, filterAgency)}
                 className="w-full sm:w-44 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="all">Todos os papéis</option>
@@ -246,13 +250,24 @@ export default function Index({ auth, users, filters, flash }) {
               
               <select
                 value={filterStatus}
-                onChange={(e) => applyFilters(filterRole, e.target.value)}
+                onChange={(e) => applyFilters(filterRole, e.target.value, filterAgency)}
                 className="w-full sm:w-44 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="all">Todos os status</option>
                 <option value="active">Ativos</option>
                 <option value="inactive">Inativos</option>
                 <option value="unverified">Não verificados</option>
+              </select>
+              
+              <select
+                value={filterAgency}
+                onChange={(e) => applyFilters(filterRole, filterStatus, e.target.value)}
+                className="w-full sm:w-44 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="all">Todas as agências</option>
+                {agencies && agencies.map((agency) => (
+                  <option key={agency.id} value={agency.id}>{agency.name}</option>
+                ))}
               </select>
             </div>
 

@@ -58,6 +58,19 @@ class UserController extends Controller
             }
         }
         
+        // Filtrar por agência específica (incluindo usuários de seus clientes)
+        if ($request->has('agency_id') && !empty($request->agency_id)) {
+            $agencyId = $request->agency_id;
+            $query->where(function($q) use ($agencyId) {
+                // Usuários diretamente vinculados à agência
+                $q->where('agency_id', $agencyId)
+                  // Usuários vinculados a clientes da agência
+                  ->orWhereHas('client', function($subQuery) use ($agencyId) {
+                      $subQuery->where('agency_id', $agencyId);
+                  });
+            });
+        }
+        
         // Ordenar os resultados
         $query->orderBy('name');
         
@@ -84,13 +97,18 @@ class UserController extends Controller
                 ];
             });
             
+        // Obter lista de agências para o filtro
+        $agencies = Agency::select('id', 'name')->orderBy('name')->get();
+            
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
             'filters' => [
                 'search' => $request->search ?? '',
                 'role' => $request->role ?? 'all',
                 'status' => $request->status ?? 'all',
+                'agency_id' => $request->agency_id ?? 'all',
             ],
+            'agencies' => $agencies,
         ]);
     }
 
