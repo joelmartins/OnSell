@@ -7,3 +7,13 @@ Melhorias implementadas:
 5. Adicionado formulário completo para planos da agência com gestão de recursos
 6. Corrigido layout administrativo com sidebar em todas as páginas
 7. Implementado tratamento de exceções nos controllers
+
+# 📊 Sistema de logs e auditoria
+Melhorias implementadas:
+1. Criado controlador específico para gerenciamento de logs (LogsController)
+2. Implementado extração precisa de informações de usuário e IP dos logs
+3. Adicionado suporte para filtrar logs por tipo, nível, data e termo de busca
+4. Melhorado exibição de mensagens de log removendo metadados técnicos
+5. Implementado exportação de logs para CSV e JSON com todas as informações
+6. Adicionado sistema de limpeza automática de logs antigos
+7. Integrado logs de auditoria do banco de dados com logs de arquivo
