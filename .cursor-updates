@@ -17,3 +17,11 @@ Melhorias implementadas:
 5. Implementado exportação de logs para CSV e JSON com todas as informações
 6. Adicionado sistema de limpeza automática de logs antigos
 7. Integrado logs de auditoria do banco de dados com logs de arquivo
+
+# 🔐 Melhorias na gestão de usuários
+Melhorias implementadas:
+1. Corrigida exibição de senhas geradas durante edição de usuários
+2. Resolvido problema com respostas JSON no Inertia.js
+3. Melhorada interface do formulário de usuários
+4. Adicionado efeito visual para quando uma nova senha está sendo gerada
+5. Aperfeiçoada segurança no compartilhamento de senhas temporárias
