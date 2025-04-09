@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Agency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Middleware;
@@ -51,6 +52,35 @@ class HandleInertiaRequests extends Middleware
                 'original' => $request->session()->get('impersonate.original_user'),
             ],
         ];
+        
+        // Adicionar informações de branding da agência para os clientes
+        $user = $request->user();
+        if ($user && $user->client_id) {
+            // Se o usuário pertence a um cliente, buscar a agência associada
+            $client = $user->client;
+            
+            if ($client && $client->agency_id) {
+                $agency = Agency::find($client->agency_id);
+                
+                if ($agency) {
+                    // Adicionar informações de branding às props compartilhadas
+                    $defaultShared['branding'] = [
+                        'agency_name' => $agency->name,
+                        'logo' => $agency->logo,
+                        'favicon' => $agency->favicon,
+                        'primary_color' => $agency->primary_color,
+                        'secondary_color' => $agency->secondary_color,
+                        'accent_color' => $agency->accent_color,
+                    ];
+                    
+                    // Se o navegador solicita o favicon, configurar
+                    if ($request->path() === 'favicon.ico' && $agency->favicon) {
+                        header('Location: ' . $agency->favicon);
+                        exit;
+                    }
+                }
+            }
+        }
         
         // Se estamos impersonando, registrar para depuração
         if ($isImpersonating) {

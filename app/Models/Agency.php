@@ -29,9 +29,14 @@ class Agency extends Model implements Auditable
         'is_active',
         'parent_agency_id',
         'logo',
+        'favicon',
         'primary_color',
         'secondary_color',
         'accent_color',
+        'custom_domain',
+        'domain_status',
+        'subdomain',
+        'landing_page',
     ];
 
     /**

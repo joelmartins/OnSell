@@ -101,6 +101,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // White Label
         Route::get('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'index'])->name('branding.index');
         Route::put('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'update'])->name('branding.update');
+        Route::put('/branding/domain', [\App\Http\Controllers\Agency\BrandingController::class, 'updateDomain'])->name('branding.update.domain');
+        Route::put('/branding/landing', [\App\Http\Controllers\Agency\BrandingController::class, 'updateLandingPage'])->name('branding.update.landing');
 
         // Planos
         Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);

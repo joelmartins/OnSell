@@ -41,7 +41,7 @@ class BrandingController extends Controller
             'impersonation_data' => $impersonating
         ]);
         
-        // Passar agency para a view
+        // Passar agency para a view com dados adicionais para as novas abas
         return Inertia::render('Agency/Branding/Index', [
             'agency' => [
                 'id' => $agency->id,
@@ -51,6 +51,10 @@ class BrandingController extends Controller
                 'primary_color' => $agency->primary_color,
                 'secondary_color' => $agency->secondary_color,
                 'accent_color' => $agency->accent_color,
+                'custom_domain' => $agency->custom_domain,
+                'domain_status' => $agency->domain_status,
+                'subdomain' => $agency->subdomain,
+                'landing_page' => $agency->landing_page ? json_decode($agency->landing_page, true) : null,
             ]
         ]);
     }
@@ -100,6 +104,114 @@ class BrandingController extends Controller
             'accent_color' => $validated['accent_color'],
         ]);
         
-        return response()->json(['message' => 'Configurações de marca atualizadas com sucesso!']);
+        return redirect()->back()->with('success', 'Configurações de marca atualizadas com sucesso!');
+    }
+
+    /**
+     * Atualiza as configurações de domínio da agência
+     */
+    public function updateDomain(Request $request)
+    {
+        // Verificar se está impersonando uma agência
+        $agencyId = null;
+        $impersonating = session()->get('impersonate.target');
+        
+        if ($impersonating && $impersonating['type'] === 'agency') {
+            // Se está impersonando, usar o ID da agência da sessão
+            $agencyId = $impersonating['id'];
+        } else {
+            // Caso contrário, obter o ID da agência do usuário autenticado
+            $agencyId = Auth::user()->agency_id;
+        }
+
+        $validator = Validator::make($request->all(), [
+            'subdomain' => 'required|string|regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/|unique:agencies,subdomain,' . $agencyId,
+            'custom_domain' => 'nullable|string|regex:/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $validated = $validator->validated();
+        
+        // Obtém a agência do ID determinado
+        $agency = Agency::findOrFail($agencyId);
+        
+        // Se o domínio personalizado foi alterado, definir status como pendente
+        $domainStatus = $agency->domain_status;
+        if ($validated['custom_domain'] !== $agency->custom_domain) {
+            $domainStatus = 'pending';
+        }
+        
+        // Atualiza as configurações de domínio
+        $agency->update([
+            'subdomain' => $validated['subdomain'],
+            'custom_domain' => $validated['custom_domain'],
+            'domain_status' => $domainStatus,
+        ]);
+        
+        // Log para auditoria
+        Log::channel('audit')->info('Domínio da agência atualizado', [
+            'user_id' => Auth::id(),
+            'agency_id' => $agencyId,
+            'subdomain' => $validated['subdomain'],
+            'custom_domain' => $validated['custom_domain'],
+            'domain_status' => $domainStatus,
+        ]);
+        
+        return redirect()->back()->with('success', 'Configurações de domínio atualizadas com sucesso!');
+    }
+
+    /**
+     * Atualiza as configurações da landing page da agência
+     */
+    public function updateLandingPage(Request $request)
+    {
+        // Verificar se está impersonando uma agência
+        $agencyId = null;
+        $impersonating = session()->get('impersonate.target');
+        
+        if ($impersonating && $impersonating['type'] === 'agency') {
+            // Se está impersonando, usar o ID da agência da sessão
+            $agencyId = $impersonating['id'];
+        } else {
+            // Caso contrário, obter o ID da agência do usuário autenticado
+            $agencyId = Auth::user()->agency_id;
+        }
+
+        $validator = Validator::make($request->all(), [
+            'headline' => 'required|string|min:5',
+            'subheadline' => 'required|string|min:5',
+            'hero_image' => 'nullable|url',
+            'cta_text' => 'required|string|min:2',
+            'features_title' => 'required|string|min:3',
+            'features' => 'required|array|min:1',
+            'features.*.title' => 'required|string|min:3',
+            'features.*.description' => 'required|string|min:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $validated = $validator->validated();
+        
+        // Obtém a agência do ID determinado
+        $agency = Agency::findOrFail($agencyId);
+        
+        // Atualiza as configurações da landing page, armazenando como JSON
+        $agency->update([
+            'landing_page' => json_encode($validated),
+        ]);
+        
+        // Log para auditoria
+        Log::channel('audit')->info('Landing page da agência atualizada', [
+            'user_id' => Auth::id(),
+            'agency_id' => $agencyId,
+            'headline' => $validated['headline'],
+        ]);
+        
+        return redirect()->back()->with('success', 'Landing page personalizada com sucesso!');
     }
 } 
