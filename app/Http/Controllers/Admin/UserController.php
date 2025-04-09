@@ -278,19 +278,15 @@ class UserController extends Controller
                 'timestamp' => now()->timestamp // Para garantir que é um novo valor
             ];
 
-            // Para requisições AJAX ou quando a requisição espera JSON
-            if (request()->ajax() || request()->header('X-Inertia-Partial-Data')) {
-                return response()->json([
-                    'flash' => [
-                        'password_generated' => $passwordData
-                    ]
-                ]);
-            }
-
-            // Para requisições Inertia normais
-            return redirect()
-                ->route('admin.users.edit', $user->id)
-                ->with('password_generated', $passwordData);
+            // Sempre retorna uma resposta Inertia para que o cliente possa processar corretamente
+            return Inertia::render('Admin/Users/Edit', [
+                'user' => $user->load('roles'),
+                'clients' => Client::select('id', 'name')->get(),
+                'agencies' => Agency::select('id', 'name')->get(),
+                'flash' => [
+                    'password_generated' => $passwordData
+                ]
+            ]);
                 
         } catch (\Exception $e) {
             Log::error('Erro ao gerar nova senha', [
@@ -299,15 +295,14 @@ class UserController extends Controller
                 'error' => $e->getMessage()
             ]);
 
-            if (request()->ajax() || request()->header('X-Inertia-Partial-Data')) {
-                return response()->json([
-                    'flash' => [
-                        'error' => 'Erro ao gerar nova senha: ' . $e->getMessage()
-                    ]
-                ]);
-            }
-
-            return redirect()->back()->with('error', 'Erro ao gerar nova senha: ' . $e->getMessage());
+            return Inertia::render('Admin/Users/Edit', [
+                'user' => $user->load('roles'),
+                'clients' => Client::select('id', 'name')->get(),
+                'agencies' => Agency::select('id', 'name')->get(),
+                'flash' => [
+                    'error' => 'Erro ao gerar nova senha: ' . $e->getMessage()
+                ]
+            ]);
         }
     }
 

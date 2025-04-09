@@ -121,8 +121,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Usuários
         Route::get('/users', [\App\Http\Controllers\Agency\UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [\App\Http\Controllers\Agency\UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [\App\Http\Controllers\Agency\UserController::class, 'store'])->name('users.store');
         Route::post('/users/{user}/verify-email', [\App\Http\Controllers\Agency\UserController::class, 'verifyEmail'])->name('users.verify-email');
         Route::put('/users/{user}/toggle-status', [\App\Http\Controllers\Agency\UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::post('/users/{user}/generate-password', [\App\Http\Controllers\Agency\UserController::class, 'generatePassword'])->name('users.generate-password');
+        Route::get('/users/{user}/edit', [\App\Http\Controllers\Agency\UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [\App\Http\Controllers\Agency\UserController::class, 'update'])->name('users.update');
 
         // Configurações
         Route::get('/settings', function () {

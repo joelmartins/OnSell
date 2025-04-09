@@ -18,15 +18,14 @@ import {
 } from "@/components/ui/alert";
 import { RefreshCw, Copy, Check, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
-export default function UserForm({ user = null, clients, agencies, isEditing, flash }) {
+export default function UserForm({ user = null, clients, isEditing, flash }) {
   const { data, setData, post, put, processing, errors, reset } = useForm({
     name: user?.name || '',
     email: user?.email || '',
+    user_type: user ? (user.agency_id ? 'agency' : 'client') : 'client',
+    client_id: user?.client_id || '',
     password: '',
     password_confirmation: '',
-    role: user?.role || 'user',
-    client_id: user?.client_id || '',
-    agency_id: user?.agency_id || '',
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -48,12 +47,18 @@ export default function UserForm({ user = null, clients, agencies, isEditing, fl
     e.preventDefault();
     
     if (isEditing) {
-      put(route('admin.users.update', user.id), {
+      put(route('agency.users.update', user.id), {
         onSuccess: () => reset(),
       });
     } else {
-      post(route('admin.users.store'), {
-        onSuccess: () => reset(),
+      post(route('agency.users.store'), {
+        onSuccess: () => {
+          reset();
+          toast.success('Usuário criado com sucesso!');
+        },
+        onError: () => {
+          toast.error('Erro ao criar usuário. Verifique os campos e tente novamente.');
+        }
       });
     }
   };
@@ -62,10 +67,11 @@ export default function UserForm({ user = null, clients, agencies, isEditing, fl
     if (window.confirm('Deseja realmente gerar uma nova senha para este usuário?')) {
       setIsGeneratingPassword(true);
       
-      post(route('admin.users.generate-password', user.id), {
+      post(route('agency.users.generate-password', user.id), {
         preserveScroll: true,
-        onSuccess: (page) => {
+        onSuccess: () => {
           setIsGeneratingPassword(false);
+          // A resposta é processada pelo Inertia automaticamente
         },
         onError: () => {
           toast.error('Erro ao gerar nova senha');
@@ -148,23 +154,22 @@ export default function UserForm({ user = null, clients, agencies, isEditing, fl
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="role">Função</Label>
+          <Label htmlFor="user_type">Tipo de Usuário</Label>
           <select
-            id="role"
-            value={data.role}
-            onChange={(e) => setData('role', e.target.value)}
+            id="user_type"
+            value={data.user_type}
+            onChange={(e) => setData('user_type', e.target.value)}
+            disabled={isEditing}
             className="w-full rounded-md border border-input bg-background px-3 py-2"
             required
           >
-            <option value="admin">Administrador</option>
-            <option value="agency">Agência</option>
-            <option value="client">Cliente</option>
-            <option value="user">Usuário</option>
+            <option value="agency">Usuário da Agência</option>
+            <option value="client">Usuário de Cliente</option>
           </select>
-          {errors.role && <p className="text-sm text-red-600">{errors.role}</p>}
+          {errors.user_type && <p className="text-sm text-red-600">{errors.user_type}</p>}
         </div>
 
-        {data.role === 'client' && (
+        {data.user_type === 'client' && (
           <div className="space-y-2">
             <Label htmlFor="client_id">Cliente</Label>
             <select
@@ -172,7 +177,7 @@ export default function UserForm({ user = null, clients, agencies, isEditing, fl
               value={data.client_id}
               onChange={(e) => setData('client_id', e.target.value)}
               className="w-full rounded-md border border-input bg-background px-3 py-2"
-              required
+              required={data.user_type === 'client'}
             >
               <option value="">Selecione um cliente</option>
               {clients.map((client) => (
@@ -182,27 +187,6 @@ export default function UserForm({ user = null, clients, agencies, isEditing, fl
               ))}
             </select>
             {errors.client_id && <p className="text-sm text-red-600">{errors.client_id}</p>}
-          </div>
-        )}
-
-        {data.role === 'agency' && (
-          <div className="space-y-2">
-            <Label htmlFor="agency_id">Agência</Label>
-            <select
-              id="agency_id"
-              value={data.agency_id}
-              onChange={(e) => setData('agency_id', e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
-              required
-            >
-              <option value="">Selecione uma agência</option>
-              {agencies.map((agency) => (
-                <option key={agency.id} value={agency.id}>
-                  {agency.name}
-                </option>
-              ))}
-            </select>
-            {errors.agency_id && <p className="text-sm text-red-600">{errors.agency_id}</p>}
           </div>
         )}
 

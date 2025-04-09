@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
 import { 
   Table, 
@@ -16,6 +16,13 @@ import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { Input } from '@/Components/ui/input';
 import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { 
   CheckCircle, 
   MailCheck, 
   AlertTriangle, 
@@ -26,7 +33,8 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
-  UserX
+  UserX,
+  Pencil
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -135,211 +143,218 @@ export default function Index({ auth, users }) {
       }
     >
       <Head title="Usuários" />
-
-      <div className="py-6">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-          {/* Barra de ferramentas */}
-          <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Campo de pesquisa */}
-              <div className="relative md:col-span-2">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <Input
-                  type="search"
-                  placeholder="Buscar por nome, e-mail ou cliente..."
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="pl-9"
-                />
-              </div>
+      
+      <Card>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+          <div>
+            <CardTitle>Usuários</CardTitle>
+            <CardDescription>Gerencie os usuários da sua agência e clientes</CardDescription>
+          </div>
+          <Link href={route('agency.users.create')}>
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Novo Usuário
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between mb-4">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar por nome, e-mail ou cliente..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="pl-8 w-full sm:w-64"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={filterRole}
+                onChange={(e) => applyFilters(e.target.value, filterStatus)}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="all">Todos os papéis</option>
+                <option value="agency.owner">Agência</option>
+                <option value="client.user">Cliente</option>
+              </select>
               
-              {/* Filtro por papel */}
-              <div>
-                <select
-                  value={filterRole}
-                  onChange={(e) => applyFilters(e.target.value, filterStatus)}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="all">Todos os papéis</option>
-                  <option value="agency.owner">Agência</option>
-                  <option value="client.user">Cliente</option>
-                </select>
-              </div>
-              
-              {/* Filtro por status */}
-              <div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => applyFilters(filterRole, e.target.value)}
-                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="all">Todos os status</option>
-                  <option value="active">Ativos</option>
-                  <option value="inactive">Inativos</option>
-                  <option value="unverified">Não verificados</option>
-                </select>
-              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => applyFilters(filterRole, e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="all">Todos os status</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+                <option value="unverified">Não verificados</option>
+              </select>
             </div>
           </div>
           
-          <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div className="p-6 text-gray-900">
-              <Table>
-                <TableCaption>Usuários da sua agência e clientes</TableCaption>
-                <TableHeader>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>E-mail</TableHead>
+                  <TableHead>Papel</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Verificado em</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.data.length === 0 && (
                   <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>E-mail</TableHead>
-                    <TableHead>Papel</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Verificado em</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableCell colSpan={7} className="text-center py-6">
+                      <div className="flex flex-col items-center justify-center text-gray-500">
+                        <UserX className="h-12 w-12 mb-2 opacity-50" />
+                        <p>Nenhum usuário encontrado com os filtros aplicados</p>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.data.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-6">
-                        <div className="flex flex-col items-center justify-center text-gray-500">
-                          <UserX className="h-12 w-12 mb-2 opacity-50" />
-                          <p>Nenhum usuário encontrado com os filtros aplicados</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  
-                  {users.data.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{getRoleBadge(user.roles)}</TableCell>
-                      <TableCell>
-                        {user.client ? (
-                          <span className="text-green-600">{user.client.name}</span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {user.email_verified_at ? (
-                          <span className="flex items-center text-green-600">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            {formatDate(user.email_verified_at)}
-                          </span>
-                        ) : (
-                          <span className="flex items-center text-amber-600">
-                            <AlertTriangle className="h-4 w-4 mr-1" />
-                            Pendente
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {user.is_active ? (
-                          <Badge className="bg-green-600">Ativo</Badge>
-                        ) : (
-                          <Badge className="bg-red-600">Inativo</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Abrir menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            
-                            {!user.email_verified_at && (
-                              <DropdownMenuItem 
-                                onClick={() => verifyEmail(user)}
-                                disabled={processing}
-                              >
-                                <MailCheck className="mr-2 h-4 w-4" />
-                                <span>Verificar e-mail</span>
-                              </DropdownMenuItem>
-                            )}
-                            
+                )}
+                
+                {users.data.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{getRoleBadge(user.roles)}</TableCell>
+                    <TableCell>
+                      {user.client ? (
+                        <span className="text-green-600">{user.client.name}</span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {user.email_verified_at ? (
+                        <span className="flex items-center text-green-600">
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          {formatDate(user.email_verified_at)}
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-amber-600">
+                          <AlertTriangle className="h-4 w-4 mr-1" />
+                          Pendente
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {user.is_active ? (
+                        <Badge className="bg-green-600">Ativo</Badge>
+                      ) : (
+                        <Badge className="bg-red-600">Inativo</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem 
+                            onClick={() => router.visit(route('agency.users.edit', user.id))}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>Editar</span>
+                          </DropdownMenuItem>
+                          
+                          {!user.email_verified_at && (
                             <DropdownMenuItem 
-                              onClick={() => toggleStatus(user)}
+                              onClick={() => verifyEmail(user)}
                               disabled={processing}
                             >
-                              {user.is_active ? (
-                                <>
-                                  <PowerOff className="mr-2 h-4 w-4" />
-                                  <span>Desativar</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Power className="mr-2 h-4 w-4" />
-                                  <span>Ativar</span>
-                                </>
-                              )}
+                              <MailCheck className="mr-2 h-4 w-4" />
+                              <span>Verificar e-mail</span>
                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Paginação */}
-              {users.links && users.links.length > 3 && (
-                <div className="flex items-center justify-between px-2 py-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-500">
-                      Mostrando {users.from} a {users.to} de {users.total} usuários
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {users.links.map((link, i) => {
-                      // Pular os links "Anterior" e "Próximo" pois serão tratados separadamente
-                      if (i === 0 || i === users.links.length - 1) return null;
-                      
-                      return (
-                        <Button
-                          key={i}
-                          variant={link.active ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => link.url && router.visit(link.url)}
-                          disabled={!link.url}
-                          className={!link.url ? "opacity-50 cursor-not-allowed" : ""}
-                        >
-                          {link.label.replace('&laquo;', '').replace('&raquo;', '')}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => users.prev_page_url && router.visit(users.prev_page_url)}
-                      disabled={!users.prev_page_url}
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => users.next_page_url && router.visit(users.next_page_url)}
-                      disabled={!users.next_page_url}
-                    >
-                      Próximo
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+                          )}
+                          
+                          <DropdownMenuItem 
+                            onClick={() => toggleStatus(user)}
+                            disabled={processing}
+                          >
+                            {user.is_active ? (
+                              <>
+                                <PowerOff className="mr-2 h-4 w-4" />
+                                <span>Desativar</span>
+                              </>
+                            ) : (
+                              <>
+                                <Power className="mr-2 h-4 w-4" />
+                                <span>Ativar</span>
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </div>
+
+          {/* Paginação */}
+          {users.links && users.links.length > 3 && (
+            <div className="flex items-center justify-between px-2 py-4 mt-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-500">
+                  Mostrando {users.from} a {users.to} de {users.total} usuários
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => users.prev_page_url && router.visit(users.prev_page_url)}
+                  disabled={!users.prev_page_url}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Anterior
+                </Button>
+                
+                {users.links.map((link, i) => {
+                  // Pular os links "Anterior" e "Próximo" pois serão tratados separadamente
+                  if (i === 0 || i === users.links.length - 1) return null;
+                  
+                  return (
+                    <Button
+                      key={i}
+                      variant={link.active ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => link.url && router.visit(link.url)}
+                      disabled={!link.url}
+                      className={!link.url ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      {link.label.replace('&laquo;', '').replace('&raquo;', '')}
+                    </Button>
+                  );
+                })}
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => users.next_page_url && router.visit(users.next_page_url)}
+                  disabled={!users.next_page_url}
+                >
+                  Próximo
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </AgencyLayout>
   );
 } 
