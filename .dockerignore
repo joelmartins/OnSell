@@ -1,0 +1,49 @@
+# Dependencies
+/node_modules
+/vendor
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+/.phpunit.cache
+.phpunit.result.cache
+phpunit.xml
+phpunit.xml.dist
+
+# Production
+/build
+/public/hot
+/public/storage
+/public/build
+
+# Storage
+/storage/*.key
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Misc
+/.git
+/.idea
+/.vscode
+/.fleet
+/.github
+/docs
+/tests
+.DS_Store
+Thumbs.db
+Homestead.json
+Homestead.yaml
+
+# Environment files
+/.env
+/.env.local
+/.env.*.local
+/.env.development.local
+/.env.test.local
+/.env.production.local 
