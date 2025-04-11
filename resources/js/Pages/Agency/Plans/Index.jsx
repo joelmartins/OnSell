@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { router, usePage } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
 import { 
   Table, 
   TableBody, 
@@ -14,7 +14,7 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
+} from "@/Components/ui/table";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -22,8 +22,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+} from "@/Components/ui/dropdown-menu";
+import { Badge } from "@/Components/ui/badge";
 import { 
   Search, 
   Plus, 

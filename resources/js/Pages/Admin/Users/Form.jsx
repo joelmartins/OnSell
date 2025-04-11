@@ -10,12 +10,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/Components/ui/select";
 import { 
   Alert,
   AlertDescription,
   AlertTitle,
-} from "@/components/ui/alert";
+} from "@/Components/ui/alert";
 import { RefreshCw, Copy, Check, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export default function UserForm({ user = null, clients, agencies, isEditing, flash }) {

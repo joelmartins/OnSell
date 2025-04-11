@@ -21,7 +21,7 @@ import {
   CardDescription, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
+} from "@/Components/ui/card";
 import { 
   CheckCircle, 
   MailCheck, 

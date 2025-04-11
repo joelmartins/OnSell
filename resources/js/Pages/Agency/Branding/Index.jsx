@@ -7,16 +7,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { router, usePage } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Input } from '@/Components/ui/input';
+import { Button } from '@/Components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/Components/ui/separator';
 import { Save, Upload, Globe, Layout, Palette } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Textarea } from '@/Components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '@/Components/ui/checkbox';
 
 const brandingSchema = z.object({
   name: z.string().min(3, { message: 'Nome deve ter pelo menos 3 caracteres' }),

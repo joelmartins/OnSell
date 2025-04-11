@@ -10,7 +10,7 @@ import {
   CardDescription, 
   CardHeader, 
   CardTitle 
-} from "@/components/ui/card";
+} from "@/Components/ui/card";
 import { 
   Table, 
   TableBody, 
@@ -18,9 +18,9 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@/Components/ui/table";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -28,8 +28,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
+} from "@/Components/ui/dropdown-menu";
+import { Badge } from "@/Components/ui/badge";
 import { toast } from 'react-toastify';
 import { 
   Search, 

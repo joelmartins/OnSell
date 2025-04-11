@@ -3,8 +3,8 @@
 import { Head } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Button } from '@/Components/ui/button';
 import { 
   Users, 
   Palette, 
