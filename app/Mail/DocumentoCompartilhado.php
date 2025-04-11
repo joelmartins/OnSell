@@ -65,7 +65,7 @@ class DocumentoCompartilhado extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.documento-compartilhado',
+            view: 'emails.documents.documento-compartilhado',
             with: [
                 'remetente' => $this->remetente,
                 'destinatario' => $this->destinatario,

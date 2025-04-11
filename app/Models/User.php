@@ -13,6 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use Lab404\Impersonate\Models\Impersonate;
+use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable implements MustVerifyEmail, Auditable
 {
@@ -57,6 +58,17 @@ class User extends Authenticatable implements MustVerifyEmail, Auditable
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     /**

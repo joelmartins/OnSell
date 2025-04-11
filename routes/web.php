@@ -213,4 +213,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('stop.impersonating');
 });
 
+// Rotas temporárias para testar os e-mails
+Route::prefix('test-emails')->middleware(['auth', 'role:admin.super'])->group(function () {
+    Route::get('/welcome', [\App\Http\Controllers\TestEmailController::class, 'testWelcomeEmail'])->name('test.email.welcome');
+    Route::get('/password-reset', [\App\Http\Controllers\TestEmailController::class, 'testPasswordReset'])->name('test.email.password-reset');
+    Route::get('/account-activation', [\App\Http\Controllers\TestEmailController::class, 'testAccountActivation'])->name('test.email.account-activation');
+});
+
 require __DIR__.'/auth.php';

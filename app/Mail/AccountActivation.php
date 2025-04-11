@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use App\Models\User;
-use App\Models\Agency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -11,22 +10,20 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class WelcomeNewClient extends Mailable implements ShouldQueue
+class AccountActivation extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $user;
-    public $password;
-    public $agency;
+    public $activationUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, string $password, Agency $agency)
+    public function __construct(User $user, string $activationUrl)
     {
         $this->user = $user;
-        $this->password = $password;
-        $this->agency = $agency;
+        $this->activationUrl = $activationUrl;
     }
 
     /**
@@ -35,7 +32,7 @@ class WelcomeNewClient extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Boas-vindas à plataforma ' . $this->agency->name,
+            subject: 'Ativação de Conta - ' . config('app.name'),
         );
     }
 
@@ -45,12 +42,10 @@ class WelcomeNewClient extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.clients.welcome-client',
+            view: 'emails.auth.account-activation',
             with: [
                 'user' => $this->user,
-                'password' => $this->password,
-                'agency' => $this->agency,
-                'loginUrl' => route('login'),
+                'activationUrl' => $this->activationUrl,
             ],
         );
     }
