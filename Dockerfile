@@ -12,7 +12,6 @@ COPY vite.config.js ./
 COPY public/ public/
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
-COPY .env ./
 COPY artisan ./
 
 # Garante que tenha as views (úteis pro SSR ou build)
