@@ -14,6 +14,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
         "owen-it/laravel-auditing": "^14.0",
+        "predis/predis": "^2.3",
         "resend/resend-laravel": "^0.17.0",
         "spatie/laravel-permission": "^6.16",
         "stancl/tenancy": "^3.9",

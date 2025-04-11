@@ -15,7 +15,7 @@ import { Switch } from '@/Components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Separator } from '@/Components/ui/separator';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
-import { Globe, Shield, FileText, Settings, Save, ArrowRight, Cloud, Server, Upload, Wrench } from 'lucide-react';
+import { Globe, Shield, FileText, Settings, Save, ArrowRight, Cloud, Server, Upload, Wrench, Database } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -117,6 +117,12 @@ export default function SettingsIndex({ auth }) {
             <Link href={route('admin.settings.logs')}>
               <FileText className="mr-2 h-4 w-4" />
               Logs
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={route('admin.settings.queues.index')}>
+              <Database className="mr-2 h-4 w-4" />
+              Gerenciador de Filas
             </Link>
           </Button>
         </div>

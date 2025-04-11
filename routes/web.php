@@ -93,6 +93,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/profile', [\App\Http\Controllers\Admin\SettingsController::class, 'profile'])->name('profile');
             Route::patch('/profile', [\App\Http\Controllers\Admin\SettingsController::class, 'updateProfile'])->name('update-profile');
             Route::put('/password', [\App\Http\Controllers\Admin\SettingsController::class, 'updatePassword'])->name('update-password');
+
+            // Gerenciador de Filas
+            Route::get('/queues', [\App\Http\Controllers\Admin\QueueManagerController::class, 'index'])->name('queues.index');
+            Route::post('/queues/flush-failed', [\App\Http\Controllers\Admin\QueueManagerController::class, 'flushFailed'])->name('queues.flush-failed');
+            Route::post('/queues/retry-failed', [\App\Http\Controllers\Admin\QueueManagerController::class, 'retryFailed'])->name('queues.retry-failed');
+            Route::post('/queues/purge', [\App\Http\Controllers\Admin\QueueManagerController::class, 'purgeQueue'])->name('queues.purge');
+            Route::post('/queues/restart-worker', [\App\Http\Controllers\Admin\QueueManagerController::class, 'restartWorker'])->name('queues.restart-worker');
         });
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
