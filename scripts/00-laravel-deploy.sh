@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 
-echo "🐘 Instalando dependências PHP com Composer..."
+echo "🎯 Rodando deploy no Render"
+
+echo "📦 Instalando dependências"
 composer install --no-dev --optimize-autoloader
 
-echo "🔧 Executando migrations..."
-php artisan migrate --force
-
-echo "📂 Configurando permissões..."
+echo "📁 Garantindo permissões"
 chmod -R 775 storage bootstrap/cache
 
-echo "📦 Build dos assets com npm..."
-npm install
-npm run build
+echo "🚀 Rodando migrations"
+php artisan migrate --force
 
-echo "✅ Deploy Laravel finalizado!"
+echo "✅ Deploy pronto!"

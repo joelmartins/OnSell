@@ -3,7 +3,6 @@ FROM node:18 AS node-builder
 
 WORKDIR /app
 
-# Copia só os arquivos necessários pro build do frontend
 COPY package*.json ./
 RUN npm install
 
@@ -14,37 +13,39 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 COPY artisan ./
 
-# Garante que tenha as views (úteis pro SSR ou build)
-COPY resources/views/ resources/views/
-
-# Faz o build dos assets (vite)
 RUN npm run build
 
-# Etapa 2: Imagem final com PHP + Laravel
-FROM php:8.3-fpm
+# Etapa 2: Imagem final com PHP + Octane
+FROM php:8.3-cli
 
-# Instala extensões necessárias
+# Instala dependências do sistema
 RUN apt-get update && apt-get install -y \
-    zip unzip curl git libonig-dev libxml2-dev libzip-dev libpq-dev \
+    zip unzip curl git libonig-dev libxml2-dev libzip-dev libpq-dev libssl-dev \
     && docker-php-ext-install pdo pdo_mysql mbstring zip
+
+# Instala Swoole via PECL (requerido pelo Octane)
+RUN pecl install swoole && docker-php-ext-enable swoole
 
 # Instala Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-# Copia app Laravel
+# Copia código da aplicação
 COPY . .
 
-# Copia os assets construídos da etapa do Node
+# Copia assets prontos da etapa Node
 COPY --from=node-builder /app/public /var/www/public
 
-# Instala dependências do Laravel
+# Instala dependências do Laravel (produção)
 RUN composer install --no-dev --optimize-autoloader
 
-# Permissões para o Laravel funcionar corretamente
+# Permissões para storage e cache
 RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-EXPOSE 9000
-CMD ["php-fpm"]
+# Porta usada pelo Octane/Swoole
+EXPOSE 8080
+
+# Comando de inicialização
+CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8080"]
