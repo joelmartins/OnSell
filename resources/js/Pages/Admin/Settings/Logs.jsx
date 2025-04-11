@@ -218,14 +218,6 @@ export default function LogsSettings({ auth }) {
           <h2 className="text-2xl font-semibold">Logs do Sistema</h2>
           <p className="text-muted-foreground">Visualize e analise os registros de atividade do sistema</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={route('admin.settings.index')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Configurações Gerais
-            </Link>
-          </Button>
-        </div>
       </div>
       
       <Tabs defaultValue="all" className="w-full space-y-6">

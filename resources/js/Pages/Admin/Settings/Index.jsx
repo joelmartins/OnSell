@@ -106,26 +106,6 @@ export default function SettingsIndex({ auth }) {
           <h2 className="text-2xl font-semibold">Configurações</h2>
           <p className="text-muted-foreground">Gerencie as configurações gerais da plataforma</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={route('admin.settings.profile')}>
-              <Settings className="mr-2 h-4 w-4" />
-              Perfil
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={route('admin.settings.logs')}>
-              <FileText className="mr-2 h-4 w-4" />
-              Logs
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={route('admin.settings.queues.index')}>
-              <Database className="mr-2 h-4 w-4" />
-              Gerenciador de Filas
-            </Link>
-          </Button>
-        </div>
       </div>
       
       <Form {...form}>
