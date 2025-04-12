@@ -781,6 +781,16 @@ export default function BrandingIndex({ agency }) {
                               >
                                 Copiar
                               </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  window.open(`https://${domainForm.watch('subdomain')}.${window.location.hostname.replace(/^www\./, '')}`, '_blank');
+                                }}
+                              >
+                                Visualizar
+                              </Button>
                             </div>
                           ) : (
                             <p className="text-muted-foreground text-sm mt-2">
@@ -806,8 +816,50 @@ export default function BrandingIndex({ agency }) {
                             >
                               Copiar
                             </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                window.open(`${window.location.origin}/agency/${agency.id}/landing`, '_blank');
+                              }}
+                            >
+                              Visualizar
+                            </Button>
                           </div>
                         </div>
+
+                        {domainForm.watch('custom_domain') && domainForm.watch('domain_status') === 'active' && (
+                          <div>
+                            <h4 className="font-medium">URL com domínio personalizado:</h4>
+                            <div className="mt-2 flex items-center space-x-2">
+                              <code className="px-2 py-1 bg-gray-200 rounded text-sm">
+                                https://{domainForm.watch('custom_domain')}
+                              </code>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`https://${domainForm.watch('custom_domain')}`);
+                                  toast.success('URL copiada para a área de transferência!');
+                                }}
+                              >
+                                Copiar
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  window.open(`https://${domainForm.watch('custom_domain')}`, '_blank');
+                                }}
+                              >
+                                Visualizar
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
