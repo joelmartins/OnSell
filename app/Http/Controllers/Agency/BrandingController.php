@@ -4,14 +4,23 @@ namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
 use App\Models\Agency;
+use App\Services\DomainService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class BrandingController extends Controller
 {
+    protected $domainService;
+
+    public function __construct(DomainService $domainService)
+    {
+        $this->domainService = $domainService;
+    }
+
     /**
      * Exibe a página de configurações de marca
      */
@@ -41,6 +50,12 @@ class BrandingController extends Controller
             'impersonation_data' => $impersonating
         ]);
         
+        // Obter URL completa do subdomínio para exibição
+        $subdomain_url = '';
+        if (!empty($agency->subdomain)) {
+            $subdomain_url = 'https://' . $agency->subdomain . '.' . config('app.domain', 'onsell.com.br');
+        }
+        
         // Passar agency para a view com dados adicionais para as novas abas
         return Inertia::render('Agency/Branding/Index', [
             'agency' => [
@@ -54,6 +69,7 @@ class BrandingController extends Controller
                 'custom_domain' => $agency->custom_domain,
                 'domain_status' => $agency->domain_status,
                 'subdomain' => $agency->subdomain,
+                'subdomain_url' => $subdomain_url,
                 'landing_page' => $agency->landing_page ? json_decode($agency->landing_page, true) : null,
             ]
         ]);
@@ -124,9 +140,22 @@ class BrandingController extends Controller
             $agencyId = Auth::user()->agency_id;
         }
 
+        // Buscar a agência atual para validação
+        $agency = Agency::findOrFail($agencyId);
+
         $validator = Validator::make($request->all(), [
-            'subdomain' => 'required|string|regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/|unique:agencies,subdomain,' . $agencyId,
-            'custom_domain' => 'nullable|string|regex:/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/',
+            'subdomain' => [
+                'required',
+                'string',
+                'regex:/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/',
+                Rule::unique('agencies', 'subdomain')->ignore($agencyId)
+            ],
+            'custom_domain' => [
+                'nullable',
+                'string',
+                'regex:/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/',
+                Rule::unique('agencies', 'custom_domain')->ignore($agencyId)
+            ],
         ]);
 
         if ($validator->fails()) {
@@ -135,11 +164,10 @@ class BrandingController extends Controller
 
         $validated = $validator->validated();
         
-        // Obtém a agência do ID determinado
-        $agency = Agency::findOrFail($agencyId);
+        // Verificar status do domínio
+        $domainStatus = $agency->domain_status;
         
         // Se o domínio personalizado foi alterado, definir status como pendente
-        $domainStatus = $agency->domain_status;
         if ($validated['custom_domain'] !== $agency->custom_domain) {
             $domainStatus = 'pending';
         }
@@ -151,16 +179,30 @@ class BrandingController extends Controller
             'domain_status' => $domainStatus,
         ]);
         
+        // Se há um domínio personalizado definido, verificar o status
+        if (!empty($validated['custom_domain'])) {
+            // Verificar o DNS do domínio e atualizar o status
+            $domainStatus = $this->domainService->updateDomainStatus($agency);
+            
+            if ($domainStatus === 'active') {
+                $successMessage = 'Configurações de domínio atualizadas com sucesso! Seu domínio foi verificado e está ativo.';
+            } else {
+                $successMessage = 'Configurações de domínio atualizadas. Seu domínio está pendente de verificação DNS. Por favor, configure os registros DNS conforme instruções.';
+            }
+        } else {
+            $successMessage = 'Configurações de domínio atualizadas com sucesso!';
+        }
+        
         // Log para auditoria
         Log::channel('audit')->info('Domínio da agência atualizado', [
             'user_id' => Auth::id(),
             'agency_id' => $agencyId,
             'subdomain' => $validated['subdomain'],
             'custom_domain' => $validated['custom_domain'],
-            'domain_status' => $domainStatus,
+            'domain_status' => $agency->domain_status,
         ]);
         
-        return redirect()->back()->with('success', 'Configurações de domínio atualizadas com sucesso!');
+        return redirect()->back()->with('success', $successMessage);
     }
 
     /**
@@ -214,5 +256,53 @@ class BrandingController extends Controller
         ]);
         
         return redirect()->back()->with('success', 'Landing page personalizada com sucesso!');
+    }
+
+    /**
+     * Verifica o status do domínio personalizado
+     */
+    public function checkDomainStatus(Request $request)
+    {
+        // Verificar se está impersonando uma agência
+        $agencyId = null;
+        $impersonating = session()->get('impersonate.target');
+        
+        if ($impersonating && $impersonating['type'] === 'agency') {
+            // Se está impersonando, usar o ID da agência da sessão
+            $agencyId = $impersonating['id'];
+        } else {
+            // Caso contrário, obter o ID da agência do usuário autenticado
+            $agencyId = Auth::user()->agency_id;
+        }
+
+        // Buscar a agência com o ID correto
+        $agency = Agency::findOrFail($agencyId);
+        
+        if (empty($agency->custom_domain)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Nenhum domínio personalizado configurado'
+            ], 400);
+        }
+
+        // Verificar o status do domínio
+        $status = $this->domainService->updateDomainStatus($agency);
+        
+        $message = '';
+        $statusCode = 200;
+        
+        if ($status === 'active') {
+            $message = 'Domínio verificado com sucesso!';
+        } else {
+            $message = 'O domínio ainda não está apontando para o servidor correto. Verifique as configurações de DNS.';
+            $statusCode = 202; // Accepted but not complete
+        }
+        
+        return response()->json([
+            'status' => $status,
+            'message' => $message,
+            'domain' => $agency->custom_domain,
+            'domain_status' => $agency->domain_status
+        ], $statusCode);
     }
 } 

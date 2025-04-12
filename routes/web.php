@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'update'])->name('branding.update');
         Route::put('/branding/domain', [\App\Http\Controllers\Agency\BrandingController::class, 'updateDomain'])->name('branding.update.domain');
         Route::put('/branding/landing', [\App\Http\Controllers\Agency\BrandingController::class, 'updateLandingPage'])->name('branding.update.landing');
+        Route::get('/branding/check-domain', [\App\Http\Controllers\Agency\BrandingController::class, 'checkDomainStatus'])->name('branding.check.domain');
 
         // Planos
         Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);

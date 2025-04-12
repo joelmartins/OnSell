@@ -12,7 +12,7 @@ import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Separator } from '@/Components/ui/separator';
-import { Save, Upload, Globe, Layout, Palette } from 'lucide-react';
+import { Save, Upload, Globe, Layout, Palette, RefreshCcw } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Textarea } from '@/Components/ui/textarea';
@@ -485,18 +485,58 @@ export default function BrandingIndex({ agency }) {
                     />
 
                     {domainForm.watch('custom_domain') && (
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
-                        <h3 className="font-medium mb-2">Configuração de DNS</h3>
-                        <p className="text-sm mb-2">Configure os seguintes registros DNS no seu provedor de domínio:</p>
-                        
-                        <div className="bg-white p-3 rounded-md border border-amber-200 font-mono text-xs">
-                          <p>Tipo: A</p>
-                          <p>Nome: @</p>
-                          <p>Valor: 34.95.121.61</p>
-                          <p>TTL: 3600</p>
+                      <div className="mt-4">
+                        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-800">
+                          <h3 className="font-medium mb-2 flex items-center">
+                            <span>Configuração de DNS</span>
+                            <div className="ml-2 px-2 py-0.5 text-xs rounded-full bg-amber-200">
+                              {domainForm.watch('domain_status') === 'active' ? 'Ativo' : 'Pendente'}
+                            </div>
+                          </h3>
+                          <p className="text-sm mb-2">Configure os seguintes registros DNS no seu provedor de domínio:</p>
+                          
+                          <div className="bg-white p-3 rounded-md border border-amber-200 font-mono text-xs mb-3">
+                            <p>Tipo: A</p>
+                            <p>Nome: @</p>
+                            <p>Valor: 34.95.121.61</p>
+                            <p>TTL: 3600</p>
+                          </div>
+                          
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm"
+                            className="flex items-center gap-1"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(route('agency.branding.check.domain'));
+                                const data = await response.json();
+                                
+                                if (response.ok) {
+                                  if (data.status === 'active') {
+                                    toast.success(data.message);
+                                    domainForm.setValue('domain_status', 'active');
+                                  } else {
+                                    toast.warning(data.message);
+                                  }
+                                } else {
+                                  toast.error(data.message || 'Erro ao verificar domínio');
+                                }
+                              } catch (error) {
+                                toast.error('Erro ao verificar o status do domínio');
+                                console.error(error);
+                              }
+                            }}
+                          >
+                            <RefreshCcw className="h-4 w-4" />
+                            Verificar Status do Domínio
+                          </Button>
+                          
+                          <p className="text-xs mt-3">
+                            Após configurar os registros DNS, pode levar até 48 horas para a propagação completa. 
+                            Utilize o botão acima para verificar o status.
+                          </p>
                         </div>
-                        
-                        <p className="text-xs mt-2">Após configurar, pode levar até 48 horas para propagar.</p>
                       </div>
                     )}
                   </div>
