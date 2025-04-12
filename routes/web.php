@@ -16,6 +16,11 @@ use App\Http\Controllers\Admin\IntegrationsController;
 // Rota inicial pública
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
+// Rotas para páginas públicas
+Route::get('/contact', function () { return Inertia::render('Public/Contact'); })->name('public.contact');
+Route::get('/terms', function () { return Inertia::render('Public/Terms'); })->name('public.terms');
+Route::get('/privacy', function () { return Inertia::render('Public/Privacy'); })->name('public.privacy');
+
 // Rotas públicas de landing pages e cadastro
 // Rotas para landing pages públicas de agências
 Route::get('/agency/{id}/landing', [\App\Http\Controllers\PublicLandingPageController::class, 'showById'])->name('agency.landing');

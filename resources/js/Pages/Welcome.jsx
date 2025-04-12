@@ -759,13 +759,13 @@ export default function Welcome() {
                             © 2025 OnSell. Todos os direitos reservados.
                         </p>
                         <div className="flex items-center gap-4">
-                            <Link href="/terms" className="text-sm text-gray-500 hover:underline underline-offset-4">
+                            <Link href={route('public.terms')} className="text-sm text-gray-500 hover:underline underline-offset-4">
                                 Termos
                             </Link>
-                            <Link href="/privacy" className="text-sm text-gray-500 hover:underline underline-offset-4">
+                            <Link href={route('public.privacy')} className="text-sm text-gray-500 hover:underline underline-offset-4">
                                 Privacidade
                             </Link>
-                            <Link href="/contact" className="text-sm text-gray-500 hover:underline underline-offset-4">
+                            <Link href={route('public.contact')} className="text-sm text-gray-500 hover:underline underline-offset-4">
                                 Contato
                             </Link>
                         </div>
