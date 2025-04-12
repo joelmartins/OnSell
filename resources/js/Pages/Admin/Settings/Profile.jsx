@@ -9,7 +9,8 @@ import { Label } from '@/Components/ui/label';
 import { Input } from '@/Components/ui/input';
 import { toast } from 'react-toastify';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Phone } from 'lucide-react';
+import { PhoneInput } from '@/Components/ui/phone-input';
 
 export default function Profile({ auth, mustVerifyEmail, status, user }) {
   const [activeTab, setActiveTab] = useState('profile');
@@ -17,6 +18,8 @@ export default function Profile({ auth, mustVerifyEmail, status, user }) {
   const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
     name: user.name,
     email: user.email,
+    phone: user.phone || '',
+    phone_country: user.phone_country || '+55',
   });
 
   const { data: passwordData, setData: setPasswordData, reset, processing: passwordProcessing, errors: passwordErrors, put } = useForm({
@@ -75,7 +78,7 @@ export default function Profile({ auth, mustVerifyEmail, status, user }) {
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
               <CardDescription>
-                Atualize seu nome e endereço de e-mail
+                Atualize seu nome, e-mail e telefone
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -113,6 +116,22 @@ export default function Profile({ auth, mustVerifyEmail, status, user }) {
                         {errors.email}
                       </p>
                     }
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone" className="flex items-center gap-1">
+                      <Phone className="h-4 w-4" />
+                      Telefone
+                    </Label>
+                    <PhoneInput 
+                      id="phone"
+                      name="phone"
+                      value={data.phone}
+                      country={data.phone_country}
+                      onValueChange={(value) => setData('phone', value)}
+                      onCountryChange={(code) => setData('phone_country', code)}
+                      error={errors.phone}
+                    />
                   </div>
                 </div>
                 
