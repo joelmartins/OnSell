@@ -42,6 +42,7 @@ export default function PlansIndex({ plans = [] }) {
   const { auth } = usePage().props;
   const [search, setSearch] = useState('');
   const [filteredPlans, setFilteredPlans] = useState(plans);
+  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     if (plans.length > 0) {
@@ -71,11 +72,39 @@ export default function PlansIndex({ plans = [] }) {
   };
 
   const handleDuplicate = (id) => {
-    router.visit(route('agency.plans.duplicate', id));
+    if (duplicating) {
+      return;
+    }
+    
+    setDuplicating(true);
+    toast.info('Duplicando plano, aguarde um momento...', { autoClose: 3000 });
+    
+    router.visit(route('agency.plans.duplicate', id), {
+      onSuccess: () => {
+        setDuplicating(false);
+      },
+      onError: (errors) => {
+        setDuplicating(false);
+        console.error('Erro ao duplicar plano:', errors);
+        
+        if (errors.error) {
+          if (errors.error.includes('Unique violation') || errors.error.includes('duplicate key')) {
+            toast.error('Erro ao duplicar: conflito de ID. Tente novamente em alguns instantes.');
+          } else {
+            toast.error(errors.error);
+          }
+        } else {
+          toast.error('Ocorreu um erro ao duplicar o plano. Tente novamente mais tarde.');
+        }
+      },
+      onFinish: () => {
+        setDuplicating(false);
+      }
+    });
   };
 
   const handleToggleStatus = (id) => {
-    router.put(route('agency.plans.toggle-status', id), {}, {
+    router.put(route('agency.plans.toggle', id), {}, {
       onSuccess: () => {
         toast.success('Status do plano atualizado com sucesso!');
       },
@@ -91,8 +120,13 @@ export default function PlansIndex({ plans = [] }) {
         onSuccess: () => {
           toast.success('Plano excluído com sucesso!');
         },
-        onError: () => {
-          toast.error('Ocorreu um erro ao excluir o plano.');
+        onError: (errors) => {
+          console.error('Erro ao excluir plano:', errors);
+          if (errors.error) {
+            toast.error(errors.error);
+          } else {
+            toast.error('Ocorreu um erro ao excluir o plano.');
+          }
         }
       });
     }
@@ -211,9 +245,12 @@ export default function PlansIndex({ plans = [] }) {
                               <Edit className="mr-2 h-4 w-4" />
                               <span>Editar</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(plan.id)}>
+                            <DropdownMenuItem 
+                              onClick={() => handleDuplicate(plan.id)}
+                              disabled={duplicating}
+                            >
                               <Copy className="mr-2 h-4 w-4" />
-                              <span>Duplicar</span>
+                              <span>{duplicating ? 'Duplicando...' : 'Duplicar'}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleToggleStatus(plan.id)}>
                               {plan.is_active ? (

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Agency\AutomationController;
+use App\Http\Controllers\Admin\IntegrationsController;
 
 // Rota inicial pública
 Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -72,8 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Rotas de Integrações Específicas
         Route::get('/integrations/whatsapp', [\App\Http\Controllers\Admin\IntegrationsController::class, 'whatsapp'])->name('integrations.whatsapp');
-        Route::get('/integrations/evolution', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolution'])->name('integrations.evolution.index');
-        Route::get('/integrations/resend', [\App\Http\Controllers\Admin\IntegrationsController::class, 'resend'])->name('integrations.resend');
+        Route::get('/integrations/evolution', [IntegrationsController::class, 'evolutionIndex'])->name('admin.integrations.evolution.index');
+        Route::get('/integrations/evolution/settings', [IntegrationsController::class, 'evolutionSettings'])->name('admin.integrations.evolution.settings');
+        Route::post('/integrations/evolution/webhook', [IntegrationsController::class, 'evolutionWebhook'])->name('admin.integrations.evolution.webhook');
         Route::get('/integrations/ses', [\App\Http\Controllers\Admin\IntegrationsController::class, 'ses'])->name('integrations.ses');
         Route::get('/integrations/twilio', [\App\Http\Controllers\Admin\IntegrationsController::class, 'twilio'])->name('integrations.twilio');
         Route::get('/integrations/vapi', [\App\Http\Controllers\Admin\IntegrationsController::class, 'vapi'])->name('integrations.vapi');
@@ -126,6 +128,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);
         Route::put('/plans/{plan}/toggle', [\App\Http\Controllers\Agency\PlanController::class, 'toggle'])->name('plans.toggle');
         Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Agency\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
+        Route::get('/plans/{plan}/duplicate', [\App\Http\Controllers\Agency\PlanController::class, 'duplicate'])->name('plans.duplicate');
+        Route::delete('/plans/{id}', [\App\Http\Controllers\Agency\PlanController::class, 'destroy'])->name('plans.destroy');
 
         // Usuários
         Route::get('/users', [\App\Http\Controllers\Agency\UserController::class, 'index'])->name('users.index');

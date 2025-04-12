@@ -108,39 +108,6 @@ class DemoDataSeeder extends Seeder
             $createdAgencyPlans[] = Plan::updateOrCreate(['id' => $id], $planData);
         }
         
-        // Criar planos da agência (para gerenciar clientes)
-        $agencyOwnerPlans = [
-            // Plano Básico para a agência gerenciar clientes
-            [
-                'id' => 9,
-                'name' => 'Agência Personalizada Starter',
-                'description' => 'Plano para agências gerenciarem até 5 clientes',
-                'price' => 297.90,
-                'period' => 'monthly',
-                'agency_id' => $agency->id,
-                'is_active' => true,
-                'is_agency_plan' => true,
-                'features' => json_encode([
-                    'Até 5 clientes',
-                    'Painel administrativo',
-                    'Marca personalizável',
-                    'Domínio personalizado',
-                ]),
-                'max_clients' => 5,
-                'has_whatsapp_integration' => true,
-                'has_email_integration' => true,
-                'has_meta_integration' => true,
-                'has_google_integration' => true,
-                'has_custom_domain' => true,
-            ],
-        ];
-
-        foreach ($agencyOwnerPlans as $planData) {
-            $id = $planData['id'];
-            unset($planData['id']);
-            Plan::updateOrCreate(['id' => $id], $planData);
-        }
-        
         // 4. Criar cliente 1 associado à agência (com o plano básico da agência)
         $client1 = Client::create([
             'name' => 'Restaurante Sabor & Arte',

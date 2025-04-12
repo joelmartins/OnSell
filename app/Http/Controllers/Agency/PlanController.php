@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class PlanController extends Controller
 {
@@ -68,7 +70,10 @@ class PlanController extends Controller
      */
     public function create()
     {
-        //
+        // Verificar permissão de criação
+        Gate::authorize('create', Plan::class);
+        
+        return Inertia::render('Agency/Plans/Create');
     }
 
     /**
@@ -78,7 +83,7 @@ class PlanController extends Controller
     {
         try {
             // Verificar permissão de criação
-            $this->authorize('create', Plan::class);
+            Gate::authorize('create', Plan::class);
             
             // Obter ID da agência do usuário autenticado ou do modo de impersonação
             $agencyId = $this->getAgencyId();
@@ -114,13 +119,24 @@ class PlanController extends Controller
             $plan->is_featured = $validated['is_featured'] ?? false;
             $plan->features = $validated['features'] ?? [];
             $plan->agency_id = $agencyId;
-            $plan->is_agency_plan = false; // Planos de agência são sempre para clientes
+            
+            // Garantir que agências só criem planos para clientes finais, nunca para outras agências
+            $plan->is_agency_plan = false;
+            
             $plan->monthly_leads = $validated['monthly_leads'] ?? null;
             $plan->max_landing_pages = $validated['max_landing_pages'] ?? null;
             $plan->max_pipelines = $validated['max_pipelines'] ?? null;
             $plan->total_leads = $validated['total_leads'] ?? null;
             $plan->max_clients = $validated['max_clients'] ?? null;
             $plan->save();
+            
+            // Registrar ação no log
+            Log::channel('audit')->info('Plano criado por agência', [
+                'user_id' => Auth::id(),
+                'agency_id' => $agencyId,
+                'plan_id' => $plan->id, 
+                'plan_name' => $plan->name
+            ]);
             
             return redirect()->route('agency.plans.index')
                 ->with('success', 'Plano criado com sucesso!');
@@ -137,9 +153,53 @@ class PlanController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Plan $plan)
     {
-        //
+        // Verificar permissão de visualização
+        Gate::authorize('view', $plan);
+        
+        // Formatar o preço para o formato brasileiro (R$ X,XX)
+        $priceFormatted = 'R$ ' . number_format((float)$plan->price, 2, ',', '.');
+        
+        // Processar features para garantir que seja um array
+        $features = [];
+        if (!empty($plan->features)) {
+            if (is_string($plan->features)) {
+                try {
+                    $decodedFeatures = json_decode($plan->features, true);
+                    if (is_array($decodedFeatures)) {
+                        $features = $decodedFeatures;
+                    } elseif (is_object($decodedFeatures)) {
+                        $features = (array)$decodedFeatures;
+                    }
+                } catch (\Exception $e) {
+                    $features = [];
+                }
+            } elseif (is_array($plan->features)) {
+                $features = $plan->features;
+            } elseif (is_object($plan->features)) {
+                $features = (array)$plan->features;
+            }
+        }
+        
+        return Inertia::render('Agency/Plans/Show', [
+            'plan' => [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'price' => $priceFormatted,
+                'period' => $plan->period,
+                'is_active' => $plan->is_active,
+                'is_featured' => $plan->is_featured,
+                'features' => $features,
+                'monthly_leads' => $plan->monthly_leads,
+                'max_landing_pages' => $plan->max_landing_pages,
+                'max_pipelines' => $plan->max_pipelines,
+                'total_leads' => $plan->total_leads,
+                'max_clients' => $plan->max_clients,
+                'clients_count' => $plan->clients()->count()
+            ]
+        ]);
     }
 
     /**
@@ -148,10 +208,31 @@ class PlanController extends Controller
     public function edit(Plan $plan)
     {
         // Verificar permissão de edição
-        $this->authorize('update', $plan);
+        Gate::authorize('update', $plan);
         
         // Formatar o preço para o formato brasileiro (R$ X,XX)
         $priceFormatted = 'R$ ' . number_format((float)$plan->price, 2, ',', '.');
+        
+        // Processar features para garantir que seja um array
+        $features = [];
+        if (!empty($plan->features)) {
+            if (is_string($plan->features)) {
+                try {
+                    $decodedFeatures = json_decode($plan->features, true);
+                    if (is_array($decodedFeatures)) {
+                        $features = $decodedFeatures;
+                    } elseif (is_object($decodedFeatures)) {
+                        $features = (array)$decodedFeatures;
+                    }
+                } catch (\Exception $e) {
+                    $features = [];
+                }
+            } elseif (is_array($plan->features)) {
+                $features = $plan->features;
+            } elseif (is_object($plan->features)) {
+                $features = (array)$plan->features;
+            }
+        }
         
         return Inertia::render('Agency/Plans/Edit', [
             'plan' => [
@@ -162,7 +243,7 @@ class PlanController extends Controller
                 'period' => $plan->period,
                 'is_active' => $plan->is_active,
                 'is_featured' => $plan->is_featured,
-                'features' => $plan->features,
+                'features' => $features,
                 'is_agency_plan' => $plan->is_agency_plan,
                 'monthly_leads' => $plan->monthly_leads,
                 'max_landing_pages' => $plan->max_landing_pages,
@@ -180,7 +261,7 @@ class PlanController extends Controller
     {
         try {
             // Verificar permissão de edição
-            $this->authorize('update', $plan);
+            Gate::authorize('update', $plan);
             
             // Validar dados enviados
             $validated = $request->validate([
@@ -211,12 +292,24 @@ class PlanController extends Controller
             $plan->is_active = $validated['is_active'] ?? $plan->is_active;
             $plan->is_featured = $validated['is_featured'] ?? $plan->is_featured;
             $plan->features = $validated['features'] ?? $plan->features;
+            
+            // Garantir que agências só possam ter planos para clientes finais
+            $plan->is_agency_plan = false;
+            
             $plan->monthly_leads = $validated['monthly_leads'] ?? $plan->monthly_leads;
             $plan->max_landing_pages = $validated['max_landing_pages'] ?? $plan->max_landing_pages;
             $plan->max_pipelines = $validated['max_pipelines'] ?? $plan->max_pipelines;
             $plan->total_leads = $validated['total_leads'] ?? $plan->total_leads;
             $plan->max_clients = $validated['max_clients'] ?? $plan->max_clients;
             $plan->save();
+            
+            // Registrar ação no log
+            Log::channel('audit')->info('Plano atualizado por agência', [
+                'user_id' => Auth::id(),
+                'agency_id' => $plan->agency_id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name
+            ]);
             
             return redirect()->route('agency.plans.index')
                 ->with('success', 'Plano atualizado com sucesso!');
@@ -233,9 +326,132 @@ class PlanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        //
+        try {
+            // Encontrar o plano pelo ID
+            $plan = Plan::findOrFail($id);
+            
+            Log::channel('audit')->info('Iniciando tentativa de exclusão de plano', [
+                'user_id' => Auth::id(),
+                'user_roles' => Auth::user()->getRoleNames(),
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+                'plan_agency_id' => $plan->agency_id,
+                'is_impersonating' => session()->has('impersonate.target'),
+                'impersonation_data' => session()->has('impersonate.target') ? session()->get('impersonate.target') : null
+            ]);
+            
+            // Verificar se o plano está em uso
+            if ($plan->clients()->count() > 0) {
+                Log::channel('audit')->warning('Tentativa de excluir plano em uso', [
+                    'user_id' => Auth::id(),
+                    'agency_id' => $plan->agency_id,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name,
+                    'clients_count' => $plan->clients()->count()
+                ]);
+                
+                return back()->withErrors([
+                    'error' => 'Este plano não pode ser excluído porque está sendo utilizado por clientes.'
+                ]);
+            }
+            
+            // Obter ID da agência e do usuário
+            $agencyId = $plan->agency_id;
+            $userId = Auth::id();
+            
+            Log::channel('audit')->info('Comparando IDs para permissão de exclusão', [
+                'user_id' => $userId,
+                'plan_agency_id' => (int)$agencyId,
+                'user_agency_id' => (int)Auth::user()->agency_id,
+                'is_admin' => Auth::user()->hasRole('admin.super'),
+                'user_roles' => Auth::user()->getRoleNames()
+            ]);
+            
+            // Verificar permissão manualmente
+            $impersonating = session()->get('impersonate.target');
+            $canDelete = false;
+            
+            // Se estiver impersonando uma agência
+            if ($impersonating && $impersonating['type'] === 'agency') {
+                $canDelete = (int)$impersonating['id'] === (int)$agencyId;
+                
+                Log::channel('audit')->info('Verificação de permissão para excluir plano (impersonando)', [
+                    'user_id' => $userId,
+                    'can_delete' => $canDelete,
+                    'impersonating_agency_id' => (int)$impersonating['id'],
+                    'plan_agency_id' => (int)$agencyId,
+                    'is_equal' => ((int)$impersonating['id'] === (int)$agencyId) ? 'sim' : 'não'
+                ]);
+            } 
+            // Se for um admin do sistema
+            else if (Auth::user()->hasRole('admin.super')) {
+                $canDelete = true;
+                
+                Log::channel('audit')->info('Admin com permissão para excluir plano', [
+                    'user_id' => $userId
+                ]);
+            } 
+            // Se for um usuário da agência
+            else if (Auth::user()->hasRole(['agency.owner', 'agency.admin'])) {
+                $canDelete = (int)Auth::user()->agency_id === (int)$agencyId;
+                
+                Log::channel('audit')->info('Verificação de permissão para excluir plano (usuário da agência)', [
+                    'user_id' => $userId,
+                    'can_delete' => $canDelete,
+                    'user_agency_id' => (int)Auth::user()->agency_id,
+                    'plan_agency_id' => (int)$agencyId,
+                    'is_equal' => ((int)Auth::user()->agency_id === (int)$agencyId) ? 'sim' : 'não'
+                ]);
+            }
+            
+            if (!$canDelete) {
+                Log::channel('audit')->warning('Tentativa não autorizada de excluir plano', [
+                    'user_id' => $userId,
+                    'plan_id' => $plan->id,
+                    'plan_name' => $plan->name,
+                    'plan_agency_id' => $agencyId
+                ]);
+                
+                return redirect()->route('agency.plans.index')
+                    ->withErrors(['error' => 'Você não tem permissão para excluir este plano.']);
+            }
+            
+            // Registrar ação no log antes de excluir
+            Log::channel('audit')->info('Plano autorizado para exclusão', [
+                'user_id' => $userId,
+                'agency_id' => $agencyId,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name
+            ]);
+            
+            // Excluir o plano
+            $result = $plan->delete();
+            
+            Log::channel('audit')->info('Resultado da exclusão do plano', [
+                'result' => $result ? 'sucesso' : 'falha',
+                'user_id' => $userId,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name
+            ]);
+            
+            return redirect()->route('agency.plans.index')
+                ->with('success', 'Plano excluído com sucesso!');
+                
+        } catch (\Exception $e) {
+            Log::channel('audit')->error('Erro ao excluir plano', [
+                'user_id' => Auth::id(),
+                'plan_id' => $id,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->withErrors([
+                'error' => 'Erro ao excluir plano: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -243,14 +459,40 @@ class PlanController extends Controller
      */
     public function toggle(Plan $plan)
     {
-        $this->authorize('update', $plan);
+        try {
+            Gate::authorize('update', $plan);
 
-        $plan->is_active = !$plan->is_active;
-        $plan->save();
+            $oldStatus = $plan->is_active;
+            $plan->is_active = !$plan->is_active;
+            $plan->save();
 
-        $status = $plan->is_active ? 'ativado' : 'desativado';
+            $status = $plan->is_active ? 'ativado' : 'desativado';
+            
+            // Registrar ação no log
+            Log::channel('audit')->info('Status do plano alterado', [
+                'user_id' => Auth::id(),
+                'agency_id' => $plan->agency_id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+                'old_status' => $oldStatus ? 'ativo' : 'inativo',
+                'new_status' => $plan->is_active ? 'ativo' : 'inativo'
+            ]);
 
-        return back()->with('success', "Plano {$status} com sucesso!");
+            return back()->with('success', "Plano {$status} com sucesso!");
+            
+        } catch (\Exception $e) {
+            Log::channel('audit')->error('Erro ao alterar status do plano', [
+                'user_id' => Auth::id(),
+                'agency_id' => $plan->agency_id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withErrors([
+                'error' => 'Erro ao alterar status do plano: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -258,14 +500,103 @@ class PlanController extends Controller
      */
     public function toggleFeatured(Plan $plan)
     {
-        $this->authorize('update', $plan);
+        try {
+            Gate::authorize('update', $plan);
 
-        $plan->is_featured = !$plan->is_featured;
-        $plan->save();
+            $oldFeatured = $plan->is_featured;
+            $plan->is_featured = !$plan->is_featured;
+            $plan->save();
 
-        $status = $plan->is_featured ? 'destacado' : 'removido dos destaques';
+            $status = $plan->is_featured ? 'destacado' : 'removido dos destaques';
+            
+            // Registrar ação no log
+            Log::channel('audit')->info('Destaque do plano alterado', [
+                'user_id' => Auth::id(),
+                'agency_id' => $plan->agency_id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+                'old_featured' => $oldFeatured ? 'destacado' : 'não destacado',
+                'new_featured' => $plan->is_featured ? 'destacado' : 'não destacado'
+            ]);
 
-        return back()->with('success', "Plano {$status} com sucesso!");
+            return back()->with('success', "Plano {$status} com sucesso!");
+            
+        } catch (\Exception $e) {
+            Log::channel('audit')->error('Erro ao alterar destaque do plano', [
+                'user_id' => Auth::id(),
+                'agency_id' => $plan->agency_id,
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withErrors([
+                'error' => 'Erro ao alterar destaque do plano: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Duplicate the specified plan.
+     */
+    public function duplicate(Plan $plan)
+    {
+        try {
+            // Log simplificado
+            Log::channel('audit')->info('Iniciando duplicação de plano', [
+                'user_id' => Auth::id(), 
+                'plan_id' => $plan->id,
+                'plan_name' => $plan->name
+            ]);
+            
+            // Obter ID da agência
+            $agencyId = $this->getAgencyId();
+            
+            // Criar um novo plano sem usar ID existente
+            $newPlan = new Plan();
+            $newPlan->name = 'Cópia de ' . $plan->name;
+            $newPlan->description = $plan->description;
+            $newPlan->price = $plan->price;
+            $newPlan->period = $plan->period;
+            $newPlan->is_active = false;
+            $newPlan->is_featured = false;
+            $newPlan->features = $plan->features;
+            $newPlan->agency_id = $agencyId;
+            $newPlan->is_agency_plan = false;
+            $newPlan->monthly_leads = $plan->monthly_leads;
+            $newPlan->max_landing_pages = $plan->max_landing_pages;
+            $newPlan->max_pipelines = $plan->max_pipelines;
+            $newPlan->total_leads = $plan->total_leads;
+            $newPlan->max_clients = $plan->max_clients;
+            
+            // Forçar a correção da sequência antes de salvar
+            DB::statement('SELECT setval(\'plans_id_seq\', (SELECT MAX(id) FROM plans) + 1)');
+            
+            // Salvar o novo plano
+            $newPlan->save();
+            
+            // Log de sucesso
+            Log::channel('audit')->info('Plano duplicado com sucesso', [
+                'user_id' => Auth::id(),
+                'original_plan_id' => $plan->id,
+                'new_plan_id' => $newPlan->id
+            ]);
+            
+            return redirect()->route('agency.plans.edit', $newPlan->id)
+                ->with('success', 'Plano duplicado com sucesso! Você pode editar os detalhes agora.');
+        } catch (\Exception $e) {
+            // Log de erro detalhado
+            Log::channel('audit')->error('Erro ao duplicar plano', [
+                'user_id' => Auth::id(),
+                'plan_id' => $plan->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Retornar para a página de planos com mensagem de erro
+            return redirect()->route('agency.plans.index')
+                ->withErrors(['error' => 'Erro ao duplicar plano: ' . $e->getMessage()]);
+        }
     }
 
     /**

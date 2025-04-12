@@ -41,7 +41,9 @@ class Plan extends Model implements Auditable
         'has_crm_integration',
         'has_facebook_integration',
         'has_google_business_integration',
-        'is_agency_plan',
+        'has_meta_integration',
+        'has_google_integration',
+        'has_custom_domain',
     ];
 
     /**

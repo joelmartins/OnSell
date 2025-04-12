@@ -175,7 +175,7 @@ function IntegrationGrid({ integrations }) {
     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {integrations.map((integration) => {
         const setupUrl = getRouteUrl(integration.setup_route);
-        const isEvolution = integration.name === 'Evolution API';
+        const isEvolution = integration.name === 'Evolution API' || integration.name === 'Resend';
         
         return (
           <Card key={integration.id} className="overflow-hidden">
