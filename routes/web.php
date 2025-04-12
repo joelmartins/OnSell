@@ -72,12 +72,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Rotas de Integrações Específicas
         Route::get('/integrations/whatsapp', [\App\Http\Controllers\Admin\IntegrationsController::class, 'whatsapp'])->name('integrations.whatsapp');
-        Route::get('/integrations/evolution', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolution'])->name('integrations.evolution');
-        Route::get('/integrations/telegram', [\App\Http\Controllers\Admin\IntegrationsController::class, 'telegram'])->name('integrations.telegram');
-        Route::get('/integrations/smtp', [\App\Http\Controllers\Admin\IntegrationsController::class, 'smtp'])->name('integrations.smtp');
-        Route::get('/integrations/mailchimp', [\App\Http\Controllers\Admin\IntegrationsController::class, 'mailchimp'])->name('integrations.mailchimp');
+        Route::get('/integrations/evolution', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolution'])->name('integrations.evolution.index');
+        Route::get('/integrations/resend', [\App\Http\Controllers\Admin\IntegrationsController::class, 'resend'])->name('integrations.resend');
         Route::get('/integrations/ses', [\App\Http\Controllers\Admin\IntegrationsController::class, 'ses'])->name('integrations.ses');
         Route::get('/integrations/twilio', [\App\Http\Controllers\Admin\IntegrationsController::class, 'twilio'])->name('integrations.twilio');
+        Route::get('/integrations/vapi', [\App\Http\Controllers\Admin\IntegrationsController::class, 'vapi'])->name('integrations.vapi');
         Route::get('/integrations/meta', [\App\Http\Controllers\Admin\IntegrationsController::class, 'meta'])->name('integrations.meta');
         Route::get('/integrations/google', [\App\Http\Controllers\Admin\IntegrationsController::class, 'google'])->name('integrations.google');
 

@@ -27,8 +27,8 @@ export default function IntegrationsIndex({ auth }) {
         name: 'WhatsApp Business API', 
         description: 'Integração oficial com a API do WhatsApp Business',
         icon: <MessageSquare className="h-8 w-8" />,
-        is_active: true,
-        is_configured: true,
+        is_active: false,
+        is_configured: false,
         docs_url: 'https://developers.facebook.com/docs/whatsapp',
         setup_route: 'admin.integrations.whatsapp'
       },
@@ -40,42 +40,22 @@ export default function IntegrationsIndex({ auth }) {
         is_active: true,
         is_configured: false,
         docs_url: 'https://github.com/evolution-api',
-        setup_route: 'admin.integrations.evolution'
-      },
-      { 
-        id: 3, 
-        name: 'Telegram Bot API', 
-        description: 'Integração com bots do Telegram',
-        icon: <MessageSquare className="h-8 w-8" />,
-        is_active: false,
-        is_configured: false,
-        docs_url: 'https://core.telegram.org/bots/api',
-        setup_route: 'admin.integrations.telegram'
+        setup_route: 'admin.integrations.evolution.index'
       }
     ],
     email: [
       { 
         id: 4, 
-        name: 'SMTP Direto', 
-        description: 'Configure servidores SMTP para envio de emails',
-        icon: <Mail className="h-8 w-8" />,
-        is_active: true,
-        is_configured: true,
-        docs_url: '#',
-        setup_route: 'admin.integrations.smtp'
-      },
-      { 
-        id: 5, 
-        name: 'Mailchimp', 
-        description: 'Integração com plataforma de email marketing',
+        name: 'Resend', 
+        description: 'API de email simples e poderosa para desenvolvedores',
         icon: <Mail className="h-8 w-8" />,
         is_active: false,
         is_configured: false,
-        docs_url: 'https://mailchimp.com/developer/',
-        setup_route: 'admin.integrations.mailchimp'
+        docs_url: 'https://resend.com/docs',
+        setup_route: 'admin.integrations.resend'
       },
       { 
-        id: 6, 
+        id: 5, 
         name: 'Amazon SES', 
         description: 'Serviço de email da Amazon Web Services',
         icon: <Mail className="h-8 w-8" />,
@@ -87,7 +67,7 @@ export default function IntegrationsIndex({ auth }) {
     ],
     telephony: [
       { 
-        id: 7, 
+        id: 6, 
         name: 'Twilio', 
         description: 'Integração com serviços de telefonia da Twilio',
         icon: <Phone className="h-8 w-8" />,
@@ -95,6 +75,16 @@ export default function IntegrationsIndex({ auth }) {
         is_configured: false,
         docs_url: 'https://www.twilio.com/docs/usage/api',
         setup_route: 'admin.integrations.twilio'
+      },
+      { 
+        id: 7, 
+        name: 'Vapi', 
+        description: 'Integração com serviços de telefonia Vapi',
+        icon: <Phone className="h-8 w-8" />,
+        is_active: false,
+        is_configured: false,
+        docs_url: 'https://vapi.com/docs/',
+        setup_route: 'admin.integrations.vapi'
       }
     ],
     social: [
@@ -103,8 +93,8 @@ export default function IntegrationsIndex({ auth }) {
         name: 'Meta Business Suite', 
         description: 'Integração com Facebook e Instagram Ads',
         icon: <Globe className="h-8 w-8" />,
-        is_active: true,
-        is_configured: true,
+        is_active: false,
+        is_configured: false,
         docs_url: 'https://developers.facebook.com/docs/marketing-apis/',
         setup_route: 'admin.integrations.meta'
       },
@@ -113,7 +103,7 @@ export default function IntegrationsIndex({ auth }) {
         name: 'Google Ads', 
         description: 'Integração com plataforma de anúncios do Google',
         icon: <Globe className="h-8 w-8" />,
-        is_active: true,
+        is_active: false,
         is_configured: false,
         docs_url: 'https://developers.google.com/google-ads/api/docs/start',
         setup_route: 'admin.integrations.google'
@@ -146,7 +136,7 @@ export default function IntegrationsIndex({ auth }) {
           </TabsTrigger>
           <TabsTrigger value="social" className="flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Redes Sociais
+            Plataformas
           </TabsTrigger>
         </TabsList>
         
@@ -185,6 +175,7 @@ function IntegrationGrid({ integrations }) {
     <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {integrations.map((integration) => {
         const setupUrl = getRouteUrl(integration.setup_route);
+        const isEvolution = integration.name === 'Evolution API';
         
         return (
           <Card key={integration.id} className="overflow-hidden">
@@ -209,7 +200,7 @@ function IntegrationGrid({ integrations }) {
                 </a>
               </Button>
               
-              {setupUrl ? (
+              {isEvolution ? (
                 <Button
                   variant="default"
                   size="sm"

@@ -21,7 +21,7 @@ class IntegrationsController extends Controller
      */
     public function whatsapp()
     {
-        return Inertia::render('Admin/Integrations/WhatsApp');
+        return Inertia::render('Admin/Integrations/WhatsApp/Index');
     }
 
     /**
@@ -29,7 +29,7 @@ class IntegrationsController extends Controller
      */
     public function evolution()
     {
-        return Inertia::render('Admin/Integrations/Evolution');
+        return Inertia::render('Admin/Integrations/Evolution/Index');
     }
 
     /**
@@ -41,14 +41,6 @@ class IntegrationsController extends Controller
     }
 
     /**
-     * Configuração do SMTP
-     */
-    public function smtp()
-    {
-        return Inertia::render('Admin/Integrations/Smtp');
-    }
-
-    /**
      * Configuração do Mailchimp
      */
     public function mailchimp()
@@ -57,11 +49,19 @@ class IntegrationsController extends Controller
     }
 
     /**
+     * Configuração do Resend
+     */
+    public function resend()
+    {
+        return Inertia::render('Admin/Integrations/Resend/Index');
+    }
+
+    /**
      * Configuração do Amazon SES
      */
     public function ses()
     {
-        return Inertia::render('Admin/Integrations/Ses');
+        return Inertia::render('Admin/Integrations/Ses/Index');
     }
 
     /**
@@ -69,7 +69,15 @@ class IntegrationsController extends Controller
      */
     public function twilio()
     {
-        return Inertia::render('Admin/Integrations/Twilio');
+        return Inertia::render('Admin/Integrations/Twilio/Index');
+    }
+
+    /**
+     * Configuração do Vapi
+     */
+    public function vapi()
+    {
+        return Inertia::render('Admin/Integrations/Vapi/Index');
     }
 
     /**
@@ -77,7 +85,7 @@ class IntegrationsController extends Controller
      */
     public function meta()
     {
-        return Inertia::render('Admin/Integrations/Meta');
+        return Inertia::render('Admin/Integrations/Meta/Index');
     }
 
     /**
@@ -85,6 +93,6 @@ class IntegrationsController extends Controller
      */
     public function google()
     {
-        return Inertia::render('Admin/Integrations/Google');
+        return Inertia::render('Admin/Integrations/Google/Index');
     }
 }
