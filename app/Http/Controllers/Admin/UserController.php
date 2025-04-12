@@ -341,7 +341,7 @@ class UserController extends Controller
                 $user->assignRole('agency.owner');
                 break;
             case 'client':
-                $user->assignRole('client.owner');
+                $user->assignRole('client.user');
                 break;
             default:
                 $user->assignRole('user');

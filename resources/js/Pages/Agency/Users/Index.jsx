@@ -127,7 +127,7 @@ export default function Index({ auth, users }) {
   const getRoleBadge = (roles) => {
     if (roles.includes('agency.owner')) {
       return <Badge className="bg-blue-600">Admin da Agência</Badge>;
-    } else if (roles.includes('client.user') || roles.includes('client.owner')) {
+    } else if (roles.includes('client.user') || roles.includes('client.user')) {
       return <Badge className="bg-green-600">Cliente</Badge>;
     }
     return <Badge className="bg-gray-500">Sem papel</Badge>;

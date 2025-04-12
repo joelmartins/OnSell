@@ -136,6 +136,8 @@ class ImpersonationController extends Controller
                 'has_cascade' => !empty($cascade),
                 'ip' => request()->ip(),
                 'user_agent' => request()->userAgent(),
+                'session_id' => session()->getId(),
+                'all_session_data' => session()->all()
             ]);
         }
         
@@ -149,6 +151,7 @@ class ImpersonationController extends Controller
             Log::channel('audit')->info('Voltando ao nível anterior de impersonação', [
                 'original_user' => $cascade['original_user'],
                 'target' => $cascade['target'],
+                'session_id' => session()->getId()
             ]);
             
             // Redirecionar para o dashboard apropriado com base no tipo de target
@@ -162,8 +165,24 @@ class ImpersonationController extends Controller
         }
         
         // Não é uma cascata, encerrar a impersonação completamente
+        Log::channel('audit')->info('Encerramento completo da impersonação', [
+            'original_user' => $originalUser,
+            'target' => $target,
+            'session_id' => session()->getId()
+        ]);
+        
         session()->forget('impersonate.original_user');
         session()->forget('impersonate.target');
+        
+        // Garantir que a sessão seja salva
+        session()->save();
+        
+        // Verificar se a impersonação foi realmente removida
+        Log::channel('audit')->info('Verificação após remoção de impersonação', [
+            'has_impersonation_session' => session()->has('impersonate.target'),
+            'session_data' => session()->all(),
+            'session_id' => session()->getId()
+        ]);
         
         // Redirecionar para o dashboard principal baseado no papel do usuário
         if ($originalUser) {

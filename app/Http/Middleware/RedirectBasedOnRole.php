@@ -54,7 +54,7 @@ class RedirectBasedOnRole
                 return redirect()->route('admin.dashboard');
             } elseif ($user->hasRole('agency.owner')) {
                 return redirect()->route('agency.dashboard');
-            } elseif ($user->hasRole(['client.owner', 'client.user'])) {
+            } elseif ($user->hasRole(['client.user', 'client.user'])) {
                 return redirect()->route('client.dashboard');
             }
         }
@@ -85,7 +85,7 @@ class RedirectBasedOnRole
         }
         
         // Se for cliente, verificar se está tentando acessar rotas de admin ou agência
-        if ($user->hasRole(['client.owner', 'client.user'])) {
+        if ($user->hasRole(['client.user', 'client.user'])) {
             foreach (array_merge($adminRoutes, $agencyRoutes) as $prefix) {
                 if (str_starts_with($routeName, $prefix)) {
                     Log::channel('audit')->warning('Cliente tentando acessar área restrita', [

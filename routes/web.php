@@ -150,6 +150,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::patch('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'updateProfile'])->name('update-profile');
             Route::put('/password', [\App\Http\Controllers\Agency\SettingsController::class, 'updatePassword'])->name('update-password');
         });
+
+        // Diagnóstico de clientes
+        Route::get('/debug/clients/{client}', [\App\Http\Controllers\Agency\ResolveClientIssueController::class, 'checkClientStatus'])
+            ->name('debug.clients.check');
+        Route::post('/debug/clients/{client}/fix', [\App\Http\Controllers\Agency\ResolveClientIssueController::class, 'fixClientIssue'])
+            ->name('debug.clients.fix');
     });
     
     // Rotas de Cliente

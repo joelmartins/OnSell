@@ -173,4 +173,40 @@ class Client extends Model implements AuditableContract
         $usage = $this->getCurrentMonthUsage();
         return $usage->getRemainingLandingPages($this->id);
     }
+
+    public static function boot()
+    {
+        parent::boot();
+        
+        // Adicionar logging explícito nas operações relacionadas a soft delete
+        static::deleted(function($client) {
+            \Log::channel('audit')->info('Cliente excluído (evento deleted)', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'agency_id' => $client->agency_id,
+                'deleted_at' => $client->deleted_at,
+                'triggered_by' => auth()->id() ?? 'sistema'
+            ]);
+        });
+        
+        static::restored(function($client) {
+            \Log::channel('audit')->info('Cliente restaurado (evento restored)', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'agency_id' => $client->agency_id,
+                'restored_at' => now(),
+                'triggered_by' => auth()->id() ?? 'sistema'
+            ]);
+        });
+        
+        static::forceDeleted(function($client) {
+            \Log::channel('audit')->info('Cliente excluído permanentemente (evento forceDeleted)', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'agency_id' => $client->agency_id,
+                'force_deleted_at' => now(),
+                'triggered_by' => auth()->id() ?? 'sistema'
+            ]);
+        });
+    }
 } 

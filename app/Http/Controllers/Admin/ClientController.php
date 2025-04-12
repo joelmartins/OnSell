@@ -106,7 +106,7 @@ class ClientController extends Controller
             ]);
             
             $user->save();
-            $user->assignRole('client.owner');
+            $user->assignRole('client.user');
         }
         
         return redirect()
@@ -190,7 +190,7 @@ class ClientController extends Controller
             ]);
             
             $user->save();
-            $user->assignRole('client.owner');
+            $user->assignRole('client.user');
         }
         
         return redirect()
