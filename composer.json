@@ -10,6 +10,7 @@
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
         "laravel/framework": "^12.0",
+        "laravel/octane": "^2.9",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
@@ -17,7 +18,9 @@
         "predis/predis": "^2.3",
         "resend/resend-laravel": "^0.17.0",
         "spatie/laravel-permission": "^6.16",
+        "spiral/roadrunner": "^2024.3",
         "stancl/tenancy": "^3.9",
+        "symfony/runtime": "^7.2",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
@@ -61,6 +64,14 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+        ],
+        "octane": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --server=frankenphp --host=127.0.0.1 --port=8000 --watch\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=octane,queue,logs,vite"
+        ],
+        "cloud:publish": [
+            "@php -r \"file_exists('.env.cloud') || copy('.env', '.env.cloud');\"",
+            "laravel cloud publish"
         ]
     },
     "extra": {
@@ -74,7 +85,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "symfony/runtime": true
         }
     },
     "minimum-stability": "stable",
