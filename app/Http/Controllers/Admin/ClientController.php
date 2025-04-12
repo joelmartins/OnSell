@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -205,7 +206,15 @@ class ClientController extends Controller
     {
         // Verificar se há usuários associados
         if ($client->users()->count() > 0) {
-            return back()->with('error', 'Este cliente possui usuários associados e não pode ser excluído.');
+            // Em vez de desassociar, vamos desabilitar os usuários
+            $client->users()->update(['is_active' => false]);
+            
+            \Log::channel('audit')->info('Usuários desabilitados ao excluir cliente', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'num_users' => $client->users()->count(),
+                'user_id' => auth()->id() ?? 'sistema'
+            ]);
         }
         
         $client->delete();
@@ -229,5 +238,117 @@ class ClientController extends Controller
             : 'Cliente desativado com sucesso!';
         
         return back()->with('success', $statusMessage);
+    }
+
+    /**
+     * Display a listing of clients that have been soft deleted.
+     */
+    public function trashedIndex(Request $request): Response
+    {
+        // Verificar se o usuário é admin
+        if (!Auth::user()->hasRole('admin.super')) {
+            abort(403, 'Apenas administradores podem visualizar clientes excluídos.');
+        }
+        
+        $query = Client::onlyTrashed()->with(['agency', 'plan']);
+        
+        // Aplicar filtro de busca, se fornecido
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        $clients = $query->orderBy('deleted_at', 'desc')
+            ->paginate(10)
+            ->through(function($client) {
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'email' => $client->email,
+                    'is_active' => $client->is_active,
+                    'agency' => $client->agency ? [
+                        'id' => $client->agency->id,
+                        'name' => $client->agency->name,
+                    ] : null,
+                    'plan' => $client->plan ? [
+                        'id' => $client->plan->id,
+                        'name' => $client->plan->name,
+                    ] : null,
+                    'deleted_at' => $client->deleted_at,
+                    'created_at' => $client->created_at,
+                ];
+            });
+            
+        return Inertia::render('Admin/Clients/Trashed', [
+            'clients' => $clients,
+        ]);
+    }
+    
+    /**
+     * Restore a client that has been soft deleted.
+     */
+    public function restore($id): RedirectResponse
+    {
+        // Verificar se o usuário é admin
+        if (!Auth::user()->hasRole('admin.super')) {
+            abort(403, 'Apenas administradores podem restaurar clientes excluídos.');
+        }
+        
+        $client = Client::onlyTrashed()->findOrFail($id);
+        $client->restore();
+        
+        \Log::channel('audit')->info('Cliente restaurado manualmente pelo admin', [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+            'admin_id' => auth()->id(),
+            'admin_name' => auth()->user()->name
+        ]);
+        
+        return redirect()
+            ->route('admin.clients.trashed')
+            ->with('success', 'Cliente restaurado com sucesso!');
+    }
+    
+    /**
+     * Permanently delete a client.
+     */
+    public function forceDelete($id): RedirectResponse
+    {
+        // Verificar se o usuário é admin
+        if (!Auth::user()->hasRole('admin.super')) {
+            abort(403, 'Apenas administradores podem excluir permanentemente clientes.');
+        }
+        
+        $client = Client::withTrashed()->findOrFail($id);
+        
+        // Registrar informações do cliente antes da exclusão permanente
+        \Log::channel('audit')->info('Cliente será excluído permanentemente', [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+            'agency_id' => $client->agency_id,
+            'admin_id' => auth()->id(),
+            'admin_name' => auth()->user()->name
+        ]);
+        
+        // Verificar se há usuários associados
+        $usersCount = $client->users()->count();
+        if ($usersCount > 0) {
+            \Log::channel('audit')->warning('Cliente excluído permanentemente tem usuários associados', [
+                'client_id' => $client->id,
+                'users_count' => $usersCount
+            ]);
+            
+            // Desassociar usuários antes de excluir permanentemente
+            $client->users()->update(['client_id' => null]);
+        }
+        
+        $client->forceDelete();
+        
+        return redirect()
+            ->route('admin.clients.trashed')
+            ->with('success', 'Cliente excluído permanentemente com sucesso!');
     }
 } 

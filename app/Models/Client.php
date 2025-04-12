@@ -8,6 +8,8 @@ use App\Models\Concerns\Auditable;
 use App\Models\Pipeline;
 use App\Models\Plan;
 use App\Models\User;
+use App\Notifications\ClientDeletedNotification;
+use App\Notifications\ClientRestoredNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -187,6 +189,44 @@ class Client extends Model implements AuditableContract
                 'deleted_at' => $client->deleted_at,
                 'triggered_by' => auth()->id() ?? 'sistema'
             ]);
+            
+            // Desvincula os usuários automaticamente quando o cliente é excluído
+            // Esta é uma proteção adicional, além da que foi implementada nos controladores
+            if ($client->users()->count() > 0) {
+                // Obter usuários antes de desabilitá-los para poder enviar notificações
+                $users = $client->users()->get();
+                
+                // Desabilitar os usuários do cliente em vez de desvinculá-los
+                $client->users()->update(['is_active' => false]);
+                
+                // Enviar notificação para cada usuário afetado
+                foreach ($users as $user) {
+                    try {
+                        $user->notify(new ClientDeletedNotification($client->name));
+                        
+                        \Log::channel('audit')->info('Notificação enviada ao usuário sobre cliente excluído', [
+                            'user_id' => $user->id,
+                            'user_email' => $user->email,
+                            'client_id' => $client->id,
+                            'client_name' => $client->name
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::channel('audit')->error('Erro ao enviar notificação ao usuário', [
+                            'user_id' => $user->id,
+                            'user_email' => $user->email,
+                            'client_id' => $client->id,
+                            'client_name' => $client->name,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+                
+                \Log::channel('audit')->info('Usuários desabilitados automaticamente no evento deleted', [
+                    'client_id' => $client->id, 
+                    'client_name' => $client->name,
+                    'num_users' => count($users)
+                ]);
+            }
         });
         
         static::restored(function($client) {
@@ -195,6 +235,41 @@ class Client extends Model implements AuditableContract
                 'client_name' => $client->name,
                 'agency_id' => $client->agency_id,
                 'restored_at' => now(),
+                'triggered_by' => auth()->id() ?? 'sistema'
+            ]);
+            
+            // Obter os usuários antes de reativá-los para poder enviar notificações
+            $users = $client->users()->get();
+            
+            // Reativar os usuários do cliente quando ele for restaurado
+            $client->users()->update(['is_active' => true]);
+            
+            // Enviar notificação para cada usuário afetado
+            foreach ($users as $user) {
+                try {
+                    $user->notify(new ClientRestoredNotification($client->name));
+                    
+                    \Log::channel('audit')->info('Notificação enviada ao usuário sobre cliente restaurado', [
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'client_id' => $client->id,
+                        'client_name' => $client->name
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::channel('audit')->error('Erro ao enviar notificação ao usuário', [
+                        'user_id' => $user->id,
+                        'user_email' => $user->email,
+                        'client_id' => $client->id,
+                        'client_name' => $client->name,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            \Log::channel('audit')->info('Usuários reativados após restauração do cliente', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'num_users' => count($users),
                 'triggered_by' => auth()->id() ?? 'sistema'
             ]);
         });

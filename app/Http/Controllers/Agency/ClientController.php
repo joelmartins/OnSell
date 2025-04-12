@@ -552,7 +552,16 @@ class ClientController extends Controller
         
         // Verificar se há usuários associados
         if ($client->users()->count() > 0) {
-            return back()->with('error', 'Este cliente possui usuários associados e não pode ser excluído.');
+            // Em vez de desassociar, vamos desabilitar os usuários
+            $client->users()->update(['is_active' => false]);
+            
+            \Log::channel('audit')->info('Usuários desabilitados ao excluir cliente', [
+                'client_id' => $client->id,
+                'client_name' => $client->name,
+                'agency_id' => $agencyId,
+                'num_users' => $client->users()->count(),
+                'user_id' => Auth::id() ?? 'sistema'
+            ]);
         }
         
         try {
@@ -604,10 +613,7 @@ class ClientController extends Controller
                 'session_id' => session()->getId()
             ]);
             
-            // Usar a página intermediária para limpar o cache e redirecionar
-            $redirectUrl = route('agency.clients.index');
-            
-            // Se estiver usando impersonação, verificar se há algum problema específico
+            // Se estiver usando impersonação, registrar no log
             if ($impersonating) {
                 \Log::channel('audit')->info('Redirecionamento durante impersonação', [
                     'impersonating' => $impersonating,
@@ -616,11 +622,10 @@ class ClientController extends Controller
                 ]);
             }
             
-            // Retornar a vista de redirecionamento com o Flash Message adicionado à sessão
-            session()->flash('success', 'Cliente excluído com sucesso!');
-            return response()->view('redirect.cache_buster', [
-                'redirectUrl' => $redirectUrl
-            ]);
+            // Usar redirecionamento direto em vez da página intermediária
+            return redirect()
+                ->route('agency.clients.index')
+                ->with('success', 'Cliente excluído com sucesso!');
         } catch (\Exception $e) {
             // Log em caso de erro na exclusão
             \Log::channel('audit')->error('Erro ao excluir cliente', [

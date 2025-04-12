@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Client;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +48,32 @@ class LoginRequest extends FormRequest
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
             ]);
+        }
+
+        // Verificar se o usuário está ativo
+        $user = Auth::user();
+        
+        if (!$user->is_active) {
+            Auth::logout();
+            RateLimiter::clear($this->throttleKey());
+            
+            throw ValidationException::withMessages([
+                'email' => 'Esta conta foi desativada. Entre em contato com o administrador para mais informações.',
+            ]);
+        }
+        
+        // Se for um usuário de cliente, verificar também se o cliente está ativo
+        if ($user->client_id && $user->hasRole('client.user')) {
+            $client = Client::withTrashed()->find($user->client_id);
+            
+            if (!$client || !$client->is_active || $client->deleted_at) {
+                Auth::logout();
+                RateLimiter::clear($this->throttleKey());
+                
+                throw ValidationException::withMessages([
+                    'email' => 'O cliente associado à sua conta foi desativado ou excluído. Entre em contato com o administrador para mais informações.',
+                ]);
+            }
         }
 
         RateLimiter::clear($this->throttleKey());

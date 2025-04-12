@@ -49,6 +49,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('dashboard');
 
         // Clientes
+        Route::get('clients/trashed', [\App\Http\Controllers\Admin\ClientController::class, 'trashedIndex'])->name('clients.trashed');
+        Route::put('clients/{id}/restore', [\App\Http\Controllers\Admin\ClientController::class, 'restore'])->name('clients.restore');
+        Route::delete('clients/{id}/force-delete', [\App\Http\Controllers\Admin\ClientController::class, 'forceDelete'])->name('clients.force-delete');
         Route::resource('clients', \App\Http\Controllers\Admin\ClientController::class);
         Route::put('clients/{client}/toggle-status', [\App\Http\Controllers\Admin\ClientController::class, 'toggleStatus'])->name('clients.toggle-status');
 

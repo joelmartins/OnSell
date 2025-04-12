@@ -20,9 +20,10 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle, LogIn } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle, LogIn, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Pagination from '@/Components/Pagination';
+import React from 'react';
 
 export default function ClientsIndex({ clients = { data: [] }, agencies = [], auth }) {
   const [search, setSearch] = useState('');
@@ -37,7 +38,16 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Usar uma ref para evitar a primeira execução
+  const initialRender = React.useRef(true);
+  
   useEffect(() => {
+    // Pular a primeira renderização
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    
     if (debounced || agencyFilter) {
       router.get(
         route('admin.clients.index'), 
@@ -120,10 +130,16 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
           <h2 className="text-2xl font-semibold">Clientes</h2>
           <p className="text-muted-foreground">Gerencie todos os clientes da plataforma</p>
         </div>
-        <Button onClick={handleAdd}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Cliente
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
+          <Button onClick={() => router.visit(route('admin.clients.trashed'))} variant="outline">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Clientes Excluídos
+          </Button>
+        </div>
       </div>
 
       <Card>

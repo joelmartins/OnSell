@@ -27,6 +27,11 @@ class RouteBindingServiceProvider extends ServiceProvider
         // Modificar a lógica de resolução do Route Model Binding para o modelo Client
         // Isso garante que clientes com soft delete não sejam acessíveis normalmente via URL
         Route::bind('client', function ($value) {
+            // Se o valor for 'trashed', retornar nulo para evitar problemas com rotas especiais
+            if ($value === 'trashed') {
+                return null;
+            }
+            
             // Buscar somente clientes que não foram excluídos via soft delete
             $client = Client::where('id', $value)->first();
             

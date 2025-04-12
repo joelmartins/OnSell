@@ -42,6 +42,7 @@
         "@reactflow/node-resizer": "^2.2.14",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
+        "date-fns": "^4.1.0",
         "grapesjs": "^0.22.6",
         "grapesjs-blocks-basic": "^1.0.2",
         "grapesjs-custom-code": "^1.0.2",
