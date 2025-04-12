@@ -22,6 +22,9 @@ export default function Welcome() {
                             <Link href="#pricing" className="text-sm font-medium hover:underline underline-offset-4">
                                 Preços
                             </Link>
+                            <Link href={route('public.agencies')} className="text-sm font-medium hover:underline underline-offset-4">
+                                Agências Parceiras
+                            </Link>
                             {auth.user ? (
                                 <Link href={route('dashboard')} className="text-sm font-medium hover:underline underline-offset-4">
                                     Dashboard

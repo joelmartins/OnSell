@@ -20,6 +20,7 @@ Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('h
 Route::get('/contact', function () { return Inertia::render('Public/Contact'); })->name('public.contact');
 Route::get('/terms', function () { return Inertia::render('Public/Terms'); })->name('public.terms');
 Route::get('/privacy', function () { return Inertia::render('Public/Privacy'); })->name('public.privacy');
+Route::get('/agencies', function () { return Inertia::render('Public/Agencies'); })->name('public.agencies');
 
 // Rotas públicas de landing pages e cadastro
 // Rotas para landing pages públicas de agências
