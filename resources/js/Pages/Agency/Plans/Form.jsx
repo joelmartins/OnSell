@@ -11,7 +11,7 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Switch } from '@/Components/ui/switch';
 import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
-import { Save, Tag, Star } from 'lucide-react';
+import { Save, Tag, Star, Plus, Trash2 } from 'lucide-react';
 import { CurrencyInput } from '@/Components/ui/currency-input';
 
 // Esquema de validação do formulário
@@ -22,7 +22,7 @@ const formSchema = z.object({
   period: z.string().min(1, { message: 'Período é obrigatório' }),
   is_active: z.boolean().default(true),
   is_featured: z.boolean().default(false),
-  features: z.array(z.string()).optional().default([]),
+  features: z.any().optional(), // Permite qualquer formato de features
   monthly_leads: z.coerce.number().int().nullable().optional(),
   max_landing_pages: z.coerce.number().int().nullable().optional(),
   max_pipelines: z.coerce.number().int().nullable().optional(),
@@ -33,6 +33,7 @@ const formSchema = z.object({
 export default function AgencyPlanForm({ plan, isEditing = false }) {
   const { errors: serverErrors } = usePage().props;
   const [generalError, setGeneralError] = useState(null);
+  const [jsonFeatures, setJsonFeatures] = useState([{ key: 'feature_1', value: '' }]);
   
   // Ao carregar o componente, verificar se há erros gerais
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
       period: 'monthly',
       is_active: true,
       is_featured: false,
-      features: [],
+      features: {},
       monthly_leads: 500,
       max_landing_pages: 1,
       max_pipelines: 1,
@@ -61,29 +62,32 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
   // Carrega os dados do plano ao editar
   useEffect(() => {
     if (plan) {
-      let planFeatures = [];
-      
-      // Converter features de objeto ou string JSON para array
-      if (plan.features) {
+      // Processar features que podem estar em formato JSON
+      let featuresObj = {};
+      try {
         if (typeof plan.features === 'string') {
-          try {
-            const featuresObj = JSON.parse(plan.features);
-            // Se for um objeto, extrair os valores
-            if (typeof featuresObj === 'object' && !Array.isArray(featuresObj)) {
-              planFeatures = Object.values(featuresObj);
-            } else if (Array.isArray(featuresObj)) {
-              planFeatures = featuresObj;
-            }
-          } catch (e) {
-            console.error('Erro ao parsear features:', e);
-            planFeatures = [];
-          }
-        } else if (Array.isArray(plan.features)) {
-          planFeatures = plan.features;
-        } else if (typeof plan.features === 'object') {
-          planFeatures = Object.values(plan.features);
+          featuresObj = JSON.parse(plan.features);
+        } else if (typeof plan.features === 'object' && !Array.isArray(plan.features)) {
+          featuresObj = plan.features;
         }
+      } catch (e) {
+        console.error('Erro ao parsear features:', e);
+        featuresObj = {};
       }
+
+      // Converter features para o formato de array de objetos para a UI
+      const featuresArray = Object.entries(featuresObj).map(([key, value]) => ({
+        key,
+        value
+      }));
+
+      // Se não houver features, inicializar com uma vazia
+      if (featuresArray.length === 0) {
+        featuresArray.push({ key: 'feature_1', value: '' });
+      }
+
+      setJsonFeatures(featuresArray);
+      form.setValue('features', featuresObj);
       
       form.reset({
         name: plan.name || '',
@@ -92,7 +96,7 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
         period: plan.period || 'monthly',
         is_active: plan.is_active !== undefined ? plan.is_active : true,
         is_featured: plan.is_featured !== undefined ? plan.is_featured : false,
-        features: planFeatures,
+        features: featuresObj,
         monthly_leads: plan.monthly_leads || null,
         max_landing_pages: plan.max_landing_pages || null,
         max_pipelines: plan.max_pipelines || null,
@@ -102,53 +106,85 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
     }
   }, [plan]);
 
-  // Array de recursos do plano
-  const [features, setFeatures] = useState(['']);
-
-  // Atualizar features quando o formulário é carregado
-  useEffect(() => {
-    const formFeatures = form.watch('features');
-    if (Array.isArray(formFeatures) && formFeatures.length > 0) {
-      setFeatures(formFeatures);
-    }
-  }, [form.watch('features')]);
-
-  // Adicionar novo recurso
+  // Adicionar nova feature
   const addFeature = () => {
-    setFeatures([...features, '']);
+    // Encontrar o próximo número disponível para a feature
+    const nextNumber = jsonFeatures.length > 0 
+      ? Math.max(...jsonFeatures.map(f => {
+          const matches = f.key.match(/feature_(\d+)/);
+          return matches ? parseInt(matches[1]) : 0;
+        })) + 1
+      : 1;
+    
+    setJsonFeatures([...jsonFeatures, { key: `feature_${nextNumber}`, value: '' }]);
   };
 
-  // Remover recurso
+  // Remover feature
   const removeFeature = (index) => {
-    const newFeatures = [...features];
+    const newFeatures = [...jsonFeatures];
     newFeatures.splice(index, 1);
-    setFeatures(newFeatures);
-    form.setValue('features', newFeatures);
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
   };
 
-  // Atualizar recurso
-  const updateFeature = (index, value) => {
-    const newFeatures = [...features];
-    newFeatures[index] = value;
-    setFeatures(newFeatures);
-    form.setValue('features', newFeatures);
+  // Atualizar chave da feature
+  const updateFeatureKey = (index, newKey) => {
+    const newFeatures = [...jsonFeatures];
+    newFeatures[index].key = newKey;
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
+  };
+
+  // Atualizar valor da feature
+  const updateFeatureValue = (index, newValue) => {
+    const newFeatures = [...jsonFeatures];
+    newFeatures[index].value = newValue;
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
+  };
+
+  // Converter o array de features para objeto e atualizar no formulário
+  const updateFeaturesInForm = (features) => {
+    const featuresObj = features.reduce((obj, item) => {
+      if (item.key && item.key.trim() !== '') {
+        obj[item.key] = item.value;
+      }
+      return obj;
+    }, {});
+    
+    form.setValue('features', featuresObj);
   };
 
   function onSubmit(values) {
-    // Ajustar os valores antes de enviar
-    const formData = {
-      ...values,
-      features: features.filter(f => f.trim() !== '')
-    };
+    // Garantir que features seja um objeto válido
+    if (typeof values.features !== 'object' || Array.isArray(values.features)) {
+      values.features = {};
+    }
+    
+    // Filtrar features vazias
+    const filteredFeatures = {};
+    for (const key in values.features) {
+      if (values.features[key].trim() !== '') {
+        filteredFeatures[key] = values.features[key];
+      }
+    }
+    
+    values.features = filteredFeatures;
 
     if (isEditing) {
-      router.put(route('agency.plans.update', plan.id), formData, {
+      router.put(route('agency.plans.update', plan.id), values, {
         onError: (errors) => {
           console.error('Erros de validação:', errors);
         }
       });
     } else {
-      router.post(route('agency.plans.store'), formData, {
+      router.post(route('agency.plans.store'), values, {
         onError: (errors) => {
           console.error('Erros de validação:', errors);
         }
@@ -277,38 +313,59 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
 
         <Separator />
         
+        {/* Features do Plano - Editor de JSON */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Recursos do Plano</h3>
+            <h3 className="text-lg font-medium">Recursos do Plano (Features)</h3>
             <Button 
               type="button" 
               variant="outline" 
               onClick={addFeature} 
               className="text-xs"
             >
+              <Plus className="h-4 w-4 mr-1" />
               Adicionar Recurso
             </Button>
           </div>
           
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-gray-400" />
-              <Input
-                value={feature}
-                onChange={(e) => updateFeature(index, e.target.value)}
-                placeholder="Ex: 10 GB de armazenamento"
-                className="flex-1"
-              />
-              <Button 
-                type="button" 
-                variant="ghost" 
-                onClick={() => removeFeature(index)}
-                className="text-red-500 hover:text-red-700 p-1 h-8 w-8"
-              >
-                &times;
-              </Button>
-            </div>
-          ))}
+          <div className="space-y-3">
+            {jsonFeatures.map((feature, index) => (
+              <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-4">
+                  <div className="flex items-center space-x-2">
+                    <Tag className="h-4 w-4 text-gray-400" />
+                    <Input
+                      value={feature.key}
+                      onChange={(e) => updateFeatureKey(index, e.target.value)}
+                      placeholder="feature_1"
+                    />
+                  </div>
+                </div>
+                <div className="col-span-7">
+                  <Input
+                    value={feature.value}
+                    onChange={(e) => updateFeatureValue(index, e.target.value)}
+                    placeholder="Valor do recurso"
+                  />
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => removeFeature(index)}
+                    className="text-red-500 hover:text-red-700 p-1 h-8 w-8 flex items-center justify-center"
+                    disabled={jsonFeatures.length <= 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <FormDescription className="mt-2">
+            Os recursos serão exibidos para os usuários na página de planos. Recomendamos usar o formato feature_1, feature_2, etc.
+          </FormDescription>
         </div>
         
         <Separator />

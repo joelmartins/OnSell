@@ -11,7 +11,7 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Switch } from '@/Components/ui/switch';
 import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
-import { Save, Building2, User, Star } from 'lucide-react';
+import { Save, Building2, User, Star, Plus, Trash2, Tag } from 'lucide-react';
 import { CurrencyInput } from '@/Components/ui/currency-input';
 import { PhoneInput } from '@/Components/ui/phone-input';
 
@@ -26,11 +26,7 @@ const formSchema = z.object({
   total_leads: z.coerce.number().int().optional(),
   max_landing_pages: z.coerce.number().int().optional(),
   max_pipelines: z.coerce.number().int().optional(),
-  features: z.object({
-    users: z.coerce.number().int().min(1, { message: 'Deve permitir pelo menos 1 usuário/cliente' }),
-    integrations: z.coerce.number().int().min(0),
-    for_agency: z.boolean().default(false)
-  }),
+  features: z.any(), // Permite qualquer formato para features (será tratado no código)
   is_agency_plan: z.boolean().default(false),
   max_clients: z.coerce.number().int().optional(),
   period: z.string().min(1, { message: 'Período é obrigatório' }),
@@ -39,6 +35,7 @@ const formSchema = z.object({
 export default function PlanForm({ plan, isEditing = false }) {
   const { errors: serverErrors } = usePage().props;
   const [generalError, setGeneralError] = useState(null);
+  const [jsonFeatures, setJsonFeatures] = useState([{ key: 'feature_1', value: '' }]);
 
   // Ao carregar o componente, verificar se há erros gerais
   useEffect(() => {
@@ -60,21 +57,45 @@ export default function PlanForm({ plan, isEditing = false }) {
       total_leads: 500,
       max_landing_pages: 1,
       max_pipelines: 1,
-      features: {
-        users: 2,
-        integrations: 1,
-        for_agency: false
-      },
+      features: {},
       is_agency_plan: false,
       max_clients: 5
     },
   });
 
   // Monitora mudanças no campo for_agency
-  const isAgencyPlan = form.watch('features.for_agency');
+  const isAgencyPlan = form.watch('is_agency_plan');
 
+  // Carregar features do plano quando disponível
   useEffect(() => {
     if (plan) {
+      // Processar features que podem estar em formato JSON
+      let featuresObj = {};
+      try {
+        if (typeof plan.features === 'string') {
+          featuresObj = JSON.parse(plan.features);
+        } else if (typeof plan.features === 'object') {
+          featuresObj = plan.features;
+        }
+      } catch (e) {
+        console.error('Erro ao parsear features:', e);
+        featuresObj = {};
+      }
+
+      // Converter features para o formato de array de objetos para a UI
+      const featuresArray = Object.entries(featuresObj).map(([key, value]) => ({
+        key,
+        value
+      }));
+
+      // Se não houver features, inicializar com uma vazia
+      if (featuresArray.length === 0) {
+        featuresArray.push({ key: 'feature_1', value: '' });
+      }
+
+      setJsonFeatures(featuresArray);
+      form.setValue('features', featuresObj);
+
       form.reset({
         name: plan.name || '',
         description: plan.description || '',
@@ -85,13 +106,10 @@ export default function PlanForm({ plan, isEditing = false }) {
         total_leads: plan.total_leads || 500,
         max_landing_pages: plan.max_landing_pages || 1,
         max_pipelines: plan.max_pipelines || 1,
-        features: {
-          users: plan.features?.users || 2,
-          integrations: plan.features?.integrations || 1,
-          for_agency: plan.is_agency_plan || false
-        },
+        features: featuresObj,
         is_agency_plan: plan.is_agency_plan || false,
-        max_clients: plan.max_clients || 5
+        max_clients: plan.max_clients || 5,
+        period: plan.period || 'monthly'
       });
     }
   }, [plan]);
@@ -114,12 +132,66 @@ export default function PlanForm({ plan, isEditing = false }) {
     }
   }, [serverErrors]);
 
+  // Adicionar nova feature
+  const addFeature = () => {
+    // Encontrar o próximo número disponível para a feature
+    const nextNumber = jsonFeatures.length > 0 
+      ? Math.max(...jsonFeatures.map(f => {
+          const matches = f.key.match(/feature_(\d+)/);
+          return matches ? parseInt(matches[1]) : 0;
+        })) + 1
+      : 1;
+    
+    setJsonFeatures([...jsonFeatures, { key: `feature_${nextNumber}`, value: '' }]);
+  };
+
+  // Remover feature
+  const removeFeature = (index) => {
+    const newFeatures = [...jsonFeatures];
+    newFeatures.splice(index, 1);
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
+  };
+
+  // Atualizar chave da feature
+  const updateFeatureKey = (index, newKey) => {
+    const newFeatures = [...jsonFeatures];
+    newFeatures[index].key = newKey;
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
+  };
+
+  // Atualizar valor da feature
+  const updateFeatureValue = (index, newValue) => {
+    const newFeatures = [...jsonFeatures];
+    newFeatures[index].value = newValue;
+    setJsonFeatures(newFeatures);
+    
+    // Atualizar o valor no formulário
+    updateFeaturesInForm(newFeatures);
+  };
+
+  // Converter o array de features para objeto e atualizar no formulário
+  const updateFeaturesInForm = (features) => {
+    const featuresObj = features.reduce((obj, item) => {
+      if (item.key && item.key.trim() !== '') {
+        obj[item.key] = item.value;
+      }
+      return obj;
+    }, {});
+    
+    form.setValue('features', featuresObj);
+  };
+
   function onSubmit(values) {
     // Ajustar os valores antes de enviar
-    if (values.features.for_agency) {
+    if (values.is_agency_plan) {
       // Se for plano de agência, ajustar campos adequadamente
-      values.is_agency_plan = true;
-      values.max_clients = values.features.users;
+      values.max_clients = values.max_clients || 5;
       
       // Zerar campos não usados em planos de agência
       values.monthly_leads = null;
@@ -128,8 +200,12 @@ export default function PlanForm({ plan, isEditing = false }) {
       values.max_pipelines = null;
     } else {
       // Se for plano de cliente
-      values.is_agency_plan = false;
       values.max_clients = null;
+    }
+
+    // Garantir que features seja um objeto válido
+    if (typeof values.features !== 'object' || Array.isArray(values.features)) {
+      values.features = {};
     }
 
     if (isEditing) {
@@ -274,7 +350,7 @@ export default function PlanForm({ plan, isEditing = false }) {
 
         <FormField
           control={form.control}
-          name="features.for_agency"
+          name="is_agency_plan"
           render={({ field }) => (
             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
               <FormControl>
@@ -302,6 +378,63 @@ export default function PlanForm({ plan, isEditing = false }) {
           )}
         />
           
+        <Separator />
+        
+        {/* Features do Plano - Editor de JSON */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Recursos do Plano (Features)</h3>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={addFeature} 
+              className="text-xs"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar Recurso
+            </Button>
+          </div>
+          
+          <div className="space-y-3">
+            {jsonFeatures.map((feature, index) => (
+              <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-4">
+                  <div className="flex items-center space-x-2">
+                    <Tag className="h-4 w-4 text-gray-400" />
+                    <Input
+                      value={feature.key}
+                      onChange={(e) => updateFeatureKey(index, e.target.value)}
+                      placeholder="feature_1"
+                    />
+                  </div>
+                </div>
+                <div className="col-span-7">
+                  <Input
+                    value={feature.value}
+                    onChange={(e) => updateFeatureValue(index, e.target.value)}
+                    placeholder="Valor do recurso"
+                  />
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    onClick={() => removeFeature(index)}
+                    className="text-red-500 hover:text-red-700 p-1 h-8 w-8 flex items-center justify-center"
+                    disabled={jsonFeatures.length <= 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <FormDescription className="mt-2">
+            Os recursos serão exibidos para os usuários na página de planos.
+          </FormDescription>
+        </div>
+        
         <Separator />
         
         {/* Limites do Plano - Mostrar apenas para planos de cliente final */}
@@ -385,50 +518,32 @@ export default function PlanForm({ plan, isEditing = false }) {
           </>
         )}
         
-        <h3 className="text-lg font-medium">Recursos Adicionais</h3>
+        {isAgencyPlan && (
+          <>
+            <h3 className="text-lg font-medium">Limites para Agência</h3>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="features.users"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{isAgencyPlan ? 'Clientes' : 'Usuários'}</FormLabel>
-                <FormControl>
-                  <Input type="number" min="1" {...field} />
-                </FormControl>
-                <FormDescription>
-                  {isAgencyPlan 
-                    ? 'Número máximo de clientes que a agência pode gerenciar' 
-                    : 'Número de usuários permitidos na conta'
-                  }
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          {!isAgencyPlan && (
-            <FormField
-              control={form.control}
-              name="features.integrations"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Integrações</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="0" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Número de integrações externas permitidas
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-        </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="max_clients"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número máximo de clientes</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Número máximo de clientes que a agência pode gerenciar
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <Separator />
+            <Separator />
+          </>
+        )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FormField
