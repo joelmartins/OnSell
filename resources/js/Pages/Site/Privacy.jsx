@@ -1,43 +1,17 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
+import Header from './Components/Header';
+import Footer from './Components/Footer';
 
 export default function Privacy() {
+    const { auth } = usePage().props;
+    
     return (
         <>
             <Head title="Política de Privacidade - OnSell" />
             <div className="flex flex-col min-h-screen">
-                <header className="border-b">
-                    <div className="container mx-auto max-w-6xl flex h-16 items-center justify-between px-4">
-                        <div className="flex items-center gap-2">
-                            <Link href={route('home')}>
-                                <img src="/img/onsell_logo.svg" alt="OnSell" className="h-8" />
-                            </Link>
-                        </div>
-                        <nav className="hidden md:flex items-center gap-6">
-                            <Link href={route('home') + "#features"} className="text-sm font-medium hover:underline underline-offset-4">
-                                Funcionalidades
-                            </Link>
-                            <Link href={route('home') + "#how-it-works"} className="text-sm font-medium hover:underline underline-offset-4">
-                                Como Funciona
-                            </Link>
-                            <Link href={route('home') + "#pricing"} className="text-sm font-medium hover:underline underline-offset-4">
-                                Preços
-                            </Link>
-                            <Link href={route('public.contact')} className="text-sm font-medium hover:underline underline-offset-4">
-                                Contato
-                            </Link>
-                        </nav>
-                        <div className="flex items-center gap-4">
-                            <Link href={route('login')} className="text-sm font-medium hover:underline underline-offset-4">
-                                Login
-                            </Link>
-                            <Link href={route('register')} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary/90">
-                                Começar Grátis
-                            </Link>
-                        </div>
-                    </div>
-                </header>
+                <Header auth={auth} />
                 <main className="flex-1">
-                    <section className="py-12 md:py-20">
+                <section className="py-12 md:py-20">
                         <div className="container mx-auto max-w-4xl px-4 md:px-6">
                             <div className="flex flex-col items-center text-center space-y-4 mb-10">
                                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">
@@ -157,29 +131,7 @@ export default function Privacy() {
                         </div>
                     </section>
                 </main>
-                <footer className="border-t py-6 md:py-0">
-                    <div className="container mx-auto max-w-6xl flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row px-4">
-                        <div className="flex items-center gap-2 font-bold">
-                            <Link href={route('home')}>
-                                <img src="/img/onsell_logo.svg" alt="OnSell" className="h-6" />
-                            </Link>
-                        </div>
-                        <p className="text-center text-sm leading-loose text-gray-500 md:text-left">
-                            © 2025 OnSell. Todos os direitos reservados.
-                        </p>
-                        <div className="flex items-center gap-4">
-                            <Link href={route('public.terms')} className="text-sm text-gray-500 hover:underline underline-offset-4">
-                                Termos
-                            </Link>
-                            <Link href={route('public.privacy')} className="text-sm text-gray-500 hover:underline underline-offset-4">
-                                Privacidade
-                            </Link>
-                            <Link href={route('public.contact')} className="text-sm text-gray-500 hover:underline underline-offset-4">
-                                Contato
-                            </Link>
-                        </div>
-                    </div>
-                </footer>
+                <Footer />
             </div>
         </>
     );

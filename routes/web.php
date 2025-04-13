@@ -14,13 +14,13 @@ use App\Http\Controllers\Agency\AutomationController;
 use App\Http\Controllers\Admin\IntegrationsController;
 
 // Rota inicial pública
-Route::get('/', [\App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Route::get('/', function () { return Inertia::render('Site/Index'); })->name('site.index');
 
-// Rotas para páginas públicas
-Route::get('/contact', function () { return Inertia::render('Public/Contact'); })->name('public.contact');
-Route::get('/terms', function () { return Inertia::render('Public/Terms'); })->name('public.terms');
-Route::get('/privacy', function () { return Inertia::render('Public/Privacy'); })->name('public.privacy');
-Route::get('/agencies', function () { return Inertia::render('Public/Agencies'); })->name('public.agencies');
+// Rotas para páginas do site
+Route::get('/contact', function () { return Inertia::render('Site/Contact'); })->name('site.contact');
+Route::get('/terms', function () { return Inertia::render('Site/Terms'); })->name('site.terms');
+Route::get('/privacy', function () { return Inertia::render('Site/Privacy'); })->name('site.privacy');
+Route::get('/agencies', function () { return Inertia::render('Site/Agencies'); })->name('site.agencies');
 
 // Rotas públicas de landing pages e cadastro
 // Rotas para landing pages públicas de agências
