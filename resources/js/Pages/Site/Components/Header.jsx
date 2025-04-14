@@ -19,12 +19,6 @@ export default function Header({ auth = {} }) {
                     <Link href={route('site.index') + "#pricing"} className="text-sm font-medium hover:underline underline-offset-4">
                         Preços
                     </Link>
-                    <Link href={route('site.agencies')} className="text-sm font-medium hover:underline underline-offset-4">
-                        Agências Parceiras
-                    </Link>
-                    <Link href={route('site.contact')} className="text-sm font-medium hover:underline underline-offset-4">
-                        Contato
-                    </Link>
                     {auth.user ? (
                         <Link href={route('dashboard')} className="text-sm font-medium hover:underline underline-offset-4">
                             Dashboard
@@ -41,7 +35,7 @@ export default function Header({ auth = {} }) {
                             Dashboard
                         </Link>
                     ) : (
-                        <Link href={route('register')} className="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary/90">
+                        <Link href={route('register')} className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition">
                             Começar Grátis
                         </Link>
                     )}
