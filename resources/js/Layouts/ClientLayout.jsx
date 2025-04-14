@@ -24,8 +24,18 @@ import {
   Menu,
   LogOut,
   X,
-  FileText
+  FileText,
+  ChevronRight,
+  User,
+  Bell,
+  CreditCard
 } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/Components/ui/collapsible";
+import { cn } from '@/lib/utils';
 
 export default function ClientLayout({ children, title }) {
   const { auth, ziggy, branding, impersonation } = usePage().props;
@@ -33,6 +43,17 @@ export default function ClientLayout({ children, title }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonateData, setImpersonateData] = useState(null);
+  const [openMenus, setOpenMenus] = useState({});
+
+  // Current route para destacar links ativos
+  const currentRoute = route().current();
+
+  const toggleMenu = (menuKey) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [menuKey]: !prev[menuKey]
+    }));
+  };
 
   // Aplicar as cores do branding via CSS variáveis
   useEffect(() => {
@@ -107,7 +128,12 @@ export default function ClientLayout({ children, title }) {
         }
       }
     }
-  }, [impersonation]);
+
+    // Auto-expandir menu de configurações se estiver em uma página de configurações
+    if (currentRoute?.startsWith('client.settings.')) {
+      setOpenMenus(prev => ({ ...prev, settings: true }));
+    }
+  }, [impersonation, currentRoute]);
 
   // Função segura para gerar rotas mesmo durante impersonação
   const safeRoute = (name, params = [], absolute = undefined) => {
@@ -177,9 +203,14 @@ export default function ClientLayout({ children, title }) {
       icon: <Plug className="h-5 w-5" />
     },
     { 
+      key: 'settings',
       name: 'Configurações', 
-      href: safeRoute('client.settings.index'), 
-      icon: <Settings className="h-5 w-5" />
+      icon: <Settings className="h-5 w-5" />,
+      submenu: [
+        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: safeRoute('client.settings.index') },
+        { name: 'Notificações', icon: <Bell className="h-4 w-4" />, href: safeRoute('client.settings.notifications') },
+        { name: 'Plano e Pagamento', icon: <CreditCard className="h-4 w-4" />, href: safeRoute('client.settings.billing') },
+      ]
     },
   ];
 
@@ -308,26 +339,93 @@ export default function ClientLayout({ children, title }) {
           
           <div className="overflow-y-auto flex-1 py-4">
             <nav className="space-y-1 px-2">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                    isActive(item.href) 
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-var(--hover-bg) hover:text-primary/80'
-                  }`}
-                >
-                  <div className={`mr-3 flex-shrink-0 transition-colors duration-200 ${
-                    isActive(item.href)
-                      ? 'text-primary'
-                      : 'text-gray-400 dark:text-gray-500 group-hover:text-primary/70'
-                  }`}>
-                    {item.icon}
+              {navigation.map((item) => {
+                const activeItem = isActive(item.href);
+                
+                return (
+                  <div key={item.name}>
+                    {item.submenu ? (
+                      <Collapsible
+                        open={openMenus[item.key]}
+                        onOpenChange={() => toggleMenu(item.key)}
+                        className="w-full"
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className={cn(
+                              "w-full justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-md transition-colors duration-200",
+                              currentRoute?.startsWith(`client.${item.key}`) && "bg-primary/10 text-primary"
+                            )}
+                          >
+                            <div className="flex items-center">
+                              <div className={cn(
+                                "mr-3 flex-shrink-0 transition-colors duration-200",
+                                currentRoute?.startsWith(`client.${item.key}`) ? "text-primary" : "text-gray-400 dark:text-gray-500"
+                              )}>
+                                {item.icon}
+                              </div>
+                              <span>{item.name}</span>
+                            </div>
+                            <ChevronRight className={cn(
+                              "h-4 w-4 transition-transform duration-200",
+                              openMenus[item.key] ? "rotate-90" : ""
+                            )} />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-4">
+                          <div className="mt-1 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
+                            {item.submenu.map((subItem, subIndex) => {
+                              const isSubActive = isActive(subItem.href);
+                              
+                              return (
+                                <Link
+                                  key={subIndex}
+                                  href={subItem.href}
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm rounded-md transition-colors duration-200",
+                                    isSubActive
+                                      ? "bg-primary/10 text-primary"
+                                      : "text-gray-700 dark:text-gray-300 hover:bg-var(--hover-bg) hover:text-primary/80"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "mr-3 flex-shrink-0 transition-colors duration-200",
+                                    isSubActive
+                                      ? "text-primary"
+                                      : "text-gray-400 dark:text-gray-500 group-hover:text-primary/70"
+                                  )}>
+                                    {subItem.icon}
+                                  </div>
+                                  {subItem.name}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                          activeItem 
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-var(--hover-bg) hover:text-primary/80'
+                        }`}
+                      >
+                        <div className={`mr-3 flex-shrink-0 transition-colors duration-200 ${
+                          activeItem
+                            ? 'text-primary'
+                            : 'text-gray-400 dark:text-gray-500 group-hover:text-primary/70'
+                        }`}>
+                          {item.icon}
+                        </div>
+                        {item.name}
+                      </Link>
+                    )}
                   </div>
-                  {item.name}
-                </Link>
-              ))}
+                );
+              })}
             </nav>
           </div>
           <div className="p-4 border-t">

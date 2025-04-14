@@ -17,15 +17,36 @@ import {
   PackageOpen, 
   Settings, 
   Menu, 
-  LogOut 
+  LogOut,
+  ChevronRight,
+  FileText,
+  User,
+  Database,
 } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/Components/ui/collapsible";
 import ImpersonationDropdown from '@/Components/ImpersonationDropdown';
+import { cn } from '@/lib/utils';
 
 export default function AgencyLayout({ children, title }) {
   const { auth, impersonation } = usePage().props;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [impersonateData, setImpersonateData] = useState(null);
+  const [openMenus, setOpenMenus] = useState({});
+
+  // Get current route name to highlight active links
+  const currentRoute = route().current();
+
+  const toggleMenu = (menuKey) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [menuKey]: !prev[menuKey]
+    }));
+  };
 
   useEffect(() => {
     // Verificar se existe impersonação ativa nos dados da página
@@ -53,7 +74,12 @@ export default function AgencyLayout({ children, title }) {
         }
       }
     }
-  }, [impersonation]);
+
+    // Auto-expandir menu de configurações se estiver em uma página de configurações
+    if (currentRoute?.startsWith('agency.settings.')) {
+      setOpenMenus(prev => ({ ...prev, settings: true }));
+    }
+  }, [impersonation, currentRoute]);
 
   const sidebarItems = [
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('agency.dashboard') },
@@ -61,7 +87,15 @@ export default function AgencyLayout({ children, title }) {
     { label: 'Usuários', icon: <Users className="h-5 w-5" />, href: route('agency.users.index') },
     { label: 'White Label', icon: <Palette className="h-5 w-5" />, href: route('agency.branding.index') },
     { label: 'Planos', icon: <PackageOpen className="h-5 w-5" />, href: route('agency.plans.index') },
-    { label: 'Configurações', icon: <Settings className="h-5 w-5" />, href: route('agency.settings.index') },
+    { 
+      key: 'settings',
+      label: 'Configurações', 
+      icon: <Settings className="h-5 w-5" />, 
+      submenu: [
+        { label: 'Geral', icon: <Settings className="h-4 w-4" />, href: route('agency.settings.index') },
+        { label: 'Perfil', icon: <User className="h-4 w-4" />, href: route('agency.settings.profile') },
+      ]
+    },
   ];
 
   return (
@@ -133,16 +167,74 @@ export default function AgencyLayout({ children, title }) {
           
           <div className="overflow-y-auto flex-1 py-4">
             <nav className="space-y-1 px-2">
-              {sidebarItems.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.href}
-                  className="flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  {item.icon}
-                  <span className="ml-3">{item.label}</span>
-                </Link>
-              ))}
+              {sidebarItems.map((item, index) => {
+                const isActive = currentRoute === route().current(item.href);
+                
+                return (
+                  <div key={index}>
+                    {item.submenu ? (
+                      <Collapsible
+                        open={openMenus[item.key]}
+                        onOpenChange={() => toggleMenu(item.key)}
+                        className="w-full"
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className={cn(
+                              "w-full justify-between px-3 py-2 text-sm font-medium",
+                              currentRoute?.startsWith(`agency.${item.key}`) && "bg-gray-100 dark:bg-gray-700"
+                            )}
+                          >
+                            <div className="flex items-center">
+                              {item.icon}
+                              <span className="ml-3">{item.label}</span>
+                            </div>
+                            <ChevronRight className={cn(
+                              "h-4 w-4 transition-transform duration-200",
+                              openMenus[item.key] ? "rotate-90" : ""
+                            )} />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-4">
+                          <div className="mt-1 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
+                            {item.submenu.map((subItem, subIndex) => {
+                              const isSubActive = currentRoute === route().current(subItem.href);
+                              
+                              return (
+                                <Link
+                                  key={subIndex}
+                                  href={subItem.href}
+                                  className={cn(
+                                    "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                                    isSubActive
+                                      ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                  )}
+                                >
+                                  {subItem.icon}
+                                  <span className="ml-3">{subItem.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100 dark:hover:bg-gray-700",
+                          isActive && "bg-gray-100 dark:bg-gray-700"
+                        )}
+                      >
+                        {item.icon}
+                        <span className="ml-3">{item.label}</span>
+                      </Link>
+                    )}
+                  </div>
+                );
+              })}
               
               {/* Dropdown de impersonação */}
               {auth.user?.roles?.includes('agency.owner') && (
