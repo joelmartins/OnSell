@@ -108,11 +108,8 @@ class ImpersonationController extends Controller
             'client_agency_id' => $client->agency_id
         ]);
 
-        // Em vez de redirecionar diretamente para o dashboard do cliente,
-        // usamos uma página intermediária de redirecionamento HTML
-        return response()->view('impersonation.redirect', [
-            'redirect_to' => route('client.dashboard')
-        ]);
+        // Redirecionar diretamente para o dashboard do cliente
+        return redirect()->route('client.dashboard');
     }
     
     /**
