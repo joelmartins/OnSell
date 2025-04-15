@@ -15,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   Trash,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Link } from '@inertiajs/react';
@@ -29,10 +30,15 @@ import {
 } from "@/Components/ui/dropdown-menu";
 import { toast } from 'react-toastify';
 import Pagination from '@/Components/Pagination';
+import InvoicesModal from '@/Components/InvoicesModal';
 
 export default function AgenciesIndex({ agencies, auth }) {
   const [search, setSearch] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [showInvoices, setShowInvoices] = useState(false);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedAgency, setSelectedAgency] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,10 +49,12 @@ export default function AgenciesIndex({ agencies, auth }) {
   }, [search]);
 
   useEffect(() => {
-    if (debounced) {
-      router.get(route('admin.agencies.index', { search: debounced }), {}, { preserveState: true });
-    } else if (debounced === '' && search === '') {
-      router.get(route('admin.agencies.index'), {}, { preserveState: true });
+    if (typeof window !== 'undefined' && window.Inertia) {
+      if (debounced) {
+        router.get(route('admin.agencies.index', { search: debounced }), {}, { preserveState: true });
+      } else if (debounced === '' && search === '') {
+        router.get(route('admin.agencies.index'), {}, { preserveState: true });
+      }
     }
   }, [debounced]);
 
@@ -104,6 +112,26 @@ export default function AgenciesIndex({ agencies, auth }) {
     router.visit(route('impersonate.agency', { agency: id }));
   };
 
+  const handleShowInvoices = async (agency) => {
+    setSelectedAgency(agency);
+    setShowInvoices(true);
+    setInvoicesLoading(true);
+    setInvoices([]);
+    try {
+      const response = await fetch(route('admin.agencies.invoices', { agency: agency.id }));
+      const data = await response.json();
+      if (data.invoices) {
+        setInvoices(data.invoices);
+      } else {
+        toast.error('Nenhuma cobrança encontrada.');
+      }
+    } catch (e) {
+      toast.error('Erro ao buscar cobranças.');
+    } finally {
+      setInvoicesLoading(false);
+    }
+  };
+
   return (
     <AdminLayout title="Gerenciamento de Agências">
       <Head title="Gerenciamento de Agências" />
@@ -149,6 +177,7 @@ export default function AgenciesIndex({ agencies, auth }) {
                   <TableHead>E-mail</TableHead>
                   <TableHead className="text-center">Clientes</TableHead>
                   <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Assinatura</TableHead>
                   <TableHead className="text-center">Criado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -171,6 +200,17 @@ export default function AgenciesIndex({ agencies, auth }) {
                           <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center justify-center gap-1">
                             <XCircle className="h-3.5 w-3.5" />
                             <span>Inativo</span>
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {agency.subscription_status ? (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 flex items-center justify-center gap-1">
+                            <span>{agency.subscription_status}</span>
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100 flex items-center justify-center gap-1">
+                            <span>Sem assinatura</span>
                           </Badge>
                         )}
                       </TableCell>
@@ -209,6 +249,10 @@ export default function AgenciesIndex({ agencies, auth }) {
                                 </>
                               )}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleShowInvoices(agency)}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              <span>Ver cobranças</span>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => handleDelete(agency.id)}
@@ -240,6 +284,13 @@ export default function AgenciesIndex({ agencies, auth }) {
           )}
         </CardContent>
       </Card>
+      <InvoicesModal
+        open={showInvoices}
+        onClose={() => setShowInvoices(false)}
+        loading={invoicesLoading}
+        invoices={invoices}
+        title={selectedAgency ? `Cobranças de ${selectedAgency.name}` : 'Cobranças'}
+      />
     </AdminLayout>
   );
 } 

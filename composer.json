@@ -9,6 +9,7 @@
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
         "lab404/laravel-impersonate": "^1.7",
+        "laravel/cashier": "^15.6",
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.9",
         "laravel/sanctum": "^4.0",
@@ -20,6 +21,7 @@
         "spatie/laravel-permission": "^6.16",
         "spiral/roadrunner": "^2024.3",
         "stancl/tenancy": "^3.9",
+        "stripe/stripe-php": "^16.6",
         "symfony/runtime": "^7.2",
         "tightenco/ziggy": "^2.0"
     },

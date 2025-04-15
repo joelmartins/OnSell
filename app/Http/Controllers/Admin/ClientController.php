@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Cashier\Subscription;
+use Stripe\StripeClient;
 
 class ClientController extends Controller
 {
@@ -20,10 +22,12 @@ class ClientController extends Controller
      */
     public function index(): Response
     {
-        $clients = Client::with(['agency', 'plan'])
+        $clients = Client::with(['agency', 'plan', 'users'])
             ->orderBy('name')
             ->paginate(10)
             ->through(function($client) {
+                $user = $client->users()->first();
+                $subscription = $user ? $user->subscription('default') : null;
                 return [
                     'id' => $client->id,
                     'name' => $client->name,
@@ -38,6 +42,7 @@ class ClientController extends Controller
                         'name' => $client->plan->name,
                     ] : null,
                     'created_at' => $client->created_at,
+                    'subscription_status' => $subscription ? $subscription->stripe_status : null,
                 ];
             });
             
@@ -232,11 +237,26 @@ class ClientController extends Controller
         $client->update([
             'is_active' => !$client->is_active
         ]);
-        
+
+        // Se desativou, cancelar assinatura Stripe se existir
+        if (!$client->is_active) {
+            $subscription = $client->subscription('default');
+            if ($subscription && $subscription->valid()) {
+                try {
+                    $subscription->cancel(); // Cancela no Stripe e marca como cancelada localmente
+                } catch (\Exception $e) {
+                    \Log::error('Erro ao cancelar assinatura Stripe ao desativar cliente', [
+                        'client_id' => $client->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
         $statusMessage = $client->is_active 
             ? 'Cliente ativado com sucesso!' 
-            : 'Cliente desativado com sucesso!';
-        
+            : 'Cliente desativado e cobrança cancelada!';
+
         return back()->with('success', $statusMessage);
     }
 
@@ -350,5 +370,28 @@ class ClientController extends Controller
         return redirect()
             ->route('admin.clients.trashed')
             ->with('success', 'Cliente excluído permanentemente com sucesso!');
+    }
+
+    /**
+     * Retorna o histórico de invoices do owner do cliente.
+     */
+    public function invoices(Client $client)
+    {
+        $owner = $client->users()->whereHas('roles', function($q) {
+            $q->where('name', 'client.user');
+        })->first();
+        if (!$owner) {
+            return response()->json(['error' => 'Owner do cliente não encontrado.'], 404);
+        }
+        $invoices = collect($owner->invoices())->map(function($invoice) {
+            return [
+                'id' => $invoice->id,
+                'date' => $invoice->date()->format('Y-m-d'),
+                'amount' => 'R$ ' . number_format($invoice->total() / 100, 2, ',', '.'),
+                'status' => $invoice->paid ? 'Pago' : 'Pendente',
+                'url' => $invoice->hosted_invoice_url,
+            ];
+        });
+        return response()->json(['invoices' => $invoices]);
     }
 } 

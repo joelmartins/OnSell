@@ -23,6 +23,8 @@ class Plan extends Model implements Auditable
         'name',
         'description',
         'price',
+        'price_id',
+        'product_id',
         'period',
         'agency_id',
         'is_active',

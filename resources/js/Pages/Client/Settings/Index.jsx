@@ -35,8 +35,24 @@ export default function SettingsIndex({ auth }) {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Outras cards de configuração podem ser adicionados aqui */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5" />
+              Cobrança e Assinatura
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Gerencie seu plano, pagamentos e histórico de cobranças.
+            </p>
+            <Button asChild className="w-full">
+              <Link href={route('client.settings.billing')}>
+                Acessar Cobrança
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </ClientLayout>
   );

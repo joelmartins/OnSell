@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Stripe\StripeClient;
 
 class PlanController extends Controller
 {
@@ -119,12 +120,11 @@ class PlanController extends Controller
 
             $plan->name = $validated['name'];
             $plan->description = $validated['description'];
-            $plan->price = $validated['price'];
             $plan->is_active = $validated['is_active'];
             $plan->is_featured = $validated['is_featured'] ?? false;
             $plan->features = $validated['features'];
             $plan->is_agency_plan = $validated['is_agency_plan'];
-            
+            $plan->period = $validated['period'];
             // Se for plano de agência, configurar apenas max_clients e definir outros limites como null
             if ($plan->is_agency_plan) {
                 $plan->max_clients = $validated['max_clients'];
@@ -140,12 +140,44 @@ class PlanController extends Controller
                 $plan->total_leads = $validated['total_leads'];
                 $plan->max_clients = null;
             }
-            
+
+            // --- Sincronizar preço Stripe se já houver product vinculado ---
+            if ($plan->product_id) {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                $priceCents = (int) round($validated['price'] * 100);
+                $period = $validated['period'] === 'yearly' ? 'year' : 'month';
+                $needNewPrice = true;
+                if ($plan->price_id) {
+                    $currentPrice = $stripe->prices->retrieve($plan->price_id);
+                    if (
+                        $currentPrice &&
+                        $currentPrice->unit_amount == $priceCents &&
+                        $currentPrice->recurring->interval == $period &&
+                        $currentPrice->active
+                    ) {
+                        $needNewPrice = false;
+                    } else {
+                        // Arquivar preço antigo
+                        $stripe->prices->update($plan->price_id, ['active' => false]);
+                    }
+                }
+                if ($needNewPrice) {
+                    $price = $stripe->prices->create([
+                        'unit_amount' => $priceCents,
+                        'currency' => 'brl',
+                        'recurring' => ['interval' => $period],
+                        'product' => $plan->product_id,
+                    ]);
+                    $plan->price_id = $price->id;
+                }
+            }
+
+            $plan->price = $validated['price'];
             $plan->save();
 
             return redirect()->route('admin.plans.index')
                 ->with('success', 'Plano atualizado com sucesso!');
-                
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
@@ -251,6 +283,8 @@ class PlanController extends Controller
                 'has_meta_integration' => $plan->has_meta_integration,
                 'has_google_integration' => $plan->has_google_integration,
                 'has_custom_domain' => $plan->has_custom_domain,
+                'price_id' => $plan->price_id,
+                'product_id' => $plan->product_id ?? null,
             ]
         ]);
     }
@@ -313,5 +347,73 @@ class PlanController extends Controller
         
         // Converte para float
         return (float) $value;
+    }
+
+    /**
+     * Sincroniza o plano com o Stripe (produto e preço).
+     * Cria/atualiza produto, cria novo preço se necessário e arquiva o antigo.
+     */
+    public function syncStripe(Plan $plan)
+    {
+        try {
+            $stripe = new StripeClient(config('services.stripe.secret'));
+
+            // 1. Criar ou atualizar produto no Stripe
+            if (!$plan->product_id) {
+                $product = $stripe->products->create([
+                    'name' => $plan->name,
+                    'description' => $plan->description,
+                ]);
+                $plan->product_id = $product->id;
+            } else {
+                $stripe->products->update($plan->product_id, [
+                    'name' => $plan->name,
+                    'description' => $plan->description,
+                ]);
+            }
+
+            // 2. Criar novo preço se necessário
+            $priceCents = (int) round($plan->price * 100);
+            $period = $plan->period === 'yearly' ? 'year' : 'month';
+            $needNewPrice = true;
+            if ($plan->price_id) {
+                // Buscar preço atual no Stripe
+                $currentPrice = $stripe->prices->retrieve($plan->price_id);
+                if (
+                    $currentPrice &&
+                    $currentPrice->unit_amount == $priceCents &&
+                    $currentPrice->recurring->interval == $period &&
+                    $currentPrice->active
+                ) {
+                    $needNewPrice = false;
+                } else {
+                    // Arquivar preço antigo
+                    $stripe->prices->update($plan->price_id, ['active' => false]);
+                }
+            }
+            if ($needNewPrice) {
+                $price = $stripe->prices->create([
+                    'unit_amount' => $priceCents,
+                    'currency' => 'brl',
+                    'recurring' => ['interval' => $period],
+                    'product' => $plan->product_id,
+                ]);
+                $plan->price_id = $price->id;
+            }
+
+            $plan->save();
+
+            return response()->json([
+                'success' => true,
+                'product_id' => $plan->product_id,
+                'price_id' => $plan->price_id,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erro Stripe', ['exception' => $e, 'plan_id' => $plan->id]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 } 

@@ -115,4 +115,80 @@ class WebhookController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Receber webhook do Stripe (pagamentos recorrentes)
+     */
+    public function stripe(Request $request)
+    {
+        $payload = $request->getContent();
+        $sigHeader = $request->header('Stripe-Signature');
+        $secret = config('services.stripe.webhook_secret') ?? env('STRIPE_WEBHOOK_SECRET');
+
+        try {
+            $event = \Stripe\Webhook::constructEvent(
+                $payload,
+                $sigHeader,
+                $secret
+            );
+        } catch (\UnexpectedValueException $e) {
+            \Log::error('Stripe webhook: payload inválido', ['error' => $e->getMessage()]);
+            return response('Invalid payload', 400);
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            \Log::error('Stripe webhook: assinatura inválida', ['error' => $e->getMessage()]);
+            return response('Invalid signature', 400);
+        }
+
+        switch ($event->type) {
+            case 'checkout.session.completed':
+                $session = $event->data->object;
+                $customerId = $session->customer ?? null;
+                if ($customerId) {
+                    $user = \App\Models\User::where('stripe_id', $customerId)->first();
+                    if ($user) {
+                        if ($user->client) {
+                            $user->client->is_active = true;
+                            $user->client->save();
+                            \Log::info('Cliente ativado via Stripe', ['client_id' => $user->client->id, 'user_id' => $user->id]);
+                        } elseif ($user->agency) {
+                            $user->agency->is_active = true;
+                            $user->agency->save();
+                            \Log::info('Agência ativada via Stripe', ['agency_id' => $user->agency->id, 'user_id' => $user->id]);
+                        }
+                    } else {
+                        \Log::warning('Usuário não encontrado para stripe_id', ['stripe_id' => $customerId]);
+                    }
+                } else {
+                    \Log::warning('customer_id não encontrado no session Stripe', ['session_id' => $session->id]);
+                }
+                break;
+            case 'customer.subscription.deleted':
+                $subscription = $event->data->object;
+                $customerId = $subscription->customer ?? null;
+                if ($customerId) {
+                    $user = \App\Models\User::where('stripe_id', $customerId)->first();
+                    if ($user) {
+                        if ($user->client) {
+                            $user->client->is_active = false;
+                            $user->client->save();
+                            \Log::info('Cliente desativado via Stripe (assinatura cancelada)', ['client_id' => $user->client->id, 'user_id' => $user->id]);
+                        } elseif ($user->agency) {
+                            $user->agency->is_active = false;
+                            $user->agency->save();
+                            \Log::info('Agência desativada via Stripe (assinatura cancelada)', ['agency_id' => $user->agency->id, 'user_id' => $user->id]);
+                        }
+                    } else {
+                        \Log::warning('Usuário não encontrado para stripe_id (cancelamento)', ['stripe_id' => $customerId]);
+                    }
+                } else {
+                    \Log::warning('customer_id não encontrado no subscription Stripe (cancelamento)', ['subscription_id' => $subscription->id]);
+                }
+                break;
+            case 'invoice.payment_failed':
+                // Futuro: notificar usuário sobre falha de pagamento
+                break;
+        }
+
+        return response('Webhook recebido', 200);
+    }
 } 

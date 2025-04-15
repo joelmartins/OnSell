@@ -20,15 +20,20 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle, LogIn, Trash2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash, CheckCircle, XCircle, LogIn, Trash2, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Pagination from '@/Components/Pagination';
 import React from 'react';
+import InvoicesModal from '@/Components/InvoicesModal';
 
 export default function ClientsIndex({ clients = { data: [] }, agencies = [], auth }) {
   const [search, setSearch] = useState('');
   const [agencyFilter, setAgencyFilter] = useState('');
   const [debounced, setDebounced] = useState('');
+  const [showInvoices, setShowInvoices] = useState(false);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -117,6 +122,26 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
     router.visit(route('impersonate.client', { client: id }));
   };
 
+  const handleShowInvoices = async (client) => {
+    setSelectedClient(client);
+    setShowInvoices(true);
+    setInvoicesLoading(true);
+    setInvoices([]);
+    try {
+      const response = await fetch(route('admin.clients.invoices', { client: client.id }));
+      const data = await response.json();
+      if (data.invoices) {
+        setInvoices(data.invoices);
+      } else {
+        toast.error('Nenhuma cobrança encontrada.');
+      }
+    } catch (e) {
+      toast.error('Erro ao buscar cobranças.');
+    } finally {
+      setInvoicesLoading(false);
+    }
+  };
+
   // Verificar se clients e clients.data existem
   const hasClients = clients && clients.data && clients.data.length > 0;
   const clientsArray = clients?.data || [];
@@ -168,6 +193,7 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
                   <TableHead>Agência</TableHead>
                   <TableHead>Plano</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Assinatura</TableHead>
                   <TableHead>Domínio</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
@@ -188,6 +214,17 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
                         }`}>
                           {client.is_active ? 'Ativo' : 'Inativo'}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {client.subscription_status ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                            {client.subscription_status}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                            Sem assinatura
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>{client.domain || 'Sem domínio'}</TableCell>
                       <TableCell>
@@ -226,6 +263,10 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
                                 </>
                               )}
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleShowInvoices(client)}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              <span>Ver cobranças</span>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleDelete(client.id)} className="text-red-600 focus:text-red-600">
                               <Trash className="mr-2 h-4 w-4" />
@@ -254,6 +295,14 @@ export default function ClientsIndex({ clients = { data: [] }, agencies = [], au
           )}
         </CardContent>
       </Card>
+
+      <InvoicesModal
+        open={showInvoices}
+        onClose={() => setShowInvoices(false)}
+        loading={invoicesLoading}
+        invoices={invoices}
+        title={selectedClient ? `Cobranças de ${selectedClient.name}` : 'Cobranças'}
+      />
     </AdminLayout>
   );
 } 

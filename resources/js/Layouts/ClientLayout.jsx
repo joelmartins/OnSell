@@ -206,10 +206,10 @@ export default function ClientLayout({ children, title }) {
       key: 'settings',
       name: 'Configurações', 
       icon: <Settings className="h-5 w-5" />,
-      submenu: [
-        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: safeRoute('client.settings.index') },
-        { name: 'Notificações', icon: <Bell className="h-4 w-4" />, href: safeRoute('client.settings.notifications') },
-        { name: 'Plano e Pagamento', icon: <CreditCard className="h-4 w-4" />, href: safeRoute('client.settings.billing') },
+      children: [
+        { name: 'Geral', icon: <Settings className="h-4 w-4" />, href: safeRoute('client.settings.index') },
+        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: safeRoute('client.settings.profile') },
+        { name: 'Cobrança e Assinatura', icon: <CreditCard className="h-4 w-4" />, href: safeRoute('client.settings.billing') },
       ]
     },
   ];
@@ -344,7 +344,7 @@ export default function ClientLayout({ children, title }) {
                 
                 return (
                   <div key={item.name}>
-                    {item.submenu ? (
+                    {item.children ? (
                       <Collapsible
                         open={openMenus[item.key]}
                         onOpenChange={() => toggleMenu(item.key)}
@@ -375,7 +375,7 @@ export default function ClientLayout({ children, title }) {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="pl-4">
                           <div className="mt-1 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
-                            {item.submenu.map((subItem, subIndex) => {
+                            {item.children.map((subItem, subIndex) => {
                               const isSubActive = isActive(subItem.href);
                               
                               return (

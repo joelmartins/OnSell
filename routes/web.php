@@ -58,10 +58,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('clients/trashed', [\App\Http\Controllers\Admin\ClientController::class, 'trashedIndex'])->name('clients.trashed');
         Route::put('clients/{id}/restore', [\App\Http\Controllers\Admin\ClientController::class, 'restore'])->name('clients.restore');
         Route::delete('clients/{id}/force-delete', [\App\Http\Controllers\Admin\ClientController::class, 'forceDelete'])->name('clients.force-delete');
+        Route::get('clients/{client}/invoices', [\App\Http\Controllers\Admin\ClientController::class, 'invoices'])->name('clients.invoices');
         Route::resource('clients', \App\Http\Controllers\Admin\ClientController::class);
         Route::put('clients/{client}/toggle-status', [\App\Http\Controllers\Admin\ClientController::class, 'toggleStatus'])->name('clients.toggle-status');
 
         // Agências
+        Route::get('agencies/{agency}/invoices', [\App\Http\Controllers\Admin\AgencyController::class, 'invoices'])->name('agencies.invoices');
         Route::resource('agencies', \App\Http\Controllers\Admin\AgencyController::class);
         Route::put('agencies/{agency}/toggle-status', [\App\Http\Controllers\Admin\AgencyController::class, 'toggleStatus'])->name('agencies.toggle-status');
 
@@ -70,6 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('plans/{plan}/duplicate', [\App\Http\Controllers\Admin\PlanController::class, 'duplicate'])->name('plans.duplicate');
         Route::put('plans/{plan}/toggle', [\App\Http\Controllers\Admin\PlanController::class, 'toggle'])->name('plans.toggle');
         Route::put('plans/{plan}/toggle-featured', [\App\Http\Controllers\Admin\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
+        Route::post('plans/{plan}/sync-stripe', [\App\Http\Controllers\Admin\PlanController::class, 'syncStripe'])->name('plans.sync-stripe');
 
         // Usuários
         Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
@@ -158,6 +161,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'profile'])->name('profile');
             Route::patch('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'updateProfile'])->name('update-profile');
             Route::put('/password', [\App\Http\Controllers\Agency\SettingsController::class, 'updatePassword'])->name('update-password');
+            
+            // Checkout Stripe
+            Route::post('/billing/checkout', [\App\Http\Controllers\Agency\BillingController::class, 'checkout'])->name('billing.checkout');
+            Route::get('/billing', [\App\Http\Controllers\Agency\BillingController::class, 'show'])->name('billing');
         });
 
         // Diagnóstico de clientes
@@ -220,6 +227,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/profile', [\App\Http\Controllers\Client\SettingsController::class, 'profile'])->name('profile');
             Route::patch('/profile', [\App\Http\Controllers\Client\SettingsController::class, 'updateProfile'])->name('update-profile');
             Route::put('/password', [\App\Http\Controllers\Client\SettingsController::class, 'updatePassword'])->name('update-password');
+            
+            // Checkout Stripe
+            Route::post('/billing/checkout', [\App\Http\Controllers\Client\BillingController::class, 'checkout'])->name('billing.checkout');
+            Route::get('/billing', [\App\Http\Controllers\Client\BillingController::class, 'show'])->name('billing');
         });
     });
 
@@ -245,5 +256,8 @@ Route::prefix('test-emails')->middleware(['auth', 'role:admin.super'])->group(fu
     Route::get('/password-reset', [\App\Http\Controllers\TestEmailController::class, 'testPasswordReset'])->name('test.email.password-reset');
     Route::get('/account-activation', [\App\Http\Controllers\TestEmailController::class, 'testAccountActivation'])->name('test.email.account-activation');
 });
+
+// Webhook Stripe (pagamentos recorrentes)
+Route::post('/webhooks/stripe', [\App\Http\Controllers\Api\WebhookController::class, 'stripe'])->name('webhooks.stripe');
 
 require __DIR__.'/auth.php';

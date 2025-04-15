@@ -14,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Save, Building2, User, Star, Plus, Trash2, Tag } from 'lucide-react';
 import { CurrencyInput } from '@/Components/ui/currency-input';
 import { PhoneInput } from '@/Components/ui/phone-input';
+import { toast } from 'react-toastify';
 
 // Esquema condicional que se adapta com base no tipo de plano (agência ou cliente)
 const formSchema = z.object({
@@ -30,12 +31,14 @@ const formSchema = z.object({
   is_agency_plan: z.boolean().default(false),
   max_clients: z.coerce.number().int().optional(),
   period: z.string().min(1, { message: 'Período é obrigatório' }),
+  price_id: z.string().optional(),
 });
 
 export default function PlanForm({ plan, isEditing = false }) {
   const { errors: serverErrors } = usePage().props;
   const [generalError, setGeneralError] = useState(null);
   const [jsonFeatures, setJsonFeatures] = useState([{ key: 'feature_1', value: '' }]);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   // Ao carregar o componente, verificar se há erros gerais
   useEffect(() => {
@@ -109,7 +112,8 @@ export default function PlanForm({ plan, isEditing = false }) {
         features: featuresObj,
         is_agency_plan: plan.is_agency_plan || false,
         max_clients: plan.max_clients || 5,
-        period: plan.period || 'monthly'
+        period: plan.period || 'monthly',
+        price_id: plan.price_id || '',
       });
     }
   }, [plan]);
@@ -225,6 +229,34 @@ export default function PlanForm({ plan, isEditing = false }) {
     }
   }
 
+  // Sincronizar com Stripe
+  const handleSyncStripe = async () => {
+    if (!plan?.id) return;
+    setSyncLoading(true);
+    try {
+      const response = await fetch(`/admin/plans/${plan.id}/sync-stripe`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Accept': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success('Plano sincronizado com sucesso com o Stripe!');
+        // Atualiza os campos na tela
+        router.reload({ only: ['plan'] });
+      } else {
+        toast.error(data.message || 'Erro ao sincronizar com Stripe.');
+      }
+    } catch (e) {
+      toast.error('Erro de comunicação com Stripe.');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   return (
     <Form {...form}>
       {generalError && (
@@ -264,33 +296,37 @@ export default function PlanForm({ plan, isEditing = false }) {
             )}
           />
           
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço</FormLabel>
-                <FormControl>
-                  <CurrencyInput
-                    id="price"
-                    name="price"
-                    placeholder="R$ 0,00"
-                    decimalScale={2}
-                    value={field.value}
-                    onValueChange={(value) => field.onChange(value || '')}
-                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-800 dark:border-gray-700"
-                  />
-                </FormControl>
-                {serverErrors && serverErrors.price && (
-                  <p className="text-sm font-medium text-red-500 mt-1">{serverErrors.price}</p>
-                )}
-                <FormDescription>
-                  Formato: R$ 0,00 (use vírgula como separador decimal)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preço</FormLabel>
+                  <FormControl>
+                    <CurrencyInput {...field} prefix="R$ " decimalSeparator="," groupSeparator="." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {/* Exibir product_id e price_id apenas em modo de edição */}
+            {isEditing && (
+              <div className="flex flex-col gap-2">
+                <div>
+                  <span className="text-xs text-muted-foreground">ID do Produto Stripe:</span>
+                  <span className="block font-mono text-sm">{plan?.product_id || '-'}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground">ID do Preço Stripe:</span>
+                  <span className="block font-mono text-sm">{plan?.price_id || '-'}</span>
+                </div>
+                <Button type="button" variant="secondary" className="mt-2" onClick={handleSyncStripe} disabled={syncLoading}>
+                  {syncLoading ? 'Sincronizando...' : 'Sincronizar com Stripe'}
+                </Button>
+              </div>
             )}
-          />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

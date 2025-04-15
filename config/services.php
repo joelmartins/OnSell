@@ -68,4 +68,9 @@ return [
         'webhook_url' => env('VAPI_WEBHOOK_URL'),
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+    ],
+
 ];

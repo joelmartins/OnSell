@@ -41,9 +41,10 @@ const formSchema = z.object({
   }),
 });
 
-export default function AgencySettings() {
+export default function AgencySettings({ billing = {}, ...props }) {
   const [activeTab, setActiveTab] = useState("notifications");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -81,6 +82,13 @@ export default function AgencySettings() {
     }, 1000);
   }
 
+  const handleCheckout = async () => {
+    setLoading(true);
+    toast.info('Redirecionando para pagamento...');
+    // window.location.href = '/agency/settings/billing/checkout';
+    setTimeout(() => setLoading(false), 2000);
+  };
+
   return (
     <AgencyLayout title="Configurações">
       <Head title="Configurações" />
@@ -95,6 +103,14 @@ export default function AgencySettings() {
           <Link href={route('agency.settings.profile')}>
             <UserCog className="mr-2 h-4 w-4" />
             Editar Perfil de Usuário
+          </Link>
+        </Button>
+      </div>
+      <div className="mb-6 flex justify-end">
+        <Button variant="outline" asChild className="mb-4">
+          <Link href={route('agency.settings.billing')}>
+            <UserCog className="mr-2 h-4 w-4" />
+            Cobrança e Assinatura
           </Link>
         </Button>
       </div>

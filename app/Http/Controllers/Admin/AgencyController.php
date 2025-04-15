@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Cashier\Subscription;
+use Stripe\StripeClient;
 
 class AgencyController extends Controller
 {
@@ -17,10 +19,15 @@ class AgencyController extends Controller
      */
     public function index(Request $request): Response
     {
-        $agencies = Agency::withCount(['clients'])
+        $agencies = Agency::with(['users'])->withCount(['clients'])
             ->orderBy('name')
             ->paginate(10)
             ->through(function($agency) {
+                // Buscar o usuário owner da agência
+                $owner = $agency->users()->whereHas('roles', function($q) {
+                    $q->where('name', 'agency.owner');
+                })->first();
+                $subscription = $owner ? $owner->subscription('default') : null;
                 return [
                     'id' => $agency->id,
                     'name' => $agency->name,
@@ -29,6 +36,7 @@ class AgencyController extends Controller
                     'is_active' => $agency->is_active,
                     'clients_count' => $agency->clients_count,
                     'created_at' => $agency->created_at,
+                    'subscription_status' => $subscription ? $subscription->stripe_status : null,
                 ];
             });
 
@@ -192,11 +200,26 @@ class AgencyController extends Controller
         $agency->update([
             'is_active' => !$agency->is_active
         ]);
-        
+
+        // Se desativou, cancelar assinatura Stripe se existir
+        if (!$agency->is_active) {
+            $subscription = $agency->subscription('default');
+            if ($subscription && $subscription->valid()) {
+                try {
+                    $subscription->cancel(); // Cancela no Stripe e marca como cancelada localmente
+                } catch (\Exception $e) {
+                    \Log::error('Erro ao cancelar assinatura Stripe ao desativar agência', [
+                        'agency_id' => $agency->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
         $statusMessage = $agency->is_active 
             ? 'Agência ativada com sucesso!' 
-            : 'Agência desativada com sucesso!';
-        
+            : 'Agência desativada e cobrança cancelada!';
+
         return back()->with('success', $statusMessage);
     }
 
@@ -225,5 +248,28 @@ class AgencyController extends Controller
         return redirect()
             ->route('admin.agencies.index')
             ->with('success', 'Agência excluída com sucesso!');
+    }
+
+    /**
+     * Retorna o histórico de invoices do owner da agência.
+     */
+    public function invoices(Agency $agency)
+    {
+        $owner = $agency->users()->whereHas('roles', function($q) {
+            $q->where('name', 'agency.owner');
+        })->first();
+        if (!$owner) {
+            return response()->json(['error' => 'Owner da agência não encontrado.'], 404);
+        }
+        $invoices = collect($owner->invoices())->map(function($invoice) {
+            return [
+                'id' => $invoice->id,
+                'date' => $invoice->date()->format('Y-m-d'),
+                'amount' => 'R$ ' . number_format($invoice->total() / 100, 2, ',', '.'),
+                'status' => $invoice->paid ? 'Pago' : 'Pendente',
+                'url' => $invoice->hosted_invoice_url,
+            ];
+        });
+        return response()->json(['invoices' => $invoices]);
     }
 } 

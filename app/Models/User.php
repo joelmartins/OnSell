@@ -14,11 +14,12 @@ use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use Lab404\Impersonate\Models\Impersonate;
 use App\Notifications\ResetPasswordNotification;
+use Laravel\Cashier\Billable;
 
 class User extends Authenticatable implements MustVerifyEmail, Auditable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, AuditableTrait, Impersonate;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, AuditableTrait, Impersonate, Billable;
 
     /**
      * The attributes that are mass assignable.

@@ -22,6 +22,7 @@ import {
   FileText,
   User,
   Database,
+  CreditCard,
 } from 'lucide-react';
 import {
   Collapsible,
@@ -91,9 +92,10 @@ export default function AgencyLayout({ children, title }) {
       key: 'settings',
       label: 'Configurações', 
       icon: <Settings className="h-5 w-5" />, 
-      submenu: [
+      children: [
         { label: 'Geral', icon: <Settings className="h-4 w-4" />, href: route('agency.settings.index') },
         { label: 'Perfil', icon: <User className="h-4 w-4" />, href: route('agency.settings.profile') },
+        { label: 'Cobrança e Assinatura', icon: <CreditCard className="h-4 w-4" />, href: route('agency.settings.billing') },
       ]
     },
   ];
@@ -172,7 +174,7 @@ export default function AgencyLayout({ children, title }) {
                 
                 return (
                   <div key={index}>
-                    {item.submenu ? (
+                    {item.children ? (
                       <Collapsible
                         open={openMenus[item.key]}
                         onOpenChange={() => toggleMenu(item.key)}
@@ -198,7 +200,7 @@ export default function AgencyLayout({ children, title }) {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="pl-4">
                           <div className="mt-1 pl-2 border-l border-gray-200 dark:border-gray-700 space-y-1">
-                            {item.submenu.map((subItem, subIndex) => {
+                            {item.children.map((subItem, subIndex) => {
                               const isSubActive = currentRoute === route().current(subItem.href);
                               
                               return (
