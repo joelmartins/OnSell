@@ -95,7 +95,7 @@ class BillingController extends Controller
             return [
                 'id' => $invoice->id,
                 'date' => $invoice->date()->format('Y-m-d'),
-                'amount' => 'R$ ' . number_format($invoice->total() / 100, 2, ',', '.'),
+                'amount' => 'R$ ' . number_format(((float) $invoice->total()) / 100, 2, ',', '.'),
                 'status' => $invoice->paid ? 'Pago' : 'Pendente',
                 'url' => $invoice->hosted_invoice_url,
             ];
@@ -111,5 +111,36 @@ class BillingController extends Controller
                 'charges' => $invoices,
             ]
         ]);
+    }
+
+    /**
+     * Cancela a assinatura Stripe do cliente autenticado.
+     * POST /client/settings/billing/cancel
+     */
+    public function cancel(Request $request)
+    {
+        $impersonate = session('impersonate.target');
+        if ($impersonate && $impersonate['type'] === 'client') {
+            $client = \App\Models\Client::find($impersonate['id']);
+        } else {
+            $client = Auth::user()->client;
+        }
+        if (!$client) {
+            return response()->json(['message' => 'Cliente não encontrado.'], 403);
+        }
+        $owner = $client->users()->whereHas('roles', function($q) {
+            $q->where('name', 'client.user');
+        })->first();
+        if (!$owner) {
+            return response()->json(['message' => 'Owner do cliente não encontrado.'], 403);
+        }
+        $subscription = $owner->subscription('default');
+        if ($subscription && $subscription->valid()) {
+            $subscription->cancel();
+            $client->is_active = false;
+            $client->save();
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['message' => 'Assinatura não encontrada ou já cancelada.'], 400);
     }
 } 

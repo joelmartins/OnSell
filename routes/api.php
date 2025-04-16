@@ -102,4 +102,7 @@ Route::prefix('webhooks')->name('webhooks.')->group(function () {
     
     // Webhook da VAPI (Telefonia)
     Route::post('/vapi', [App\Http\Controllers\Api\WebhookController::class, 'vapi'])->name('vapi');
+    
+    // Webhook do Stripe (pagamentos)
+    Route::post('/stripe', [App\Http\Controllers\Api\WebhookController::class, 'stripe'])->name('stripe');
 }); 

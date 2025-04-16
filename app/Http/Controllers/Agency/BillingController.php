@@ -112,4 +112,35 @@ class BillingController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Cancela a assinatura Stripe da agência autenticada.
+     * POST /agency/settings/billing/cancel
+     */
+    public function cancel(Request $request)
+    {
+        $impersonate = session('impersonate.target');
+        if ($impersonate && $impersonate['type'] === 'agency') {
+            $agency = \App\Models\Agency::find($impersonate['id']);
+        } else {
+            $agency = Auth::user()->agency;
+        }
+        if (!$agency) {
+            return response()->json(['message' => 'Agência não encontrada.'], 403);
+        }
+        $owner = $agency->users()->whereHas('roles', function($q) {
+            $q->where('name', 'agency.owner');
+        })->first();
+        if (!$owner) {
+            return response()->json(['message' => 'Owner da agência não encontrado.'], 403);
+        }
+        $subscription = $owner->subscription('default');
+        if ($subscription && $subscription->valid()) {
+            $subscription->cancel();
+            $agency->is_active = false;
+            $agency->save();
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['message' => 'Assinatura não encontrada ou já cancelada.'], 400);
+    }
 } 

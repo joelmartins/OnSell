@@ -4,7 +4,7 @@ import Header from './Components/Header';
 import Footer from './Components/Footer';
 
 export default function Index() {
-    const { auth, laravelVersion, phpVersion, canLogin, canRegister, featuredPlans } = usePage().props;
+    const { auth, laravelVersion, phpVersion, featuredPlans } = usePage().props;
     return (
         <>
             <Head title="OnSell - Venda sem equipe. A IA cuida disso para você." />
@@ -27,7 +27,7 @@ export default function Index() {
                                         Gere, qualifique e converta leads automaticamente — sem depender de equipe de marketing ou vendas.
                                     </p>
                                     <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                                        <Link href={route('register')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
+                                        <Link href={route('signup')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
                                             Criar conta grátis
                                             <ArrowRight className="h-4 w-4" />
                                         </Link>
@@ -478,8 +478,8 @@ export default function Index() {
                                     </p>
                                 </div>
                                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-8">
-                                    {featuredPlans && featuredPlans.length > 0 ? (
-                                        featuredPlans.map((plan, index) => (
+                                    {featuredPlans && featuredPlans.filter(plan => plan.type !== 'agency').length > 0 ? (
+                                        featuredPlans.filter(plan => plan.type !== 'agency').map((plan, index) => (
                                             <div key={plan.id} className={`flex flex-col rounded-lg border bg-background p-6 shadow-sm ${index === 1 ? 'relative' : ''}`}>
                                                 {index === 1 && (
                                                     <div className="absolute -top-4 left-0 right-0 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-xs font-medium text-primary-foreground">
@@ -500,135 +500,50 @@ export default function Index() {
                                                     </div>
                                                     <p className="mt-3 text-gray-500">{plan.leads_limit ? `Até ${plan.leads_limit} leads/mês` : 'Leads ilimitados'}</p>
                                                     <ul className="mt-6 space-y-2">
-                                                        {plan.features && plan.features.split(',').map((feature, i) => (
-                                                            <li key={i} className="flex items-center">
-                                                                <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                                <span>{feature.trim()}</span>
-                                                            </li>
-                                                        ))}
+                                                        {Array.isArray(plan.features)
+                                                            ? plan.features.filter(Boolean).map((feature, i) => (
+                                                                <li key={i} className="flex items-center">
+                                                                    <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
+                                                                    <span>{typeof feature === 'string' ? feature.charAt(0).toUpperCase() + feature.slice(1) : ''}</span>
+                                                                </li>
+                                                            ))
+                                                            : plan.features && typeof plan.features === 'object' && !Array.isArray(plan.features)
+                                                                ? Object.values(plan.features).filter(f => typeof f === 'string' && f.trim()).map((feature, i) => (
+                                                                    <li key={i} className="flex items-center">
+                                                                        <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
+                                                                        <span>{feature.charAt(0).toUpperCase() + feature.slice(1)}</span>
+                                                                    </li>
+                                                                ))
+                                                                : typeof plan.features === 'string' && plan.features
+                                                                    ? (() => {
+                                                                        try {
+                                                                            const obj = JSON.parse(plan.features);
+                                                                            return Object.values(obj).filter(f => typeof f === 'string' && f.trim()).map((feature, i) => (
+                                                                                <li key={i} className="flex items-center">
+                                                                                    <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
+                                                                                    <span>{feature.charAt(0).toUpperCase() + feature.slice(1)}</span>
+                                                                                </li>
+                                                                            ));
+                                                                        } catch {
+                                                                            return null;
+                                                                        }
+                                                                    })()
+                                                                    : null
+                                                        }
                                                     </ul>
                                                 </div>
                                                 <div className="mt-6">
                                                     <Link 
-                                                        href={plan.price > 0 ? route('register') : route('register')} 
+                                                        href={route('signup', { plan_id: plan.id })} 
                                                         className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
                                                     >
-                                                        {plan.price === 0 ? 'Começar Grátis' : plan.price >= 400 ? 'Falar com Vendas' : 'Assinar Agora'}
+                                                        {plan.price === 0 ? 'Começar Grátis' : 'Assinar Agora'}
                                                     </Link>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <>
-                                            <div className="flex flex-col rounded-lg border bg-background p-6 shadow-sm">
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-bold">Starter</h3>
-                                                    <p className="text-sm text-gray-500 mt-1">Para quem está começando</p>
-                                                    <div className="mt-2 text-4xl font-bold">R$ 0<span className="text-base font-normal text-gray-500">/mês</span></div>
-                                                    <p className="mt-3 text-gray-500">Até 20 leads/mês</p>
-                                                    <ul className="mt-6 space-y-2">
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>1 campanha ativa</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>1 landing page</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>WhatsApp básico</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>CRM simples</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div className="mt-6">
-                                                    <Link href={route('register')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-                                                        Começar Grátis
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col rounded-lg border bg-background p-6 shadow-sm relative">
-                                                <div className="absolute -top-4 left-0 right-0 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                                                    Mais popular
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-bold">Pro</h3>
-                                                    <p className="text-sm text-gray-500 mt-1">Para negócios em crescimento</p>
-                                                    <div className="mt-2 text-4xl font-bold">R$ 197<span className="text-base font-normal text-gray-500">/mês</span></div>
-                                                    <p className="mt-3 text-gray-500">Até 100 leads/mês</p>
-                                                    <ul className="mt-6 space-y-2">
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>5 campanhas ativas</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>3 landing pages</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>WhatsApp + Ligações</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>CRM completo</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>Automações avançadas</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div className="mt-6">
-                                                    <Link href={route('register')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-                                                        Assinar Agora
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col rounded-lg border bg-background p-6 shadow-sm">
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-bold">Enterprise</h3>
-                                                    <p className="text-sm text-gray-500 mt-1">Para negócios estabelecidos</p>
-                                                    <div className="mt-2 text-4xl font-bold">R$ 497<span className="text-base font-normal text-gray-500">/mês</span></div>
-                                                    <p className="mt-3 text-gray-500">Leads ilimitados</p>
-                                                    <ul className="mt-6 space-y-2">
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>Campanhas ilimitadas</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>Landing pages ilimitadas</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>Todos os canais</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>CRM personalizado</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>API e integrações</span>
-                                                        </li>
-                                                        <li className="flex items-center">
-                                                            <CheckCircle2 className="mr-2 h-4 w-4 text-primary" />
-                                                            <span>Suporte prioritário</span>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <div className="mt-6">
-                                                    <Link href="#" className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
-                                                        Falar com Vendas
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        </>
+                                        <div className="text-gray-500">Nenhum plano disponível</div>
                                     )}
                                 </div>
                             </div>
@@ -702,7 +617,7 @@ export default function Index() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
-                                    <Link href={route('register')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
+                                    <Link href={route('signup')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
                                         Criar conta grátis
                                         <ArrowRight className="h-4 w-4" />
                                     </Link>

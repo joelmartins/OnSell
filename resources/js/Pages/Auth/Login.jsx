@@ -104,7 +104,7 @@ export default function Login({ status, canResetPassword }) {
                         <p className="text-sm text-muted-foreground">
                             Não possui uma conta?{' '}
                             <Link
-                                href={route('register')}
+                                href={route('signup')}
                                 className="font-medium text-primary underline underline-offset-4 hover:text-primary/90"
                             >
                                 Cadastre-se

@@ -19,9 +19,28 @@ export default function Billing({ billing = {} }) {
   };
 
   const handleCancel = async () => {
-    if (window.confirm('Tem certeza que deseja cancelar sua assinatura?')) {
-      toast.success('Assinatura cancelada com sucesso!');
-      // Aqui você faria a chamada para cancelar via backend
+    if (!window.confirm('Tem certeza que deseja cancelar sua assinatura?')) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/agency/settings/billing/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Assinatura cancelada com sucesso!');
+        window.location.reload();
+      } else {
+        toast.error(data.message || 'Erro ao cancelar assinatura.');
+      }
+    } catch (err) {
+      toast.error('Erro ao cancelar assinatura: ' + (err.message || 'Erro desconhecido.'));
+    } finally {
+      setLoading(false);
     }
   };
 

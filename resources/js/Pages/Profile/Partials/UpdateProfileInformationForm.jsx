@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -16,7 +17,18 @@ export default function UpdateProfileInformation({
         useForm({
             name: user.name,
             email: user.email,
+            phone: user.phone,
         });
+
+    function formatPhone(value) {
+        let v = value.replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 0) v = '(' + v;
+        if (v.length > 3) v = v.slice(0, 3) + ') ' + v.slice(3);
+        if (v.length > 10) v = v.slice(0, 10) + '-' + v.slice(10);
+        else if (v.length > 6) v = v.slice(0, 9) + '-' + v.slice(9);
+        return v;
+    }
 
     const submit = (e) => {
         e.preventDefault();
@@ -89,6 +101,27 @@ export default function UpdateProfileInformation({
                                 email address.
                             </div>
                         )}
+                    </div>
+                )}
+
+                {data.phone !== undefined && (
+                    <div>
+                        <InputLabel htmlFor="phone" value="Telefone" />
+
+                        <TextInput
+                            id="phone"
+                            type="text"
+                            name="phone"
+                            value={data.phone}
+                            onChange={(e) => setData('phone', formatPhone(e.target.value))}
+                            placeholder="Telefone (com DDD)"
+                            maxLength={15}
+                            inputMode="tel"
+                            pattern="\(\d{2}\) \d{4,5}-\d{4}"
+                            className="mt-1 block w-full"
+                        />
+
+                        <InputError className="mt-2" message={errors.phone} />
                     </div>
                 )}
 

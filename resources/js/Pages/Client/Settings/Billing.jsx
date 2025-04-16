@@ -13,15 +13,56 @@ export default function Billing({ billing = {} }) {
 
   const handleCheckout = async () => {
     setLoading(true);
-    toast.info('Redirecionando para pagamento...');
-    // window.location.href = '/client/settings/billing/checkout';
-    setTimeout(() => setLoading(false), 2000);
+    try {
+      const res = await fetch('/client/settings/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+        body: JSON.stringify({ plan_id: billing.plan?.id }),
+      });
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+      const data = await res.json();
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        toast.error('Não foi possível iniciar o checkout.');
+      }
+    } catch (err) {
+      toast.error('Erro ao iniciar checkout: ' + (err.message || 'Erro desconhecido.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = async () => {
-    if (window.confirm('Tem certeza que deseja cancelar sua assinatura?')) {
-      toast.success('Assinatura cancelada com sucesso!');
-      // Aqui você faria a chamada para cancelar via backend
+    if (!window.confirm('Tem certeza que deseja cancelar sua assinatura?')) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/client/settings/billing/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Assinatura cancelada com sucesso!');
+        window.location.reload();
+      } else {
+        toast.error(data.message || 'Erro ao cancelar assinatura.');
+      }
+    } catch (err) {
+      toast.error('Erro ao cancelar assinatura: ' + (err.message || 'Erro desconhecido.'));
+    } finally {
+      setLoading(false);
     }
   };
 

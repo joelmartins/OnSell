@@ -27,7 +27,7 @@ export default function Agencies() {
                                         Ofereça soluções completas de automação de vendas e marketing para seus clientes sob sua própria marca, sem investimento em desenvolvimento.
                                     </p>
                                     <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                                        <Link href={route('register')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
+                                        <Link href={route('signup')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-primary text-primary-foreground shadow hover:bg-primary/90 gap-1">
                                             Tornar-se parceiro
                                             <ArrowRight className="h-4 w-4" />
                                         </Link>
@@ -358,7 +358,7 @@ export default function Agencies() {
                                             </ul>
                                         </div>
                                         <div className="mt-6">
-                                            <Link href={route('register')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                                            <Link href={route('signup')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                                                 Começar Agora
                                             </Link>
                                         </div>
@@ -408,7 +408,7 @@ export default function Agencies() {
                                             </ul>
                                         </div>
                                         <div className="mt-6">
-                                            <Link href={route('register')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
+                                            <Link href={route('signup')} className="w-full inline-flex justify-center items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">
                                                 Assinar Agora
                                             </Link>
                                         </div>
@@ -532,7 +532,7 @@ export default function Agencies() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col gap-2 min-[400px]:flex-row pt-4">
-                                    <Link href={route('register')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-white text-primary shadow hover:bg-white/90 gap-1">
+                                    <Link href={route('signup')} className="inline-flex items-center justify-center px-8 py-2 text-sm font-medium transition-colors rounded-md h-10 bg-white text-primary shadow hover:bg-white/90 gap-1">
                                         Criar conta de parceiro
                                         <ArrowRight className="h-4 w-4" />
                                     </Link>

@@ -35,7 +35,7 @@ export default function Header({ auth = {} }) {
                             Dashboard
                         </Link>
                     ) : (
-                        <Link href={route('register')} className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition">
+                        <Link href={route('signup')} className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition">
                             Começar Grátis
                         </Link>
                     )}

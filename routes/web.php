@@ -12,9 +12,24 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\LogsController;
 use App\Http\Controllers\Agency\AutomationController;
 use App\Http\Controllers\Admin\IntegrationsController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Models\Plan;
+use Illuminate\Support\Facades\DB;
+use Stripe\StripeClient;
 
 // Rota inicial pública
-Route::get('/', function () { return Inertia::render('Site/Index'); })->name('site.index');
+Route::get('/', function () {
+    $featuredPlans = \App\Models\Plan::whereNull('agency_id')
+        ->where('is_active', true)
+        ->where('is_featured', true)
+        ->orderBy('price')
+        ->get();
+    return Inertia::render('Site/Index', [
+        'featuredPlans' => $featuredPlans,
+    ]);
+})->name('site.index');
 
 // Rotas para páginas do site
 Route::get('/contact', function () { return Inertia::render('Site/Contact'); })->name('site.contact');
@@ -232,6 +247,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/billing/checkout', [\App\Http\Controllers\Client\BillingController::class, 'checkout'])->name('billing.checkout');
             Route::get('/billing', [\App\Http\Controllers\Client\BillingController::class, 'show'])->name('billing');
         });
+
+        // Cliente: cancelamento de assinatura
+        Route::post('/billing/cancel', [\App\Http\Controllers\Client\BillingController::class, 'cancel'])->name('client.billing.cancel');
+    });
+
+    // Agência: cancelamento de assinatura
+    Route::middleware(['auth', 'role:agency.owner'])->prefix('agency/settings')->group(function () {
+        Route::post('/billing/cancel', [\App\Http\Controllers\Agency\BillingController::class, 'cancel'])->name('agency.billing.cancel');
     });
 
     // Impersonação
@@ -257,7 +280,90 @@ Route::prefix('test-emails')->middleware(['auth', 'role:admin.super'])->group(fu
     Route::get('/account-activation', [\App\Http\Controllers\TestEmailController::class, 'testAccountActivation'])->name('test.email.account-activation');
 });
 
-// Webhook Stripe (pagamentos recorrentes)
-Route::post('/webhooks/stripe', [\App\Http\Controllers\Api\WebhookController::class, 'stripe'])->name('webhooks.stripe');
+// Rota para renderizar a página de cadastro rápido
+Route::get('/signup', function (\Illuminate\Http\Request $request) {
+    $planId = $request->query('plan_id');
+    $plan = $planId ? \App\Models\Plan::find($planId) : null;
+    $featuredPlans = \App\Models\Plan::whereNull('agency_id')
+        ->where('is_active', true)
+        ->where('is_featured', true)
+        ->orderBy('price')
+        ->get();
+    return Inertia::render('Site/Signup', [
+        'selectedPlan' => $plan,
+        'plan_id' => $planId,
+        'featuredPlans' => $featuredPlans,
+    ]);
+})->name('signup');
+
+Route::post('/signup', function (Request $request) {
+    $validated = $request->validate([
+        'client_name' => 'required|string|max:255',
+        'client_document' => 'nullable|string|max:32',
+        'client_email' => 'required|email|max:255|unique:clients,email',
+        'client_phone' => 'nullable|string|max:20',
+        'user_name' => 'required|string|max:255',
+        'user_email' => 'required|email|max:255|unique:users,email',
+        'user_phone' => 'nullable|string|max:20',
+        'password' => 'required|string|min:6',
+        'plan_id' => 'nullable|exists:plans,id',
+    ]);
+
+    DB::beginTransaction();
+    try {
+        $plan = $validated['plan_id'] ? Plan::find($validated['plan_id']) : null;
+        $client = \App\Models\Client::create([
+            'name' => $validated['client_name'],
+            'document' => $validated['client_document'],
+            'email' => $validated['client_email'],
+            'phone' => $validated['client_phone'],
+            'plan_id' => $plan ? $plan->id : null,
+            'is_active' => false,
+        ]);
+        $user = User::create([
+            'name' => $validated['user_name'],
+            'email' => $validated['user_email'],
+            'phone' => $validated['user_phone'],
+            'password' => Hash::make($validated['password']),
+            'client_id' => $client->id,
+            'is_active' => true,
+        ]);
+        if (\Spatie\Permission\Models\Role::where('name', 'client.user')->exists()) {
+            $user->assignRole('client.user');
+        }
+        if ($plan && $plan->price > 0 && $plan->price_id) {
+            $stripe = new StripeClient(config('services.stripe.secret'));
+            $customer = $stripe->customers->create([
+                'email' => $user->email,
+                'name' => $user->name,
+                'phone' => $user->phone,
+                'metadata' => [
+                    'user_id' => $user->id,
+                    'client_id' => $client->id,
+                ],
+            ]);
+            $user->stripe_id = $customer->id;
+            $user->save();
+            $checkoutSession = $stripe->checkout->sessions->create([
+                'customer' => $customer->id,
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price' => $plan->price_id,
+                    'quantity' => 1,
+                ]],
+                'mode' => 'subscription',
+                'success_url' => url('/login?success=1'),
+                'cancel_url' => url('/signup?plan_id=' . $plan->id . '&cancel=1'),
+            ]);
+            DB::commit();
+            return response()->json(['checkout_url' => $checkoutSession->url]);
+        }
+        DB::commit();
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['message' => $e->getMessage()], 422);
+    }
+});
 
 require __DIR__.'/auth.php';
