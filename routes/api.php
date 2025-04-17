@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\WhatsAppWebhookController;
 use App\Http\Controllers\Api\AutomationController;
 use App\Http\Controllers\Api\MessageTemplateController;
 use App\Http\Controllers\Api\CampaignController;
+use App\Http\Controllers\Agency\BrandingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -105,4 +106,10 @@ Route::prefix('webhooks')->name('webhooks.')->group(function () {
     
     // Webhook do Stripe (pagamentos)
     Route::post('/stripe', [App\Http\Controllers\Api\WebhookController::class, 'stripe'])->name('stripe');
+});
+
+// Rotas da Agência
+Route::middleware(['auth:sanctum'])->prefix('agency')->group(function () {
+    // Preenchimento da landing page com IA
+    Route::post('/branding/ai-fill', [\App\Http\Controllers\Agency\BrandingController::class, 'aiFillLandingPage']);
 }); 

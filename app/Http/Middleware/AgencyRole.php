@@ -16,9 +16,31 @@ class AgencyRole
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Log inicial para análise de depuração
+        Log::channel('audit')->info('Middleware AgencyRole iniciado', [
+            'path' => $request->path(),
+            'method' => $request->method(),
+            'user_id' => auth()->id(),
+            'has_session' => session()->has('impersonate.target'),
+            'session_id' => session()->getId(),
+            'route_name' => $request->route()->getName()
+        ]);
+        
         // Verificar se há uma impersonação ativa de agência na sessão
         $target = session()->get('impersonate.target');
         if ($target && $target['type'] === 'agency') {
+            // Verificação adicional: o target['id'] existe e é válido?
+            if (!isset($target['id']) || empty($target['id'])) {
+                Log::channel('audit')->error('Sessão de impersonação de agência inválida - ID ausente', [
+                    'path' => $request->path(),
+                    'session_data' => session()->all()
+                ]);
+                // Limpar sessão de impersonação corrompida
+                session()->forget('impersonate.target');
+                return redirect()->route('dashboard')
+                    ->with('error', 'Sessão de impersonação inválida. Por favor, tente novamente.');
+            }
+            
             Log::channel('audit')->info('Acessando rota de agência como impersonador', [
                 'path' => $request->path(),
                 'target_id' => $target['id']
@@ -48,6 +70,15 @@ class AgencyRole
             'has_impersonation_session' => session()->has('impersonate.target'),
             'impersonation_type' => session()->get('impersonate.target.type'),
         ]);
+        
+        // Verificação para evitar erro 404 em rotas de branding específicas
+        if ($request->is('agency/branding/*') && stripos($request->path(), 'visual') !== false
+            || stripos($request->path(), 'domain') !== false
+            || stripos($request->path(), 'landing') !== false) {
+            // Redirecionar para a página principal de branding
+            return redirect()->route('agency.branding.index')
+                ->with('error', 'Acesso não autorizado a esta seção de branding. Redirecionado para a página principal.');
+        }
         
         return abort(403, 'Acesso não autorizado.');
     }

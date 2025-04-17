@@ -23,6 +23,8 @@ import {
   User,
   Database,
   CreditCard,
+  Globe,
+  Layout,
 } from 'lucide-react';
 import {
   Collapsible,
@@ -86,7 +88,16 @@ export default function AgencyLayout({ children, title }) {
     { label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, href: route('agency.dashboard') },
     { label: 'Clientes', icon: <Users className="h-5 w-5" />, href: route('agency.clients.index') },
     { label: 'Usuários', icon: <Users className="h-5 w-5" />, href: route('agency.users.index') },
-    { label: 'White Label', icon: <Palette className="h-5 w-5" />, href: route('agency.branding.index') },
+    {
+      key: 'branding',
+      label: 'White Label',
+      icon: <Palette className="h-5 w-5" />, 
+      children: [
+        { label: 'Identidade Visual', icon: <Palette className="h-4 w-4" />, href: route('agency.branding.visual') },
+        { label: 'Domínio', icon: <Globe className="h-4 w-4" />, href: route('agency.branding.domain') },
+        { label: 'Landing Page', icon: <Layout className="h-4 w-4" />, href: route('agency.branding.landing') },
+      ]
+    },
     { label: 'Planos', icon: <PackageOpen className="h-5 w-5" />, href: route('agency.plans.index') },
     { 
       key: 'settings',

@@ -39,7 +39,9 @@ Route::get('/agencies', function () { return Inertia::render('Site/Agencies'); }
 
 // Rotas públicas de landing pages e cadastro
 // Rotas para landing pages públicas de agências
-Route::get('/agency/{id}/landing', [\App\Http\Controllers\PublicLandingPageController::class, 'showById'])->name('agency.landing');
+Route::get('/agency/{id}/landing', [\App\Http\Controllers\PublicLandingPageController::class, 'showById'])
+    ->where('id', '[0-9]+')
+    ->name('agency.landing');
 
 // Rotas para cadastro via landing page
 Route::get('/agency/{agencyId}/signup', [\App\Http\Controllers\AgencySignupController::class, 'showSignupForm'])->name('agency.signup');
@@ -146,17 +148,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // White Label
         Route::get('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'index'])->name('branding.index');
+        // As rotas abaixo são usadas pelo backend, mas no frontend a navegação é feita por abas no Index.jsx
+        // Os links no AgencyLayout.jsx redirecionam para branding.index com um parâmetro defaultTab
+        Route::get('/branding/visual', [\App\Http\Controllers\Agency\BrandingController::class, 'visual'])->name('branding.visual');
+        Route::get('/branding/domain', [\App\Http\Controllers\Agency\BrandingController::class, 'domain'])->name('branding.domain');
+        Route::get('/branding/landing', [\App\Http\Controllers\Agency\BrandingController::class, 'landing'])->name('branding.landing');
         Route::put('/branding', [\App\Http\Controllers\Agency\BrandingController::class, 'update'])->name('branding.update');
         Route::put('/branding/domain', [\App\Http\Controllers\Agency\BrandingController::class, 'updateDomain'])->name('branding.update.domain');
         Route::put('/branding/landing', [\App\Http\Controllers\Agency\BrandingController::class, 'updateLandingPage'])->name('branding.update.landing');
+        Route::put('/branding/landing-json', [\App\Http\Controllers\Agency\BrandingController::class, 'updateLandingPageJson'])->name('branding.update.landing.json');
         Route::get('/branding/check-domain', [\App\Http\Controllers\Agency\BrandingController::class, 'checkDomainStatus'])->name('branding.check.domain');
+        Route::post('/branding/ai-fill', [\App\Http\Controllers\Agency\BrandingController::class, 'aiFillLandingPage'])->name('branding.ai-fill');
+        Route::post('/branding/ai-fill-json', [\App\Http\Controllers\Agency\BrandingController::class, 'aiFillLandingPageJson'])->name('branding.ai-fill-json');
 
         // Planos
         Route::resource('plans', \App\Http\Controllers\Agency\PlanController::class);
         Route::put('/plans/{plan}/toggle', [\App\Http\Controllers\Agency\PlanController::class, 'toggle'])->name('plans.toggle');
         Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Agency\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
         Route::get('/plans/{plan}/duplicate', [\App\Http\Controllers\Agency\PlanController::class, 'duplicate'])->name('plans.duplicate');
-        Route::delete('/plans/{id}', [\App\Http\Controllers\Agency\PlanController::class, 'destroy'])->name('plans.destroy');
         Route::post('/plans/{plan}/sync-stripe', [\App\Http\Controllers\Agency\PlanController::class, 'syncStripe'])->name('plans.sync-stripe');
 
         // Usuários
