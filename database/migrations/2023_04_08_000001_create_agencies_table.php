@@ -29,6 +29,8 @@ return new class extends Migration
             $table->string('secondary_color', 20)->default('#10b981');
             $table->string('accent_color', 20)->default('#f97316');
             
+            $table->string('stripe_account_id')->nullable()->index();
+            
             $table->timestamps();
             $table->softDeletes();
         });

@@ -175,6 +175,7 @@ export default function PlansIndex({ plans = [] }) {
                   <TableHead>Descrição</TableHead>
                   <TableHead>Preço</TableHead>
                   <TableHead>Período</TableHead>
+                  <TableHead className="text-center">Sincronizado</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Destaque</TableHead>
                   <TableHead>Criado em</TableHead>
@@ -198,9 +199,8 @@ export default function PlansIndex({ plans = [] }) {
                         {typeof plan.price === 'string' && plan.price.startsWith('R$') 
                           ? plan.price 
                           : `R$ ${typeof plan.price === 'number' 
-                              ? plan.price.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) 
-                              : parseFloat(plan.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
-                        }
+                              ? plan.price.toFixed(2).replace('.', ',') 
+                              : plan.price}`}
                       </TableCell>
                       <TableCell>
                         {plan.period === 'monthly' && 'Mensal'}
@@ -208,6 +208,19 @@ export default function PlansIndex({ plans = [] }) {
                         {plan.period === 'semiannual' && 'Semestral'}
                         {plan.period === 'annual' && 'Anual'}
                         {plan.period === 'lifetime' && 'Vitalício'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {plan.product_id && plan.price_id ? (
+                          <span title="Sincronizado com Stripe" className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <CheckCircle className="w-5 h-5" />
+                            Sim
+                          </span>
+                        ) : (
+                          <span title="Não sincronizado" className="inline-flex items-center gap-1 text-red-500 dark:text-red-400">
+                            <XCircle className="w-5 h-5" />
+                            Não
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-center">
                         {plan.is_active ? (

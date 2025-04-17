@@ -49,6 +49,8 @@ class PlanController extends Controller
                     'created_at' => $plan->created_at,
                     'updated_at' => $plan->updated_at,
                     'clients_count' => $plan->clients()->count(),
+                    'product_id' => $plan->product_id,
+                    'price_id' => $plan->price_id,
                 ];
             });
         
@@ -249,7 +251,9 @@ class PlanController extends Controller
                 'max_landing_pages' => $plan->max_landing_pages,
                 'max_pipelines' => $plan->max_pipelines,
                 'total_leads' => $plan->total_leads,
-                'max_clients' => $plan->max_clients
+                'max_clients' => $plan->max_clients,
+                'product_id' => $plan->product_id,
+                'price_id' => $plan->price_id,
             ]
         ]);
     }
@@ -632,5 +636,61 @@ class PlanController extends Controller
         
         // Converte para float
         return (float) $value;
+    }
+
+    /**
+     * Sincroniza o plano com o Stripe da agência (cria/atualiza produto e price).
+     */
+    public function syncStripe(Request $request, $id)
+    {
+        // Buscar plano considerando impersonação
+        $impersonating = session()->get('impersonate.target');
+        if ($impersonating && $impersonating['type'] === 'agency') {
+            $agencyId = $impersonating['id'];
+        } else {
+            $agencyId = Auth::user()->agency_id;
+        }
+        $plan = Plan::where('id', $id)->where('agency_id', $agencyId)->firstOrFail();
+        $agency = $plan->agency;
+        if (!$agency || !$agency->stripe_account_id) {
+            return response()->json(['message' => 'Agência sem conta Stripe conectada.'], 400);
+        }
+        try {
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+            // Cria ou atualiza o produto no Stripe da agência
+            if (!$plan->product_id) {
+                $product = $stripe->products->create([
+                    'name' => $plan->name,
+                    'description' => $plan->description,
+                ], [
+                    'stripe_account' => $agency->stripe_account_id
+                ]);
+                $plan->product_id = $product->id;
+            } else {
+                $stripe->products->update($plan->product_id, [
+                    'name' => $plan->name,
+                    'description' => $plan->description,
+                ], [
+                    'stripe_account' => $agency->stripe_account_id
+                ]);
+            }
+            // Cria um novo price sempre que sincronizar
+            $price = $stripe->prices->create([
+                'unit_amount' => (int) round($plan->price * 100),
+                'currency' => 'brl',
+                'recurring' => [
+                    'interval' => $plan->period === 'yearly' ? 'year' : 'month',
+                ],
+                'product' => $plan->product_id,
+            ], [
+                'stripe_account' => $agency->stripe_account_id
+            ]);
+            $plan->price_id = $price->id;
+            $plan->save();
+            return response()->json(['success' => true, 'product_id' => $plan->product_id, 'price_id' => $plan->price_id]);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao sincronizar plano com Stripe', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Erro ao sincronizar com Stripe: ' . $e->getMessage()], 500);
+        }
     }
 }

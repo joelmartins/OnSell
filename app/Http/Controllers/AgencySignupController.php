@@ -50,6 +50,8 @@ class AgencySignupController extends Controller
         // Buscar todos os planos ativos da agência para exibir opções
         $plans = Plan::where('agency_id', $agencyId)
             ->where('is_active', true)
+            ->whereNotNull('product_id')
+            ->whereNotNull('price_id')
             ->orderBy('price')
             ->get()
             ->map(function($plan) use ($planId) {
@@ -133,6 +135,8 @@ class AgencySignupController extends Controller
         // Buscar todos os planos ativos da agência para exibir opções
         $plans = Plan::where('agency_id', $agency->id)
             ->where('is_active', true)
+            ->whereNotNull('product_id')
+            ->whereNotNull('price_id')
             ->orderBy('price')
             ->get()
             ->map(function($plan) use ($planId) {
@@ -345,7 +349,41 @@ class AgencySignupController extends Controller
                 'plan_name' => $plan->name,
             ]);
             
-            // Redirecionar para a página de sucesso
+            // Se a agência tem Stripe Connect e o plano tem price_id, criar sessão de checkout
+            if ($agency->stripe_account_id && $plan->price_id) {
+                try {
+                    $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                    $session = $stripe->checkout->sessions->create([
+                        'payment_method_types' => ['card'],
+                        'line_items' => [[
+                            'price' => $plan->price_id,
+                            'quantity' => 1,
+                        ]],
+                        'mode' => 'subscription',
+                        'success_url' => url('/login?success=1'),
+                        'cancel_url' => url()->previous() . '?canceled=1',
+                        'metadata' => [
+                            'agency_id' => $agency->id,
+                            'client_id' => $client->id,
+                            'plan_id' => $plan->id,
+                        ],
+                        'customer_email' => $user->email,
+                    ], [
+                        'stripe_account' => $agency->stripe_account_id
+                    ]);
+                    return redirect($session->url);
+                } catch (\Exception $e) {
+                    Log::error('Erro ao criar sessão de checkout Stripe Connect no signup', [
+                        'error' => $e->getMessage(),
+                        'agency_id' => $agency->id,
+                        'client_id' => $client->id,
+                        'plan_id' => $plan->id,
+                    ]);
+                    // Se falhar, segue para tela de sucesso padrão
+                }
+            }
+
+            // Redirecionar para a página de sucesso padrão caso não tenha Stripe Connect
             return Inertia::render('Public/AgencySignupSuccess', [
                 'agency' => [
                     'id' => $agency->id,

@@ -108,6 +108,11 @@ export default function AgencyLayout({ children, title }) {
           icon: <CreditCard className="h-4 w-4" />,
           href: route('agency.settings.billing'),
         },
+        {
+          label: 'Integrações',
+          icon: <Database className="h-4 w-4" />,
+          href: route('agency.settings.integrations'),
+        },
       ]
     },
   ];

@@ -26,13 +26,8 @@ class BillingController extends Controller
         if (!$agency) {
             abort(403, 'Agência não encontrada.');
         }
-
-        // Buscar o owner da agência
-        $owner = $agency->users()->whereHas('roles', function($q) {
-            $q->where('name', 'agency.owner');
-        })->first();
-        if (!$owner) {
-            abort(403, 'Owner da agência não encontrado.');
+        if (!$agency->stripe_account_id) {
+            abort(400, 'Agência sem Stripe Connect.');
         }
 
         $planId = $request->input('plan_id');
@@ -44,19 +39,30 @@ class BillingController extends Controller
             abort(400, 'Plano sem integração Stripe.');
         }
 
-        // Cria sessão de checkout Stripe
-        $checkout = $owner->newSubscription('default', $plan->price_id)
-            ->checkout([
+        // Criar sessão de checkout Stripe via API, usando a conta da agência
+        try {
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+            $session = $stripe->checkout->sessions->create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price' => $plan->price_id,
+                    'quantity' => 1,
+                ]],
+                'mode' => 'subscription',
                 'success_url' => route('agency.settings.billing') . '?success=1',
                 'cancel_url' => route('agency.settings.billing') . '?canceled=1',
                 'metadata' => [
                     'agency_id' => $agency->id,
                     'plan_id' => $plan->id,
                 ],
+            ], [
+                'stripe_account' => $agency->stripe_account_id
             ]);
-
-        // Redireciona para o Stripe
-        return redirect($checkout->url);
+            return redirect($session->url);
+        } catch (\Exception $e) {
+            \Log::error('Erro ao criar sessão de checkout Stripe Connect', ['error' => $e->getMessage()]);
+            abort(500, 'Erro ao criar sessão de checkout Stripe: ' . $e->getMessage());
+        }
     }
 
     /**

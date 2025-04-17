@@ -89,4 +89,27 @@ class SettingsController extends Controller
 
         return Redirect::route('agency.settings.profile')->with('success', 'Senha atualizada com sucesso.');
     }
+
+    /**
+     * Exibe a tela de integrações da agência (Stripe Connect, etc).
+     */
+    public function integrations(Request $request)
+    {
+        $impersonating = session()->get('impersonate.target');
+        if ($impersonating && $impersonating['type'] === 'agency') {
+            $agency = \App\Models\Agency::find($impersonating['id']);
+        } else {
+            $agency = $request->user()->agency;
+        }
+        if (!$agency) {
+            abort(403, 'Agência não encontrada para este usuário.');
+        }
+        return inertia('Agency/Settings/Integrations', [
+            'agency' => [
+                'id' => $agency->id,
+                'name' => $agency->name,
+                'stripe_account_id' => $agency->stripe_account_id,
+            ],
+        ]);
+    }
 } 

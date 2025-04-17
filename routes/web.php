@@ -157,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/plans/{plan}/toggle-featured', [\App\Http\Controllers\Agency\PlanController::class, 'toggleFeatured'])->name('plans.toggle-featured');
         Route::get('/plans/{plan}/duplicate', [\App\Http\Controllers\Agency\PlanController::class, 'duplicate'])->name('plans.duplicate');
         Route::delete('/plans/{id}', [\App\Http\Controllers\Agency\PlanController::class, 'destroy'])->name('plans.destroy');
+        Route::post('/plans/{plan}/sync-stripe', [\App\Http\Controllers\Agency\PlanController::class, 'syncStripe'])->name('plans.sync-stripe');
 
         // Usuários
         Route::get('/users', [\App\Http\Controllers\Agency\UserController::class, 'index'])->name('users.index');
@@ -176,6 +177,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'profile'])->name('profile');
             Route::patch('/profile', [\App\Http\Controllers\Agency\SettingsController::class, 'updateProfile'])->name('update-profile');
             Route::put('/password', [\App\Http\Controllers\Agency\SettingsController::class, 'updatePassword'])->name('update-password');
+            
+            // Integrações
+            Route::get('/integrations', [\App\Http\Controllers\Agency\SettingsController::class, 'integrations'])->name('integrations');
             
             // Checkout Stripe
             Route::post('/billing/checkout', [\App\Http\Controllers\Agency\BillingController::class, 'checkout'])->name('billing.checkout');
@@ -255,6 +259,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Agência: cancelamento de assinatura
     Route::middleware(['auth', 'role:agency.owner'])->prefix('agency/settings')->group(function () {
         Route::post('/billing/cancel', [\App\Http\Controllers\Agency\BillingController::class, 'cancel'])->name('agency.billing.cancel');
+    });
+
+    // Integração Stripe Connect para agências
+    Route::middleware(['auth', \App\Http\Middleware\AgencyRole::class])->prefix('agency/settings/integrations')->group(function () {
+        Route::get('/stripe/connect', [\App\Http\Controllers\Agency\StripeIntegrationController::class, 'redirectToStripe'])->name('agency.stripe.connect');
+        Route::get('/stripe/callback', [\App\Http\Controllers\Agency\StripeIntegrationController::class, 'handleStripeCallback'])->name('agency.stripe.callback');
+        Route::post('/stripe/disconnect', [\App\Http\Controllers\Agency\StripeIntegrationController::class, 'disconnectStripe'])->name('agency.stripe.disconnect');
     });
 
     // Impersonação

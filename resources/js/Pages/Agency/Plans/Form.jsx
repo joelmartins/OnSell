@@ -13,6 +13,7 @@ import { Separator } from '@/Components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Save, Tag, Star, Plus, Trash2 } from 'lucide-react';
 import { CurrencyInput } from '@/Components/ui/currency-input';
+import { toast } from 'react-toastify';
 
 // Esquema de validação do formulário
 const formSchema = z.object({
@@ -34,6 +35,7 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
   const { errors: serverErrors } = usePage().props;
   const [generalError, setGeneralError] = useState(null);
   const [jsonFeatures, setJsonFeatures] = useState([{ key: 'feature_1', value: '' }]);
+  const [syncLoading, setSyncLoading] = useState(false);
   
   // Ao carregar o componente, verificar se há erros gerais
   useEffect(() => {
@@ -191,6 +193,32 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
       });
     }
   }
+
+  const handleSyncStripe = async () => {
+    if (!plan?.id) return;
+    setSyncLoading(true);
+    try {
+      const response = await fetch(`/agency/plans/${plan.id}/sync-stripe`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+          'Accept': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success('Plano sincronizado com sucesso com o Stripe!');
+        router.reload({ only: ['plan'] });
+      } else {
+        toast.error(data.message || 'Erro ao sincronizar com Stripe.');
+      }
+    } catch (e) {
+      toast.error('Erro de comunicação com Stripe.');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
 
   return (
     <Form {...form}>
@@ -429,6 +457,22 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
           {isEditing ? 'Atualizar Plano' : 'Criar Plano'}
         </Button>
       </form>
+
+      {isEditing && (
+        <div className="flex flex-col gap-2 mt-4">
+          <div>
+            <span className="text-xs text-muted-foreground">ID do Produto Stripe:</span>
+            <span className="block font-mono text-sm">{plan?.product_id || '-'}</span>
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">ID do Preço Stripe:</span>
+            <span className="block font-mono text-sm">{plan?.price_id || '-'}</span>
+          </div>
+          <Button type="button" variant="secondary" className="mt-2" onClick={handleSyncStripe} disabled={syncLoading}>
+            {syncLoading ? 'Sincronizando...' : 'Sincronizar com Stripe'}
+          </Button>
+        </div>
+      )}
     </Form>
   );
 } 
