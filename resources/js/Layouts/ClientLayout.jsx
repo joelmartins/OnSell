@@ -202,15 +202,26 @@ export default function ClientLayout({ children, title }) {
       href: safeRoute('client.integrations'), 
       icon: <Plug className="h-5 w-5" />
     },
-    { 
-      key: 'settings',
-      name: 'Configurações', 
+    {
+      name: 'Configurações',
       icon: <Settings className="h-5 w-5" />,
       children: [
-        { name: 'Geral', icon: <Settings className="h-4 w-4" />, href: safeRoute('client.settings.index') },
-        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: '/client/settings/profile' },
-        { name: 'Cobrança e Assinatura', icon: <CreditCard className="h-4 w-4" />, href: safeRoute('client.settings.billing') },
-      ]
+        {
+          name: 'Dados da Empresa',
+          href: safeRoute('client.settings.index'),
+          icon: <Settings className="h-4 w-4" />,
+        },
+        {
+          name: 'Perfil',
+          href: safeRoute('client.settings.profile'),
+          icon: <User className="h-4 w-4" />,
+        },
+        {
+          name: 'Cobrança e Assinatura',
+          icon: <CreditCard className="h-4 w-4" />,
+          href: safeRoute('client.settings.billing'),
+        }
+      ],
     },
   ];
 

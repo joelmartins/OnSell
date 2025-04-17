@@ -39,7 +39,7 @@ class SettingsController extends Controller
             'ip' => request()->ip(),
         ]);
         
-        return Inertia::render('Agency/Settings/Profile', [
+        return Inertia::render('Agency/Settings/Profile/Index', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'user' => $request->user(),

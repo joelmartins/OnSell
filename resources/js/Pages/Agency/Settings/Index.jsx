@@ -1,22 +1,17 @@
 "use client";
 
 import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
-import { router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import AgencyLayout from '@/Layouts/AgencyLayout';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/Components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/Components/ui/form';
 import { Input } from '@/Components/ui/input';
-import { Textarea } from '@/Components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
-import { Switch } from '@/Components/ui/switch';
-import { Separator } from '@/Components/ui/separator';
-import { Save, Bell, Mail, Phone, Shield, UserCog } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { PhoneInput } from '@/Components/ui/phone-input';
 
 // Esquema de validação
 const formSchema = z.object({
@@ -39,6 +34,15 @@ const formSchema = z.object({
     support_email: z.string().email().optional(),
     support_phone: z.string().optional(),
   }),
+});
+
+// Adicionar schema para dados da empresa
+const companySchema = z.object({
+  company_name: z.string().min(2, 'O nome da empresa é obrigatório.'),
+  company_document: z.string().optional(),
+  company_email: z.string().email('E-mail inválido.'),
+  company_phone: z.string().optional(),
+  company_country_code: z.string().optional(),
 });
 
 export default function AgencySettings({ billing = {}, ...props }) {
@@ -71,6 +75,18 @@ export default function AgencySettings({ billing = {}, ...props }) {
     },
   });
 
+  // Novo form para dados da empresa
+  const companyForm = useForm({
+    resolver: zodResolver(companySchema),
+    defaultValues: {
+      company_name: '',
+      company_document: '',
+      company_email: '',
+      company_phone: '',
+      company_country_code: '+55',
+    },
+  });
+
   function onSubmit(data) {
     setIsSubmitting(true);
     
@@ -78,6 +94,15 @@ export default function AgencySettings({ billing = {}, ...props }) {
     setTimeout(() => {
       console.log('Dados do formulário:', data);
       toast.success('Configurações salvas com sucesso!');
+      setIsSubmitting(false);
+    }, 1000);
+  }
+
+  function onSubmitCompany(data) {
+    setIsSubmitting(true);
+    // Simulação de envio para o backend
+    setTimeout(() => {
+      toast.success('Dados da empresa salvos com sucesso!');
       setIsSubmitting(false);
     }, 1000);
   }
@@ -92,343 +117,95 @@ export default function AgencySettings({ billing = {}, ...props }) {
   return (
     <AgencyLayout title="Configurações">
       <Head title="Configurações" />
-      
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold">Configurações da Agência</h2>
-        <p className="text-muted-foreground">Gerencie as configurações da sua agência</p>
+        <h2 className="text-2xl font-semibold">Configurações</h2>
+        <p className="text-muted-foreground">Gerencie as configurações da sua conta</p>
       </div>
-      
-      <div className="mb-6 flex justify-end">
-        <Button variant="outline" asChild className="mb-4">
-          <Link href={route('agency.settings.profile')}>
-            <UserCog className="mr-2 h-4 w-4" />
-            Editar Perfil de Usuário
-          </Link>
-        </Button>
+      <div className="mb-8 mt-8">
+        <Card className="w-full mx-auto">
+          <CardHeader>
+            <CardTitle>Dados da Empresa</CardTitle>
+            <CardDescription>Edite as informações cadastrais da sua empresa/agência.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...companyForm}>
+              <form onSubmit={companyForm.handleSubmit(onSubmitCompany)} className="space-y-6">
+                <FormField
+                  control={companyForm.control}
+                  name="company_name"
+                  rules={{ required: 'O nome da empresa é obrigatório.' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome da empresa *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Padaria do João" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="company_document"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CNPJ ou CPF</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="CNPJ ou CPF" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="company_email"
+                  rules={{ required: 'O e-mail da empresa é obrigatório.' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>E-mail da empresa *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="empresa@email.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={companyForm.control}
+                  name="company_phone"
+                  rules={{
+                    validate: (value) => {
+                      const digits = (value || '').replace(/\D/g, '');
+                      if (digits.length > 9) return 'O telefone deve ter no máximo 9 dígitos.';
+                      return true;
+                    },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone da empresa</FormLabel>
+                      <FormControl>
+                        <PhoneInput
+                          id="company_phone"
+                          name="company_phone"
+                          value={field.value}
+                          country={companyForm.watch('company_country_code') || '+55'}
+                          onValueChange={val => companyForm.setValue('company_phone', val, { shouldValidate: true })}
+                          onCountryChange={val => companyForm.setValue('company_country_code', val)}
+                          placeholder="(11) 91234-5678"
+                          error={companyForm.formState.errors.company_phone?.message}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" disabled={isSubmitting}>Salvar Dados da Empresa</Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
-      <div className="mb-6 flex justify-end">
-        <Button variant="outline" asChild className="mb-4">
-          <Link href={route('agency.settings.billing')}>
-            <UserCog className="mr-2 h-4 w-4" />
-            Cobrança e Assinatura
-          </Link>
-        </Button>
-      </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full md:w-auto">
-              <TabsTrigger value="notifications" className="flex items-center gap-2">
-                <Bell className="h-4 w-4" />
-                <span className="hidden sm:inline">Notificações</span>
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline">Segurança</span>
-              </TabsTrigger>
-              <TabsTrigger value="appearance" className="flex items-center gap-2">
-                <UserCog className="h-4 w-4" />
-                <span className="hidden sm:inline">Aparência</span>
-              </TabsTrigger>
-              <TabsTrigger value="contact" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span className="hidden sm:inline">Contato</span>
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="notifications" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notificações</CardTitle>
-                  <CardDescription>
-                    Configure como você deseja receber notificações do sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="notifications.email"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Email
-                          </FormLabel>
-                          <FormDescription>
-                            Receber notificações via email
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="notifications.push"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Push
-                          </FormLabel>
-                          <FormDescription>
-                            Receber notificações push no navegador
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="notifications.sms"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            SMS
-                          </FormLabel>
-                          <FormDescription>
-                            Receber notificações via SMS
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="notifications.whatsapp"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            WhatsApp
-                          </FormLabel>
-                          <FormDescription>
-                            Receber notificações via WhatsApp
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="security" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Segurança</CardTitle>
-                  <CardDescription>
-                    Configure as opções de segurança da sua conta
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="security.two_factor"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Autenticação de dois fatores
-                          </FormLabel>
-                          <FormDescription>
-                            Requer um código adicional ao fazer login
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="security.ip_restriction"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Restrição de IP
-                          </FormLabel>
-                          <FormDescription>
-                            Limitar o acesso a IPs específicos
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="security.session_timeout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tempo de inatividade (minutos)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} min={5} max={120} />
-                        </FormControl>
-                        <FormDescription>
-                          Tempo até a sessão expirar por inatividade
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="appearance" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aparência</CardTitle>
-                  <CardDescription>
-                    Personalize a aparência da plataforma
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="appearance.dark_mode"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Modo escuro
-                          </FormLabel>
-                          <FormDescription>
-                            Utilizar tema escuro na interface
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="appearance.compact_mode"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Modo compacto
-                          </FormLabel>
-                          <FormDescription>
-                            Reduzir o espaçamento entre elementos
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="contact" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informações de Contato</CardTitle>
-                  <CardDescription>
-                    Configure as informações de contato para seus clientes
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="contact.support_email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email de Suporte</FormLabel>
-                        <FormControl>
-                          <Input placeholder="suporte@suaagencia.com.br" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Email que será exibido para seus clientes para contato
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="contact.support_phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefone de Suporte</FormLabel>
-                        <FormControl>
-                          <Input placeholder="(11) 99999-9999" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                          Telefone que será exibido para seus clientes para contato
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-          
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
-              <Save className="h-4 w-4" />
-              {isSubmitting ? "Salvando..." : "Salvar Configurações"}
-            </Button>
-          </div>
-        </form>
-      </Form>
     </AgencyLayout>
   );
 } 
