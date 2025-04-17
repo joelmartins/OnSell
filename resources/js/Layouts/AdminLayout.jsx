@@ -96,7 +96,7 @@ export default function AdminLayout({ children, title }) {
       icon: <Settings className="h-5 w-5" />, 
       submenu: [
         { label: 'Geral', icon: <Settings className="h-4 w-4" />, href: route('admin.settings.index') },
-        { label: 'Perfil', icon: <User className="h-4 w-4" />, href: route('admin.settings.profile') },
+        { label: 'Perfil', icon: <User className="h-4 w-4" />, href: '/admin/settings/profile' },
         { label: 'Logs', icon: <FileText className="h-4 w-4" />, href: route('admin.settings.logs') },
         { label: 'Gerenciador de Filas', icon: <Database className="h-4 w-4" />, href: route('admin.settings.queues.index') },
       ]

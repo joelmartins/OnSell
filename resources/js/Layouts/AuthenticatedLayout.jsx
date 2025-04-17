@@ -50,7 +50,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link href={route('profile.edit')} className="flex w-full items-center">
+                                    <Link 
+                                        href={route('admin.settings.profile')}
+                                        className="flex w-full items-center"
+                                    >
                                         <User className="mr-2 h-4 w-4" />
                                         Perfil
                                     </Link>
@@ -96,7 +99,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </div>
                                 <div className="flex flex-col space-y-3">
                                     <Link 
-                                        href={route('profile.edit')}
+                                        href={route('admin.settings.profile')}
                                         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
                                     >
                                         Perfil

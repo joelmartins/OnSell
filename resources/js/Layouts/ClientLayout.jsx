@@ -208,7 +208,7 @@ export default function ClientLayout({ children, title }) {
       icon: <Settings className="h-5 w-5" />,
       children: [
         { name: 'Geral', icon: <Settings className="h-4 w-4" />, href: safeRoute('client.settings.index') },
-        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: safeRoute('client.settings.profile') },
+        { name: 'Perfil', icon: <User className="h-4 w-4" />, href: '/client/settings/profile' },
         { name: 'Cobrança e Assinatura', icon: <CreditCard className="h-4 w-4" />, href: safeRoute('client.settings.billing') },
       ]
     },

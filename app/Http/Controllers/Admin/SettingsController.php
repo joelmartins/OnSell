@@ -35,7 +35,7 @@ class SettingsController extends Controller
      */
     public function profile(Request $request): Response
     {
-        return Inertia::render('Admin/Settings/Profile', [
+        return Inertia::render('Admin/Settings/Profile/Index', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'user' => $request->user(),

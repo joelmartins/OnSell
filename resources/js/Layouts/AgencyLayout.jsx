@@ -94,7 +94,7 @@ export default function AgencyLayout({ children, title }) {
       icon: <Settings className="h-5 w-5" />, 
       children: [
         { label: 'Geral', icon: <Settings className="h-4 w-4" />, href: route('agency.settings.index') },
-        { label: 'Perfil', icon: <User className="h-4 w-4" />, href: route('agency.settings.profile') },
+        { label: 'Perfil', icon: <User className="h-4 w-4" />, href: '/agency/settings/profile' },
         { label: 'Cobrança e Assinatura', icon: <CreditCard className="h-4 w-4" />, href: route('agency.settings.billing') },
       ]
     },
