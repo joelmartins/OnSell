@@ -46,3 +46,6 @@ Melhorias implementadas:
 - Reorganizado o fluxo de seleção de planos e preenchimento de dados
 - Reforçada filtragem para não exibir planos de agência na home e no signup
 - Adicionada consulta SQL mais robusta para garantir que planos de agência sejam excluídos consistentemente
+
+# 🔄 Sales Kit renomeado para Inteligência de Vendas
+Atualizado o implementation-plan.mdc: Sales Kit agora é Inteligência de Vendas (Fluxo Estruturado), com etapas detalhadas de ICP, mapeamento emocional, estratégia de acesso e dashboard de inteligência comercial.

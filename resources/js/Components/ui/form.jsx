@@ -24,15 +24,36 @@ const FormField = (
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
+  
+  // Verifica se o contexto de formulário existe
+  const formContext = useFormContext()
+  
+  // Fornece valores padrão seguros se o contexto não existir
+  const { getFieldState, formState } = formContext || { 
+    getFieldState: () => ({}), 
+    formState: {} 
+  }
 
-  const fieldState = getFieldState(fieldContext.name, formState)
-
+  // Se não há contexto de campo, lança erro
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
-  const { id } = itemContext
+  // Se temos contexto de campo mas não temos contexto de formulário,
+  // retorna objeto com valores padrão
+  if (!formContext) {
+    return {
+      id: itemContext?.id || '',
+      name: fieldContext.name,
+      formItemId: itemContext?.id ? `${itemContext.id}-form-item` : '',
+      formDescriptionId: itemContext?.id ? `${itemContext.id}-form-item-description` : '',
+      formMessageId: itemContext?.id ? `${itemContext.id}-form-item-message` : '',
+    }
+  }
+
+  // Caso normal: temos contexto de formulário e campo
+  const fieldState = getFieldState(fieldContext.name, formState)
+  const { id } = itemContext || { id: '' }
 
   return {
     id,

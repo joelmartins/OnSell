@@ -34,7 +34,8 @@ import {
   ListChecks,
   Building2,
   MailPlus,
-  Table
+  Table,
+  BrainCircuit
 } from 'lucide-react';
 import {
   Collapsible,
@@ -173,9 +174,36 @@ export default function ClientLayout({ children, title }) {
       href: safeRoute('client.dashboard'), 
       icon: <LayoutDashboard className="h-5 w-5" />
     },
+    {
+      name: 'Inteligência de Vendas',
+      key: 'salesintelligence',
+      icon: <BrainCircuit className="h-5 w-5" />,
+      children: [
+        {
+          name: 'Diagnosis',
+          href: safeRoute('client.salesintelligence.diagnosis'),
+          icon: <FileText className="h-4 w-4" />,
+        },
+        {
+          name: 'Emotional Mapping',
+          href: safeRoute('client.salesintelligence.emotional-mapping'),
+          icon: <Users className="h-4 w-4" />,
+        },
+        {
+          name: 'Access Strategy',
+          href: safeRoute('client.salesintelligence.access-strategy'),
+          icon: <Send className="h-4 w-4" />,
+        },
+        {
+          name: 'Intelligence Map',
+          href: safeRoute('client.salesintelligence.intelligence-map'),
+          icon: <BarChart className="h-4 w-4" />,
+        },
+      ],
+    },
     { 
       name: 'Contatos', 
-      href: safeRoute('client.contacts.index'), 
+      href: safeRoute('client.contacts'), 
       icon: <Users className="h-5 w-5" />
     },
     { 
@@ -205,7 +233,7 @@ export default function ClientLayout({ children, title }) {
     },
     { 
       name: 'Campanhas', 
-      href: safeRoute('client.campaings.index'), 
+      href: safeRoute('client.campaigns'), 
       icon: <MailPlus className="h-5 w-5" />
     },
     { 

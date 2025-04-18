@@ -1,0 +1,247 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 1. Painel (Dashboard de Vendas)
+- [ ] Definir estrutura de dados para KPIs, leads, tarefas e sugestões da IA
+- [ ] Criar API para fornecer dados agregados do painel
+- [ ] Implementar componente React do dashboard
+- [ ] Integrar sugestões e alertas da IA (ex: follow-up, oportunidades quentes)
+- [ ] Testes unitários e de integração
+
+### 1.1 Objetivo
+Exibir visão geral dos principais indicadores de vendas, status dos leads, tarefas e recomendações inteligentes para o usuário.
+
+### 1.2 Fluxo
+- Coleta de dados de leads, oportunidades, tarefas e resultados.
+- Exibição de KPIs (leads captados, conversão, funil, tarefas pendentes, etc).
+- Sugestões e alertas da IA baseados em comportamento e histórico.
+
+### 1.3 Integração IA
+- IA sugere próximos passos, follow-ups prioritários, oportunidades quentes e riscos.
+- IA destaca anomalias e tendências relevantes.
+
+---
+
+## 2. Inteligência de Vendas (Fluxo Estruturado)
+- [ ] Definir nome final do menu e modelo de dados (produto, ICP, decisor, dores, desejos, objeções, perfil comportamental, tom de comunicação)
+- [ ] Criar formulários dinâmicos para diagnóstico do ICP e tomador de decisão
+- [ ] Implementar prompts e integração com IA para análise e geração de perfis
+- [ ] Criar interface para mapeamento emocional do prospect
+- [ ] Integrar IA para gerar objeções, gatilhos e âncoras de copy
+- [ ] Implementar estratégia de acesso (gatekeeper) com sugestões da IA
+- [ ] Gerar Mapa de Inteligência Comercial (dashboard do módulo)
+- [ ] Testes unitários e de integração
+
+### 2.1 Diagnóstico do ICP e Tomador de Decisão
+**Objetivo:** Identificar com precisão quem é o cliente ideal, quem decide e como ele pensa — base para toda comunicação futura.
+**Fluxo:**
+- Formulário dinâmico com perguntas orientadas por IA:
+  - O que você vende? (Produto/serviço principal)
+  - Qual tipo de cliente mais se beneficia disso? (Segmento de mercado, tipo de empresa, perfil demográfico)
+  - Qual é o cargo da pessoa que geralmente toma a decisão de compra? (CEO, Diretor, Gerente, Comprador, etc.)
+  - Essa pessoa decide sozinha ou precisa envolver outras pessoas? (Sim/Não - Se não, quem mais influencia?)
+  - Com que frequência esse tipo de cliente faz compras como a sua? (Compras únicas, trimestrais, anuais...)
+  - Qual é o ciclo médio de vendas? (Ex: 7 dias, 30 dias, 90 dias)
+- **IA:** Analisa respostas para criar o Perfil Comportamental do Decisor:
+  - Impulsivo (compra rápido, emocional)
+  - Cético (questiona muito, precisa de provas)
+  - Relacional (valoriza relacionamento/confiança)
+  - Técnico (prioriza dados, especificações, ROI)
+- Definição do Tom de Comunicação Ideal para campanhas futuras (ex: mais emocional, racional, consultivo).
+
+### 2.2 Mapeamento Emocional do Prospect
+**Objetivo:** Capturar sentimentos profundos, desejos, medos e frustrações que realmente movem a decisão de compra — alimentando copies, headlines, chamadas, argumentos.
+**Fluxo:**
+- Perguntas assistidas por IA:
+  - Quais são as principais frustrações desse cliente em relação ao que você oferece?
+  - O que ele mais deseja conquistar ao contratar uma solução como a sua?
+  - Qual é o maior medo dele ao investir nesse tipo de serviço/produto?
+  - O que ele já tentou anteriormente e não funcionou?
+  - Se ele pudesse ouvir uma "promessa dos sonhos", qual seria?
+- **IA:** Geração de:
+  - Lista de objeções prováveis (Ex: "Será que vai funcionar para mim?", "Será que é seguro?")
+  - Gatilhos emocionais (Ex: segurança, sucesso, status, economia de tempo/dinheiro)
+  - Âncoras de Copy (frases impactantes para campanhas, landing pages, scripts)
+
+### 2.3 Estratégia de Acesso (Como Passar pelo Gatekeeper)
+**Objetivo:** Aumentar a taxa de contato direto com o decisor, minimizando bloqueios iniciais (secretárias, assistentes, recepcionistas).
+**Fluxo:**
+- Perguntas orientadas por IA:
+  - Com quem você geralmente fala primeiro ao abordar novas empresas? (Ex: recepcionista, analista, secretário)
+  - É comum cair com intermediários antes de chegar ao decisor? (Sim/Não)
+  - Já teve sucesso falando direto com o decisor? Como foi? (Buscar padrões de abordagens que funcionaram)
+- **IA:** Criação de Estratégias Personalizadas:
+  - Quebra de bloqueio: Frase de contexto + argumento plausível (ex: "preciso falar diretamente com o responsável técnico sobre uma atualização importante")
+  - Abordagem com nome: Quando já se sabe o nome do decisor.
+  - Abordagem sem nome: Quando é necessário "puxar" o nome de maneira sutil.
+  - Armadilhas de conversa: Pequenas perguntas ou ganchos para fazer o gatekeeper abrir informações.
+
+### 2.4 Resultado Final no Sistema
+**Mapa de Inteligência Comercial (Dashboard do Módulo):**
+- ICP detalhado (perfil ideal de cliente)
+- Perfil do Decisor (comportamento + tom recomendado)
+- Frustrações / Sonhos / Medos (listagem)
+- Objeções prováveis (prontas para usar em copy e scripts)
+- Gatilhos e Âncoras Emocionais (catalogadas)
+- Estratégias de Acesso (roteiros de ligação / abordagem)
+
+---
+
+## 3. Contatos
+- [ ] Estruturar modelo de contatos/leads enriquecidos
+- [ ] Implementar segmentação automática por IA
+- [ ] Criar interface de busca, filtros e enriquecimento
+- [ ] Integrar sugestões de abordagem e priorização por IA
+- [ ] Testes unitários e de integração
+
+### 3.1 Objetivo
+Centralizar e enriquecer a base de leads e clientes, facilitando segmentação, priorização e personalização de abordagens.
+
+### 3.2 Fluxo
+- Cadastro manual, importação ou captura automática de leads.
+- Enriquecimento de dados via integrações e IA.
+- Segmentação dinâmica e filtros avançados.
+- Visualização de histórico e status de cada contato.
+
+### 3.3 Integração IA
+- IA sugere segmentações, perfis prioritários e melhores horários de contato.
+- IA enriquece dados automaticamente e sugere abordagens personalizadas.
+
+---
+
+## 4. Pipeline
+- [ ] Definir modelo de oportunidades e etapas do funil
+- [ ] Implementar Kanban com automações
+- [ ] Integrar IA para sugerir próxima ação e alertas
+- [ ] Testes unitários e de integração
+
+### 4.1 Objetivo
+Organizar visualmente as oportunidades de venda, facilitando o acompanhamento do funil e automação de tarefas.
+
+### 4.2 Fluxo
+- Criação e movimentação de oportunidades entre etapas do funil.
+- Atribuição de responsáveis e prazos.
+- Gatilhos automáticos para tarefas e notificações.
+
+### 4.3 Integração IA
+- IA sugere próxima ação, alerta sobre estagnação e identifica oportunidades quentes.
+- IA recomenda automações e melhorias no funil.
+
+---
+
+## 5. Mensagens (Inbox Unificado)
+- [ ] Integrar canais (WhatsApp, e-mail, redes sociais)
+- [ ] Implementar IA para sugerir respostas e follow-ups
+- [ ] Criar interface de histórico e contexto conversacional
+- [ ] Testes unitários e de integração
+
+### 5.1 Objetivo
+Centralizar toda a comunicação com leads e clientes, otimizando o tempo de resposta e a personalização.
+
+### 5.2 Fluxo
+- Recebimento e envio de mensagens por múltiplos canais.
+- Visualização de histórico completo por contato.
+- Sugestão de respostas rápidas e follow-ups.
+
+### 5.3 Integração IA
+- IA sugere respostas, follow-ups e identifica oportunidades de upsell/cross-sell.
+- IA analisa sentimento e urgência das mensagens.
+
+---
+
+## 6. Automação
+- [ ] Definir modelo de fluxos e triggers
+- [ ] Criar editor visual de automações
+- [ ] Integrar IA para sugerir automações e otimizações
+- [ ] Testes unitários e de integração
+
+### 6.1 Objetivo
+Permitir a criação de fluxos automatizados para qualificação, nutrição e conversão de leads.
+
+### 6.2 Fluxo
+- Criação de triggers (ex: novo lead, mudança de etapa, resposta recebida).
+- Definição de ações automáticas (ex: enviar e-mail, criar tarefa, notificar responsável).
+- Visualização e edição dos fluxos.
+
+### 6.3 Integração IA
+- IA sugere automações baseadas em padrões de sucesso.
+- IA recomenda ajustes para aumentar conversão e engajamento.
+
+---
+
+## 7. Formulários
+- [ ] Implementar geração dinâmica de formulários
+- [ ] Integrar IA para sugerir campos e perguntas
+- [ ] Testes unitários e de integração
+
+### 7.1 Objetivo
+Facilitar a criação de formulários inteligentes para captação e qualificação de leads.
+
+### 7.2 Fluxo
+- Criação de formulários customizáveis.
+- Sugestão de campos e perguntas pela IA.
+- Integração com automações e landing pages.
+
+### 7.3 Integração IA
+- IA sugere perguntas de qualificação e campos obrigatórios.
+- IA analisa respostas para segmentação automática.
+
+---
+
+## 8. Landing Pages
+- [ ] Criar editor de landing pages assistido por IA
+- [ ] Integrar IA para copy, layout e imagens
+- [ ] Testes unitários e de integração
+
+### 8.1 Objetivo
+Permitir a criação rápida de páginas de captura otimizadas para conversão.
+
+### 8.2 Fluxo
+- Editor visual para criação de landing pages.
+- Sugestão de copy, layout e imagens pela IA.
+- Integração com formulários e automações.
+
+### 8.3 Integração IA
+- IA gera copy persuasiva, sugere imagens e estrutura de página.
+- IA analisa performance e sugere melhorias.
+
+---
+
+## 9. Campanhas
+- [ ] Definir modelo de campanhas multicanal
+- [ ] Implementar orquestração e segmentação por IA
+- [ ] Integrar IA para geração de copy e sugestões de público
+- [ ] Testes unitários e de integração
+
+### 9.1 Objetivo
+Orquestrar campanhas de marketing e vendas em múltiplos canais, com segmentação inteligente.
+
+### 9.2 Fluxo
+- Criação de campanhas multicanal (e-mail, WhatsApp, redes sociais).
+- Segmentação automática de público.
+- Geração de copy e agendamento de envios.
+
+### 9.3 Integração IA
+- IA sugere segmentações, copy e horários ideais de envio.
+- IA analisa resultados e recomenda ajustes.
+
+---
+
+## 10. Relatórios
+- [ ] Estruturar dashboards e relatórios automáticos
+- [ ] Integrar IA para análises e recomendações
+- [ ] Testes unitários e de integração
+
+### 10.1 Objetivo
+Oferecer dashboards e relatórios automáticos com insights acionáveis para o negócio.
+
+### 10.2 Fluxo
+- Coleta e agregação de dados de todos os módulos.
+- Exibição de KPIs, funis, taxas de conversão e tendências.
+- Geração de relatórios customizáveis.
+
+### 10.3 Integração IA
+- IA identifica padrões, anomalias e oportunidades de melhoria.
+- IA sugere ações baseadas nos dados analisados.

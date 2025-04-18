@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use Stripe\StripeClient;
+use App\Http\Controllers\SalesIntelligenceController;
 
 // Rota inicial pública
 Route::get('/', function () {
@@ -266,6 +267,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Cliente: cancelamento de assinatura
         Route::post('/billing/cancel', [\App\Http\Controllers\Client\BillingController::class, 'cancel'])->name('client.billing.cancel');
+
+        // Diagnóstico
+        Route::get('sales-intelligence/diagnosis', [SalesIntelligenceController::class, 'showForm'])->name('salesintelligence.diagnosis');
+        Route::post('sales-intelligence/diagnosis', [SalesIntelligenceController::class, 'storeAnswers'])->name('salesintelligence.storeAnswers');
+        // Emotional Mapping
+        Route::get('sales-intelligence/emotional-mapping', [SalesIntelligenceController::class, 'emotional'])->name('salesintelligence.emotional-mapping');
+        // Access Strategy
+        Route::get('sales-intelligence/access-strategy', [SalesIntelligenceController::class, 'access'])->name('salesintelligence.access-strategy');
+        // Intelligence Map
+        Route::get('sales-intelligence/intelligence-map', [SalesIntelligenceController::class, 'map'])->name('salesintelligence.intelligence-map');
+        // Processamento IA
+        Route::post('sales-intelligence/process-ai', [SalesIntelligenceController::class, 'processAIAnalysis'])->name('salesintelligence.process-ai');
+
+        // Campanhas (exemplo)
+        Route::get('/campaigns', function () {
+            return Inertia::render('Client/Campaigns/Index');
+        })->name('campaigns');
+
+        // Formulários (exemplo)
+        Route::get('/forms', function () {
+            return Inertia::render('Client/Forms/Index');
+        })->name('forms');
     });
 
     // Agência: cancelamento de assinatura
