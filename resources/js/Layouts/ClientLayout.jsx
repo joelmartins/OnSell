@@ -161,6 +161,8 @@ export default function ClientLayout({ children, title }) {
         'client.integrations': '/client/integrations',
         'client.settings.index': '/client/settings',
         'client.settings.profile': '/client/settings/profile',
+        'client.client.salesintelligence.diagnosis': '/client/sales-intelligence/diagnosis',
+        'client.client.salesintelligence.deliverables': '/client/sales-intelligence/deliverables',
         'logout': '/logout'
       };
       
@@ -180,24 +182,12 @@ export default function ClientLayout({ children, title }) {
       icon: <BrainCircuit className="h-5 w-5" />,
       children: [
         {
-          name: 'Diagnosis',
-          href: safeRoute('client.salesintelligence.diagnosis'),
-          icon: <FileText className="h-4 w-4" />,
+          name: 'Formulário',
+          href: safeRoute('client.client.salesintelligence.diagnosis'),
         },
         {
-          name: 'Emotional Mapping',
-          href: safeRoute('client.salesintelligence.emotional-mapping'),
-          icon: <Users className="h-4 w-4" />,
-        },
-        {
-          name: 'Access Strategy',
-          href: safeRoute('client.salesintelligence.access-strategy'),
-          icon: <Send className="h-4 w-4" />,
-        },
-        {
-          name: 'Intelligence Map',
-          href: safeRoute('client.salesintelligence.intelligence-map'),
-          icon: <BarChart className="h-4 w-4" />,
+          name: 'Mapa de Inteligência',
+          href: safeRoute('client.client.salesintelligence.deliverables'),
         },
       ],
     },
@@ -222,19 +212,9 @@ export default function ClientLayout({ children, title }) {
       icon: <Zap className="h-5 w-5" />
     },
     { 
-      name: 'Formulários', 
-      href: safeRoute('client.forms'), 
-      icon: <ListChecks className="h-5 w-5" />
-    },
-    { 
       name: 'Landing Pages', 
       href: safeRoute('client.landing-pages.index'), 
       icon: <Globe className="h-5 w-5" />
-    },
-    { 
-      name: 'Campanhas', 
-      href: safeRoute('client.campaigns'), 
-      icon: <MailPlus className="h-5 w-5" />
     },
     { 
       name: 'Relatórios', 

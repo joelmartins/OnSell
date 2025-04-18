@@ -18,7 +18,6 @@ use App\Models\User;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
 use Stripe\StripeClient;
-use App\Http\Controllers\SalesIntelligenceController;
 
 // Rota inicial pública
 Route::get('/', function () {
@@ -268,27 +267,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Cliente: cancelamento de assinatura
         Route::post('/billing/cancel', [\App\Http\Controllers\Client\BillingController::class, 'cancel'])->name('client.billing.cancel');
 
-        // Diagnóstico
-        Route::get('sales-intelligence/diagnosis', [SalesIntelligenceController::class, 'showForm'])->name('salesintelligence.diagnosis');
-        Route::post('sales-intelligence/diagnosis', [SalesIntelligenceController::class, 'storeAnswers'])->name('salesintelligence.storeAnswers');
-        // Emotional Mapping
-        Route::get('sales-intelligence/emotional-mapping', [SalesIntelligenceController::class, 'emotional'])->name('salesintelligence.emotional-mapping');
-        // Access Strategy
-        Route::get('sales-intelligence/access-strategy', [SalesIntelligenceController::class, 'access'])->name('salesintelligence.access-strategy');
-        // Intelligence Map
-        Route::get('sales-intelligence/intelligence-map', [SalesIntelligenceController::class, 'map'])->name('salesintelligence.intelligence-map');
-        // Processamento IA
-        Route::post('sales-intelligence/process-ai', [SalesIntelligenceController::class, 'processAIAnalysis'])->name('salesintelligence.process-ai');
-
-        // Campanhas (exemplo)
-        Route::get('/campaigns', function () {
-            return Inertia::render('Client/Campaigns/Index');
-        })->name('campaigns');
-
-        // Formulários (exemplo)
-        Route::get('/forms', function () {
-            return Inertia::render('Client/Forms/Index');
-        })->name('forms');
+        // Sales Intelligence (novo fluxo modular)
+        Route::get('/sales-intelligence/diagnosis', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'showForm'])->name('salesintelligence.diagnosis');
+        Route::post('/sales-intelligence/answers', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'storeAnswers'])->name('salesintelligence.answers');
+        Route::get('/sales-intelligence/deliverables', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'listDeliverables'])->name('salesintelligence.deliverables');
+        Route::post('/sales-intelligence/deliverable/{type}/generate', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'generateDeliverable'])->name('salesintelligence.generate');
+        Route::post('/sales-intelligence/deliverable/{type}/save', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'saveDeliverable'])->name('salesintelligence.save');
     });
 
     // Agência: cancelamento de assinatura
@@ -319,11 +303,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('stop.impersonating');
 });
 
-// Rotas temporárias para testar os e-mails
-Route::prefix('test-emails')->middleware(['auth', 'role:admin.super'])->group(function () {
-    Route::get('/welcome', [\App\Http\Controllers\TestEmailController::class, 'testWelcomeEmail'])->name('test.email.welcome');
-    Route::get('/password-reset', [\App\Http\Controllers\TestEmailController::class, 'testPasswordReset'])->name('test.email.password-reset');
-    Route::get('/account-activation', [\App\Http\Controllers\TestEmailController::class, 'testAccountActivation'])->name('test.email.account-activation');
+// Rotas para envio de e-mails reais do sistema
+Route::prefix('system-emails')->middleware(['auth', 'role:admin.super'])->group(function () {
+    Route::post('/welcome', [\App\Http\Controllers\SystemEmailController::class, 'sendWelcomeEmail'])->name('system.email.welcome');
+    Route::post('/password-reset', [\App\Http\Controllers\SystemEmailController::class, 'sendPasswordResetEmail'])->name('system.email.password-reset');
+    Route::post('/account-activation', [\App\Http\Controllers\SystemEmailController::class, 'sendAccountActivationEmail'])->name('system.email.account-activation');
 });
 
 // Rota para renderizar a página de cadastro rápido

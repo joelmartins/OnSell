@@ -49,3 +49,30 @@ Melhorias implementadas:
 
 # 🔄 Sales Kit renomeado para Inteligência de Vendas
 Atualizado o implementation-plan.mdc: Sales Kit agora é Inteligência de Vendas (Fluxo Estruturado), com etapas detalhadas de ICP, mapeamento emocional, estratégia de acesso e dashboard de inteligência comercial.
+
+# ✨ Novo formulário unificado Sales Intelligence Capture criado
+Criado SalesIntelligenceCapture.jsx com 19 perguntas, agrupamento por seções, animações Framer Motion, mobile-first, dark mode e integração pronta para backend e IA.
+
+# 🚀 Evolução do SalesIntelligenceCapture.jsx
+Adicionada exibição de respostas salvas, edição inline, botão 'Gerar Mapa de Inteligência', loading animado e relatório IA editável no fluxo de Sales Intelligence.
+
+# 🔄 Atualização do fluxo de entrada Sales Intelligence
+Controller atualizado para renderizar SalesIntelligenceCapture como tela principal do cliente.
+
+# 🧭 Menu lateral atualizado para novo fluxo Sales Intelligence
+Atalho de Inteligência de Vendas agora aponta diretamente para o novo fluxo unificado, sem subitens antigos.
+
+# 📝 Relatório IA completo no SalesIntelligenceCapture.jsx
+Relatório de IA agora exibe e permite editar todos os campos do modelo completo do Intelligence Map, conforme o prompt master.
+
+# 🔄 Sidebar: removido item 'Inteligência de Vendas (Novo)'
+Menu volta ao padrão, sem destaque especial para Sales Intelligence Capture.
+
+# 🔁 Sidebar: item 'Inteligência de Vendas' reinserido
+Item 'Inteligência de Vendas' reinserido na sidebar do cliente, sem destaque ou texto 'Novo', apontando para o fluxo correto.
+
+# 🔀 Controller: rotas antigas redirecionam para novo fluxo
+Métodos emotional, access e map agora redirecionam para SalesIntelligenceCapture, eliminando erro de página não encontrada.
+
+# 🔄 Componente SalesIntelligenceCapture renomeado para index.jsx
+SalesIntelligenceCapture.jsx renomeado para index.jsx, atualizados todos os controllers e rotas para apontar para o novo arquivo. Mantida toda a funcionalidade existente, melhorando a organização do código.

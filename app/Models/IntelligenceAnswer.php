@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model para entregáveis de inteligência de vendas (apenas para clientes)
+ * Model para respostas do formulário de inteligência de vendas (apenas para clientes)
  * agency_id e user_id não são utilizados.
  */
-class SalesIntelligence extends Model
+class IntelligenceAnswer extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -19,22 +19,16 @@ class SalesIntelligence extends Model
      *
      * @var string
      */
-    protected $table = 'intelligence_deliverables';
+    protected $table = 'intelligence_answers';
 
     /**
      * Os atributos que são atribuíveis em massa.
-     * Somente client_id é obrigatório.
      *
      * @var array<int, string>
      */
     protected $fillable = [
         'client_id',
-        'type',
-        'prompt',
-        'input_data',
-        'output_markdown',
-        'output_json',
-        'version',
+        'answers',
     ];
 
     /**
@@ -43,8 +37,7 @@ class SalesIntelligence extends Model
      * @var array
      */
     protected $casts = [
-        'input_data' => 'array',
-        'output_json' => 'array',
+        'answers' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -57,4 +50,4 @@ class SalesIntelligence extends Model
     {
         return $this->belongsTo(Client::class);
     }
-} 
+}
