@@ -28,7 +28,13 @@ import {
   ChevronRight,
   User,
   Bell,
-  CreditCard
+  CreditCard,
+  Globe,
+  Send,
+  ListChecks,
+  Building2,
+  MailPlus,
+  Table
 } from 'lucide-react';
 import {
   Collapsible,
@@ -168,6 +174,11 @@ export default function ClientLayout({ children, title }) {
       icon: <LayoutDashboard className="h-5 w-5" />
     },
     { 
+      name: 'Contatos', 
+      href: safeRoute('client.contacts.index'), 
+      icon: <Users className="h-5 w-5" />
+    },
+    { 
       name: 'Pipeline', 
       href: safeRoute('client.pipeline'), 
       icon: <Kanban className="h-5 w-5" />
@@ -183,14 +194,19 @@ export default function ClientLayout({ children, title }) {
       icon: <Zap className="h-5 w-5" />
     },
     { 
-      name: 'Landing Pages', 
-      href: safeRoute('client.landing-pages.index'), 
-      icon: <FileText className="h-5 w-5" />
+      name: 'Formulários', 
+      href: safeRoute('client.forms'), 
+      icon: <ListChecks className="h-5 w-5" />
     },
     { 
-      name: 'Contatos', 
-      href: safeRoute('client.contacts'), 
-      icon: <Users className="h-5 w-5" />
+      name: 'Landing Pages', 
+      href: safeRoute('client.landing-pages.index'), 
+      icon: <Globe className="h-5 w-5" />
+    },
+    { 
+      name: 'Campanhas', 
+      href: safeRoute('client.campaings.index'), 
+      icon: <MailPlus className="h-5 w-5" />
     },
     { 
       name: 'Relatórios', 
@@ -209,7 +225,7 @@ export default function ClientLayout({ children, title }) {
         {
           name: 'Dados da Empresa',
           href: safeRoute('client.settings.index'),
-          icon: <Settings className="h-4 w-4" />,
+          icon: <Building2 className="h-4 w-4" />,
         },
         {
           name: 'Perfil',
