@@ -5,6 +5,10 @@ import Footer from './Components/Footer';
 
 export default function Index() {
     const { auth, laravelVersion, phpVersion, featuredPlans } = usePage().props;
+    
+    // Filtrar planos de agência
+    const clientPlans = featuredPlans ? featuredPlans.filter(plan => plan.type !== 'agency') : [];
+
     return (
         <>
             <Head title="OnSell - Venda sem equipe. A IA cuida disso para você." />
@@ -478,8 +482,8 @@ export default function Index() {
                                     </p>
                                 </div>
                                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pt-8">
-                                    {featuredPlans && featuredPlans.filter(plan => plan.type !== 'agency').length > 0 ? (
-                                        featuredPlans.filter(plan => plan.type !== 'agency').map((plan, index) => (
+                                    {clientPlans && clientPlans.length > 0 ? (
+                                        clientPlans.map((plan, index) => (
                                             <div key={plan.id} className={`flex flex-col rounded-lg border bg-background p-6 shadow-sm ${index === 1 ? 'relative' : ''}`}>
                                                 {index === 1 && (
                                                     <div className="absolute -top-4 left-0 right-0 mx-auto w-fit px-4 py-1 rounded-full bg-primary text-xs font-medium text-primary-foreground">

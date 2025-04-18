@@ -22,6 +22,7 @@ export default function AgencySignup({ agency, landing, selectedPlan, plans, for
     phone: '',
     password: '',
     password_confirmation: '',
+    client_document: '',
   });
   
   const [cpfCnpj, setCpfCnpj] = useState('');
@@ -142,6 +143,9 @@ export default function AgencySignup({ agency, landing, selectedPlan, plans, for
       alert('As senhas não correspondem. Por favor, verifique.');
       return;
     }
+
+    // Certifique-se de que o client_document está definido no objeto de dados
+    setData('client_document', cpfCnpj);
     
     // Envie o formulário
     post(formAction, {
@@ -428,86 +432,90 @@ export default function AgencySignup({ agency, landing, selectedPlan, plans, for
                     </div>
                   )}
                   
-                  <div>
-                    <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome da Empresa *
-                    </label>
-                    <input
-                      type="text"
-                      id="company_name"
-                      name="company_name"
-                      value={data.company_name}
-                      onChange={e => setData('company_name', e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
-                        errors.company_name ? 'border-red-500' : ''
-                      }`}
-                      required
-                    />
-                    {errors.company_name && (
-                      <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
-                    )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome da Empresa *
+                      </label>
+                      <input
+                        type="text"
+                        id="company_name"
+                        name="company_name"
+                        value={data.company_name}
+                        onChange={e => setData('company_name', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
+                          errors.company_name ? 'border-red-500' : ''
+                        }`}
+                        required
+                      />
+                      {errors.company_name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="client_document" className="block text-sm font-medium text-gray-700 mb-1">
+                        CPF ou CNPJ *
+                      </label>
+                      <input
+                        type="text"
+                        id="client_document"
+                        name="client_document"
+                        value={cpfCnpj}
+                        onChange={handleCpfCnpjChange}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
+                          cpfCnpjError ? 'border-red-500' : ''
+                        }`}
+                        required
+                        maxLength={18}
+                        placeholder="Digite o CPF ou CNPJ"
+                      />
+                      {cpfCnpjError && (
+                        <p className="mt-1 text-sm text-red-600">{cpfCnpjError}</p>
+                      )}
+                    </div>
                   </div>
                   
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Seu Nome *
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={data.name}
-                      onChange={e => setData('name', e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
-                        errors.name ? 'border-red-500' : ''
-                      }`}
-                      required
-                    />
-                    {errors.name && (
-                      <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                      E-mail *
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={data.email}
-                      onChange={e => setData('email', e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
-                        errors.email ? 'border-red-500' : ''
-                      }`}
-                      required
-                    />
-                    {errors.email && (
-                      <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="client_document" className="block text-sm font-medium text-gray-700 mb-1">
-                      CPF ou CNPJ *
-                    </label>
-                    <input
-                      type="text"
-                      id="client_document"
-                      name="client_document"
-                      value={cpfCnpj}
-                      onChange={handleCpfCnpjChange}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
-                        cpfCnpjError ? 'border-red-500' : ''
-                      }`}
-                      required
-                      maxLength={18}
-                      placeholder="Digite o CPF ou CNPJ"
-                    />
-                    {cpfCnpjError && (
-                      <p className="mt-1 text-sm text-red-600">{cpfCnpjError}</p>
-                    )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Seu Nome *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={data.name}
+                        onChange={e => setData('name', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
+                          errors.name ? 'border-red-500' : ''
+                        }`}
+                        required
+                      />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                        E-mail *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={data.email}
+                        onChange={e => setData('email', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
+                          errors.email ? 'border-red-500' : ''
+                        }`}
+                        required
+                      />
+                      {errors.email && (
+                        <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                      )}
+                    </div>
                   </div>
                   
                   <div>
@@ -532,41 +540,43 @@ export default function AgencySignup({ agency, landing, selectedPlan, plans, for
                     )}
                   </div>
                   
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Senha *
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={data.password}
-                      onChange={e => setData('password', e.target.value)}
-                      className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
-                        errors.password ? 'border-red-500' : ''
-                      }`}
-                      required
-                      minLength={8}
-                    />
-                    {errors.password && (
-                      <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirmar Senha *
-                    </label>
-                    <input
-                      type="password"
-                      id="password_confirmation"
-                      name="password_confirmation"
-                      value={data.password_confirmation}
-                      onChange={e => setData('password_confirmation', e.target.value)}
-                      className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none"
-                      required
-                      minLength={8}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                        Senha *
+                      </label>
+                      <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        value={data.password}
+                        onChange={e => setData('password', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none ${
+                          errors.password ? 'border-red-500' : ''
+                        }`}
+                        required
+                        minLength={8}
+                      />
+                      {errors.password && (
+                        <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar Senha *
+                      </label>
+                      <input
+                        type="password"
+                        id="password_confirmation"
+                        name="password_confirmation"
+                        value={data.password_confirmation}
+                        onChange={e => setData('password_confirmation', e.target.value)}
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:outline-none"
+                        required
+                        minLength={8}
+                      />
+                    </div>
                   </div>
                   
                   <div className="mt-8">

@@ -35,3 +35,14 @@ Melhorias implementadas:
 5. Consolidado configuração de logging para melhor rastreamento de atividades
 6. Melhorado estrutura de layouts para consistência em toda a aplicação
 7. Otimizado rotas para melhor organização do sistema
+
+# Modificações ao sistema OnSell
+
+- Removidos campos de email e telefone da empresa no formulário de signup
+- Ajustado layout do formulário para melhor usabilidade
+- Utilizados campos do usuário para salvar na tabela de clientes
+- Adaptado formulário Signup.jsx com base no layout do AgencySignup.jsx mantendo a estética atual
+- Adicionadas validações mais robustas para CPF/CNPJ
+- Reorganizado o fluxo de seleção de planos e preenchimento de dados
+- Reforçada filtragem para não exibir planos de agência na home e no signup
+- Adicionada consulta SQL mais robusta para garantir que planos de agência sejam excluídos consistentemente

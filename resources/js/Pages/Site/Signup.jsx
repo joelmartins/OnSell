@@ -4,7 +4,7 @@ import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { toast } from 'react-toastify';
-import { Building2, User, Mail, Phone, Key, CheckCircle2 } from 'lucide-react';
+import { Building2, User, Mail, Phone, Key, CheckCircle2, Loader2, ChevronLeft, ArrowRight } from 'lucide-react';
 
 // Função utilitária para formatar telefone brasileiro (com DDD) em tempo real
 // Exemplo: (11) 91234-5678
@@ -35,65 +35,136 @@ function formatCpfCnpj(value) {
   return v.slice(0, 18);
 }
 
+function validateCpfCnpj(value) {
+  value = value.replace(/\D/g, '');
+  if (value.length === 11) {
+    // Validação CPF
+    let sum = 0;
+    let rest;
+    if (value === "00000000000") return false;
+    for (let i = 1; i <= 9; i++) sum = sum + parseInt(value.substring(i - 1, i)) * (11 - i);
+    rest = (sum * 10) % 11;
+    if ((rest === 10) || (rest === 11)) rest = 0;
+    if (rest !== parseInt(value.substring(9, 10))) return false;
+    sum = 0;
+    for (let i = 1; i <= 10; i++) sum = sum + parseInt(value.substring(i - 1, i)) * (12 - i);
+    rest = (sum * 10) % 11;
+    if ((rest === 10) || (rest === 11)) rest = 0;
+    if (rest !== parseInt(value.substring(10, 11))) return false;
+    return true;
+  } else if (value.length === 14) {
+    // Validação CNPJ
+    let size = value.length - 2;
+    let numbers = value.substring(0, size);
+    let digits = value.substring(size);
+    let sum = 0;
+    let pos = size - 7;
+    for (let i = size; i >= 1; i--) {
+      sum += numbers.charAt(size - i) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    let result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+    if (result !== parseInt(digits.charAt(0))) return false;
+    size = size + 1;
+    numbers = value.substring(0, size);
+    sum = 0;
+    pos = size - 7;
+    for (let i = size; i >= 1; i--) {
+      sum += numbers.charAt(size - i) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    result = sum % 11 < 2 ? 0 : 11 - sum % 11;
+    if (result !== parseInt(digits.charAt(1))) return false;
+    return true;
+  }
+  return false;
+}
+
 export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(selectedPlan ? 1 : 0);
   const [form, setForm] = useState({
-    client_name: '',
+    company_name: '',
     client_document: '',
-    client_email: '',
-    client_phone: '',
-    user_name: '',
-    user_email: '',
-    user_phone: '',
+    name: '',
+    email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
-    plan_id: plan_id || '',
+    plan_id: plan_id || (selectedPlan ? selectedPlan.id : ''),
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPayOption, setShowPayOption] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(plan_id || (selectedPlan ? selectedPlan.id : ''));
+  const [cpfCnpj, setCpfCnpj] = useState('');
+  const [cpfCnpjError, setCpfCnpjError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+
+  // Filtrar planos de agência
+  const clientPlans = featuredPlans.filter(plan => plan.type !== 'agency');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'client_phone' || name === 'user_phone') {
-      setForm({ ...form, [name]: formatPhone(value) });
-    } else if (name === 'client_document') {
-      setForm({ ...form, client_document: formatCpfCnpj(value) });
+    setForm({ ...form, [name]: value });
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhone(e.target.value);
+    setForm({ ...form, phone: formatted });
+    if (formatted.replace(/\D/g, '').length < 10) {
+      setPhoneError('Telefone inválido');
     } else {
-      setForm({ ...form, [name]: value });
+      setPhoneError('');
     }
   };
 
-  const handleNext = (e) => {
-    e.preventDefault();
-    if (!form.client_name || !form.client_email || !form.user_name || !form.user_email || !form.password) {
-      toast.error('Preencha todos os campos obrigatórios.');
-      return;
-    }
-    if (form.password !== form.password_confirmation) {
-      toast.error('As senhas não coincidem.');
-      return;
-    }
-    if (selectedPlan) {
-      setStep(3);
+  const handleCpfCnpjChange = (e) => {
+    const formatted = formatCpfCnpj(e.target.value);
+    setCpfCnpj(formatted);
+    setForm({ ...form, client_document: formatted });
+    if (formatted.replace(/\D/g, '').length >= 11 && !validateCpfCnpj(formatted)) {
+      setCpfCnpjError('CPF ou CNPJ inválido');
     } else {
-      setStep(2);
+      setCpfCnpjError('');
     }
   };
 
   const handlePlanSelect = (plan) => {
     setForm({ ...form, plan_id: plan.id });
     setSelectedPlanId(plan.id);
-    setStep(3);
+    setStep(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goBackToPlanSelection = () => {
+    setStep(0);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Verifique se plan_id está definido
+    if (!form.plan_id) {
+      toast.error('Por favor, selecione um plano para continuar.');
+      return;
+    }
+    
+    // Verifique se todos os campos obrigatórios estão preenchidos
+    if (!form.company_name || !form.name || !form.email || !form.phone || !form.password || !form.password_confirmation) {
+      toast.error('Preencha todos os campos obrigatórios.');
+      return;
+    }
+    
+    // Verifique se as senhas correspondem
     if (form.password !== form.password_confirmation) {
       toast.error('As senhas não coincidem.');
       return;
     }
+
+    // Certifique-se de que o client_document está definido
+    setForm({ ...form, client_document: cpfCnpj });
+    
     setLoading(true);
     try {
       const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -105,8 +176,7 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
         },
         body: JSON.stringify({
           ...form,
-          client_phone: form.client_phone.replace(/\D/g, ''),
-          user_phone: form.user_phone.replace(/\D/g, ''),
+          phone: form.phone.replace(/\D/g, ''),
           client_document: form.client_document.replace(/\D/g, ''),
         }),
       });
@@ -130,12 +200,35 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
     <>
       <Head title="Cadastro Rápido" />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-background py-12 px-4">
-        <Card className="w-full max-w-lg mx-auto shadow-xl border-0">
+        <Card className="w-full max-w-4xl mx-auto shadow-xl border-0">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-2xl font-bold tracking-tight">Crie sua conta grátis</CardTitle>
-            <p className="text-gray-500 text-base mt-2">Preencha os dados abaixo para começar a usar o OnSell</p>
+            <p className="text-gray-500 text-base mt-2">
+              {step === 0 
+                ? "Escolha o plano que melhor se adapta às suas necessidades" 
+                : "Preencha os dados abaixo para começar a usar o OnSell"}
+            </p>
           </CardHeader>
           <CardContent>
+            {/* Etapas do cadastro */}
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center">
+                <div
+                  className="rounded-full w-8 h-8 flex items-center justify-center font-semibold bg-primary text-white"
+                  style={step >= 0 ? {} : { backgroundColor: '#e5e7eb', color: '#4b5563' }}
+                >
+                  1
+                </div>
+                <div className="w-16 h-1 mx-1" style={step >= 1 ? { backgroundColor: '#0f766e' } : { backgroundColor: '#e5e7eb' }}></div>
+                <div
+                  className="rounded-full w-8 h-8 flex items-center justify-center font-semibold"
+                  style={step >= 1 ? { backgroundColor: '#0f766e', color: '#ffffff' } : { backgroundColor: '#e5e7eb', color: '#4b5563' }}
+                >
+                  2
+                </div>
+              </div>
+            </div>
+
             {success ? (
               <div className="flex flex-col items-center space-y-6 py-8">
                 <div className="text-2xl font-bold text-primary">Cadastro realizado com sucesso!</div>
@@ -147,56 +240,16 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
               </div>
             ) : (
               <>
-                {step === 1 && (
-                  <form onSubmit={handleNext} className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/60 rounded-lg p-4 border border-gray-100">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Building2 className="h-5 w-5 text-primary" />
-                          <span className="font-semibold text-gray-800">Dados da Empresa</span>
-                        </div>
-                        <label className="block text-sm font-medium text-gray-700">Nome da empresa *</label>
-                        <Input name="client_name" placeholder="Ex: Padaria do João" value={form.client_name} onChange={handleChange} required />
-                        <label className="block text-sm font-medium text-gray-700">CNPJ ou CPF</label>
-                        <Input name="client_document" placeholder="CNPJ ou CPF" value={form.client_document} onChange={handleChange} maxLength={18} />
-                        <label className="block text-sm font-medium text-gray-700">E-mail da empresa *</label>
-                        <Input name="client_email" type="email" placeholder="empresa@email.com" value={form.client_email} onChange={handleChange} required />
-                        <label className="block text-sm font-medium text-gray-700">Telefone da empresa</label>
-                        <Input name="client_phone" placeholder="(11) 91234-5678" value={form.client_phone} onChange={handleChange} maxLength={15} inputMode="tel" pattern="\(\d{2}\) \d{4,5}-\d{4}" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <User className="h-5 w-5 text-primary" />
-                          <span className="font-semibold text-gray-800">Seus Dados</span>
-                        </div>
-                        <label className="block text-sm font-medium text-gray-700">Seu nome completo *</label>
-                        <Input name="user_name" placeholder="Seu nome completo" value={form.user_name} onChange={handleChange} required />
-                        <label className="block text-sm font-medium text-gray-700">Seu e-mail *</label>
-                        <Input name="user_email" type="email" placeholder="seu@email.com" value={form.user_email} onChange={handleChange} required />
-                        <label className="block text-sm font-medium text-gray-700">Seu telefone</label>
-                        <Input name="user_phone" placeholder="(11) 91234-5678" value={form.user_phone} onChange={handleChange} maxLength={15} inputMode="tel" pattern="\(\d{2}\) \d{4,5}-\d{4}" />
-                        <label className="block text-sm font-medium text-gray-700">Senha de acesso *</label>
-                        <div className="relative">
-                          <Input name="password" type="password" placeholder="Senha de acesso" value={form.password} onChange={handleChange} required className="pr-10" />
-                        </div>
-                        <label className="block text-sm font-medium text-gray-700">Confirme a senha *</label>
-                        <div className="relative">
-                          <Input name="password_confirmation" type="password" placeholder="Repita a senha" value={form.password_confirmation} onChange={handleChange} required className="pr-10" />
-                        </div>
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full h-12 text-base font-semibold">Avançar</Button>
-                  </form>
-                )}
-                {step === 2 && (
+                {/* Passo 1: Seleção de plano */}
+                {step === 0 && (
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold mb-2 text-center">Escolha seu plano</h3>
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {featuredPlans && featuredPlans.filter(plan => plan.type !== 'agency').length > 0 ? (
-                        featuredPlans.filter(plan => plan.type !== 'agency').map((plan, idx) => (
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 px-2">
+                      {clientPlans && clientPlans.length > 0 ? (
+                        clientPlans.map((plan, idx) => (
                           <div
                             key={plan.id}
-                            className={`flex flex-col rounded-lg border bg-background p-6 shadow-sm transition-all cursor-pointer ${selectedPlanId == plan.id ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/60'} ${idx === 1 ? 'relative' : ''}`}
+                            className={`flex flex-col rounded-lg border bg-background p-4 md:p-6 shadow-sm transition-all cursor-pointer ${selectedPlanId == plan.id ? 'ring-2 ring-primary border-primary' : 'hover:border-primary/60'} ${idx === 1 ? 'relative' : ''}`}
                             onClick={() => handlePlanSelect(plan)}
                           >
                             {idx === 1 && (
@@ -205,9 +258,9 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
                               </div>
                             )}
                             <div className="flex-1">
-                              <h3 className="text-2xl font-bold">{plan.name}</h3>
+                              <h3 className="text-xl md:text-2xl font-bold">{plan.name}</h3>
                               <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
-                              <div className="mt-2 text-4xl font-bold">
+                              <div className="mt-2 text-3xl md:text-4xl font-bold">
                                 {typeof plan.price === 'string' && plan.price.startsWith('R$')
                                   ? plan.price
                                   : `R$ ${typeof plan.price === 'number'
@@ -217,7 +270,7 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
                                 <span className="text-base font-normal text-gray-500">/mês</span>
                               </div>
                               <p className="mt-3 text-gray-500">{plan.leads_limit ? `Até ${plan.leads_limit} leads/mês` : 'Leads ilimitados'}</p>
-                              <ul className="mt-6 space-y-2">
+                              <ul className="mt-4 space-y-2 text-sm">
                                 {Array.isArray(plan.features)
                                   ? plan.features.filter(Boolean).map((feature, i) => (
                                       <li key={i} className="flex items-center">
@@ -257,8 +310,9 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
                               </ul>
                             </div>
                             <div className="mt-6">
-                              <Button className="w-full" variant={selectedPlanId == plan.id ? 'default' : 'outline'}>
-                                {plan.price === 0 ? 'Começar Grátis' : plan.price >= 400 ? 'Falar com Vendas' : 'Assinar Agora'}
+                              <Button className="w-full flex items-center justify-center">
+                                {plan.price === 0 ? 'Começar Grátis' : plan.price >= 400 ? 'Falar com Vendas' : 'Selecionar'}
+                                <ArrowRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -267,28 +321,180 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
                         <div className="text-gray-500">Nenhum plano disponível</div>
                       )}
                     </div>
-                    <Button onClick={() => setStep(1)} variant="outline" className="w-full mt-2">Voltar</Button>
                   </div>
                 )}
-                {step === 3 && (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold mb-2">Resumo do Plano</h3>
-                      {selectedPlan ? (
-                        <div className="p-3 rounded bg-primary/10 mb-2">
-                          <div className="font-bold">{selectedPlan.name}</div>
-                          <div className="text-sm text-gray-500">{selectedPlan.description}</div>
-                          <div className="text-xl font-bold mt-1">{selectedPlan.price === 0 ? 'Grátis' : `R$ ${selectedPlan.price}`}</div>
+                
+                {/* Passo 2: Cadastro */}
+                {step === 1 && (
+                  <div>
+                    {clientPlans && clientPlans.length > 0 && (
+                      <div className="flex items-center mb-6">
+                        <button 
+                          type="button" 
+                          onClick={goBackToPlanSelection}
+                          className="inline-flex items-center text-gray-600 hover:text-gray-900"
+                        >
+                          <ChevronLeft className="h-5 w-5 mr-1" />
+                          Voltar para planos
+                        </button>
+                      </div>
+                    )}
+                    
+                    {selectedPlanId && clientPlans && clientPlans.length > 0 && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+                        <h3 className="font-semibold">
+                          Plano selecionado: {clientPlans.find(p => p.id == selectedPlanId)?.name || 'Plano'}
+                        </h3>
+                        <p className="text-gray-600">
+                          {clientPlans.find(p => p.id == selectedPlanId)?.price
+                            ? `R$ ${parseFloat(clientPlans.find(p => p.id == selectedPlanId)?.price).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/mês`
+                            : ''
+                          }
+                        </p>
+                      </div>
+                    )}
+                    
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="company_name" className="block text-sm font-medium text-gray-700 mb-1">
+                            Nome da Empresa *
+                          </label>
+                          <Input
+                            type="text"
+                            id="company_name"
+                            name="company_name"
+                            value={form.company_name}
+                            onChange={handleChange}
+                            placeholder="Ex: Padaria do João"
+                            className="w-full"
+                            required
+                          />
                         </div>
-                      ) : (
-                        <div className="p-3 rounded bg-primary/10 mb-2">
-                          <div className="font-bold">Plano selecionado: {form.plan_id}</div>
+                        
+                        <div>
+                          <label htmlFor="client_document" className="block text-sm font-medium text-gray-700 mb-1">
+                            CPF ou CNPJ
+                          </label>
+                          <Input
+                            type="text"
+                            id="client_document"
+                            name="client_document"
+                            value={cpfCnpj}
+                            onChange={handleCpfCnpjChange}
+                            className={cpfCnpjError ? 'border-red-500' : ''}
+                            maxLength={18}
+                            placeholder="Digite o CPF ou CNPJ"
+                          />
+                          {cpfCnpjError && (
+                            <p className="mt-1 text-sm text-red-600">{cpfCnpjError}</p>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={loading}>{loading ? 'Processando...' : 'Ir para pagamento'}</Button>
-                    <Button type="button" variant="outline" className="w-full" onClick={() => setStep(selectedPlan ? 1 : 2)}>Voltar</Button>
-                  </form>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                            Seu Nome *
+                          </label>
+                          <Input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={form.name}
+                            onChange={handleChange}
+                            placeholder="Seu nome completo"
+                            required
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            E-mail *
+                          </label>
+                          <Input
+                            type="email"
+                            id="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            placeholder="seu@email.com"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                          Telefone *
+                        </label>
+                        <Input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={form.phone}
+                          onChange={handlePhoneChange}
+                          className={phoneError ? 'border-red-500' : ''}
+                          maxLength={15}
+                          placeholder="(99) 99999-9999"
+                          required
+                        />
+                        {phoneError && (
+                          <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Senha *
+                          </label>
+                          <Input
+                            type="password"
+                            id="password"
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            placeholder="Senha de acesso"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        
+                        <div>
+                          <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
+                            Confirmar Senha *
+                          </label>
+                          <Input
+                            type="password"
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            value={form.password_confirmation}
+                            onChange={handleChange}
+                            placeholder="Repita a senha"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-8">
+                        <Button
+                          type="submit"
+                          className="w-full h-12 text-base font-semibold flex items-center justify-center"
+                          disabled={loading}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processando...
+                            </>
+                          ) : (
+                            'Finalizar Cadastro'
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 )}
               </>
             )}

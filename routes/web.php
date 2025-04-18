@@ -24,6 +24,9 @@ Route::get('/', function () {
     $featuredPlans = \App\Models\Plan::whereNull('agency_id')
         ->where('is_active', true)
         ->where('is_featured', true)
+        ->where('is_agency_plan', false)
+        ->whereNotNull('price_id')
+        ->whereNotNull('product_id')
         ->orderBy('price')
         ->get();
     return Inertia::render('Site/Index', [
@@ -306,7 +309,9 @@ Route::get('/signup', function (\Illuminate\Http\Request $request) {
     $plan = $planId ? \App\Models\Plan::find($planId) : null;
     $featuredPlans = \App\Models\Plan::whereNull('agency_id')
         ->where('is_active', true)
-        ->where('is_featured', true)
+        ->where('is_agency_plan', false)
+        ->whereNotNull('price_id')
+        ->whereNotNull('product_id')
         ->orderBy('price')
         ->get();
     return Inertia::render('Site/Signup', [

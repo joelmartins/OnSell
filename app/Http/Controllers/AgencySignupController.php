@@ -235,6 +235,7 @@ class AgencySignupController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
+            'client_document' => 'nullable|string|max:20',
         ], [
             'plan_id.required' => 'É necessário selecionar um plano.',
             'plan_id.exists' => 'O plano selecionado não existe.',
@@ -292,6 +293,7 @@ class AgencySignupController extends Controller
                 'name' => $validated['company_name'],
                 'email' => $validated['email'],
                 'phone' => $validated['phone'],
+                'document' => $validated['client_document'] ?? null,
                 'agency_id' => $agency->id,
                 'plan_id' => $plan->id,
                 'is_active' => true,
