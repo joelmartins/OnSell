@@ -8,7 +8,6 @@ import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
-import route from 'ziggy-js';
 
 const sections = [
   {
@@ -94,7 +93,7 @@ export default function SalesIntelligence({ existing }) {
         onSuccess: () => {
           toast.success('Respostas salvas com sucesso!');
           setLoading(false);
-          router.visit('/sales-intelligence/deliverables');
+          router.visit(route('client.salesintelligence.deliverables'));
         },
         onError: () => {
           toast.error('Erro ao salvar respostas.');
