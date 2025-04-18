@@ -161,8 +161,8 @@ export default function ClientLayout({ children, title }) {
         'client.integrations': '/client/integrations',
         'client.settings.index': '/client/settings',
         'client.settings.profile': '/client/settings/profile',
-        'client.client.salesintelligence.diagnosis': '/client/sales-intelligence/diagnosis',
-        'client.client.salesintelligence.deliverables': '/client/sales-intelligence/deliverables',
+        'client.salesintelligence.diagnosis': '/client/sales-intelligence/diagnosis',
+        'client.salesintelligence.deliverables': '/client/sales-intelligence/deliverables',
         'logout': '/logout'
       };
       
@@ -183,11 +183,11 @@ export default function ClientLayout({ children, title }) {
       children: [
         {
           name: 'Formulário',
-          href: safeRoute('client.client.salesintelligence.diagnosis'),
+          href: safeRoute('client.salesintelligence.diagnosis'),
         },
         {
           name: 'Mapa de Inteligência',
-          href: safeRoute('client.client.salesintelligence.deliverables'),
+          href: safeRoute('client.salesintelligence.deliverables'),
         },
       ],
     },
