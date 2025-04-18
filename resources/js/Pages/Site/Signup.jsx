@@ -168,20 +168,51 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
     setLoading(true);
     try {
       const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
+      // Transformando os dados do formulário para o formato esperado pelo backend
+      const requestData = {
+        client_name: form.company_name,
+        client_document: form.client_document.replace(/\D/g, ''),
+        client_email: form.email,
+        client_phone: form.phone.replace(/\D/g, ''),
+        user_name: form.name,
+        user_email: form.email,
+        user_phone: form.phone.replace(/\D/g, ''),
+        password: form.password,
+        plan_id: form.plan_id
+      };
+      
       const response = await fetch('/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
         },
-        body: JSON.stringify({
-          ...form,
-          phone: form.phone.replace(/\D/g, ''),
-          client_document: form.client_document.replace(/\D/g, ''),
-        }),
+        body: JSON.stringify(requestData),
       });
+      
+      if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const data = await response.json();
+          throw new Error(data.message || 'Erro ao cadastrar.');
+        } else {
+          // Em ambiente de desenvolvimento, vamos mostrar mais detalhes sobre o erro
+          const responseText = await response.text();
+          console.error('Erro na resposta:', responseText);
+          
+          // Verificar se a resposta contém HTML (possível erro 500 com stack trace)
+          if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+            console.error('Recebeu HTML em vez de JSON. Possível erro 500 no servidor.');
+            throw new Error('Erro interno do servidor. Contate o suporte técnico.');
+          } else {
+            throw new Error('Erro de servidor. Por favor, tente novamente mais tarde.');
+          }
+        }
+      }
+      
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Erro ao cadastrar.');
+      
       if (data.checkout_url) {
         toast.success('Cadastro realizado! Redirecionando para pagamento...');
         window.location.href = data.checkout_url;
@@ -190,6 +221,7 @@ export default function Signup({ selectedPlan, plan_id, featuredPlans = [] }) {
         setShowPayOption(true);
       }
     } catch (err) {
+      console.error('Erro durante o cadastro:', err);
       toast.error(err.message || 'Erro ao cadastrar.');
     } finally {
       setLoading(false);

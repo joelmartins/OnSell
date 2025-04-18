@@ -377,7 +377,7 @@ Route::post('/signup', function (Request $request) {
                     'quantity' => 1,
                 ]],
                 'mode' => 'subscription',
-                'success_url' => url('/login?success=1'),
+                'success_url' => url('/payment-success?user_id=' . $user->id . '&client_id=' . $client->id),
                 'cancel_url' => url('/signup?plan_id=' . $plan->id . '&cancel=1'),
             ]);
             DB::commit();
@@ -389,6 +389,37 @@ Route::post('/signup', function (Request $request) {
         DB::rollBack();
         return response()->json(['message' => $e->getMessage()], 422);
     }
+});
+
+// Rota para confirmar pagamento bem-sucedido
+Route::get('/payment-success', function (Request $request) {
+    $userId = $request->query('user_id');
+    $clientId = $request->query('client_id');
+    
+    if ($userId && $clientId) {
+        // Ativar o cliente manualmente, já que pode haver atraso no webhook do Stripe
+        try {
+            $client = \App\Models\Client::find($clientId);
+            if ($client && !$client->is_active) {
+                $client->is_active = true;
+                $client->save();
+                \Log::info('Cliente ativado manualmente após pagamento bem-sucedido', [
+                    'client_id' => $clientId,
+                    'user_id' => $userId
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Erro ao ativar cliente após pagamento', [
+                'error' => $e->getMessage(),
+                'client_id' => $clientId,
+                'user_id' => $userId
+            ]);
+        }
+    }
+    
+    return Inertia::render('Site/PaymentSuccess', [
+        'loginUrl' => url('/login')
+    ]);
 });
 
 require __DIR__.'/auth.php';
