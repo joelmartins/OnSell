@@ -8,6 +8,8 @@ import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
+import { post } from 'axios';
+import { route } from 'ziggy';
 
 const sections = [
   {
@@ -86,8 +88,7 @@ export default function SalesIntelligence({ existing }) {
       return;
     }
     setLoading(true);
-    router.post(
-      '/sales-intelligence/answers',
+    post(route('client.salesintelligence.answers'),
       { answers },
       {
         onSuccess: () => {
