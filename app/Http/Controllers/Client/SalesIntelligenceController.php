@@ -341,11 +341,18 @@ class SalesIntelligenceController extends Controller
     public function checkProgress(Request $request)
     {
         $clientId = $this->getImpersonatedClientId();
-        $deliverables = IntelligenceDeliverable::where('client_id', $clientId)
+        $deliverables = SalesIntelligence::where('client_id', $clientId)
             ->whereNotNull('output_markdown')
             ->where('output_markdown', '!=', '')
             ->get()
             ->keyBy('type');
+        
+        // Adicionar log para debug
+        Log::channel('sales_intelligence')->info('Verificação de progresso', [
+            'client_id' => $clientId,
+            'deliverables_count' => count($deliverables),
+            'deliverables_types' => $deliverables->pluck('type')->toArray()
+        ]);
         
         return response()->json([
             'success' => true,

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router, Head } from "@inertiajs/react";
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/Components/ui/card';
@@ -24,15 +24,26 @@ const DELIVERABLE_TYPES = [
 ];
 
 export default function Deliverables({ deliverables }) {
+  console.log('Entregáveis recebidos:', deliverables);
+  
   const deliverablesMap = Array.isArray(deliverables)
     ? Object.fromEntries(deliverables.map(d => [d.type, d]))
     : {};
+  
   const safeDeliverables = DELIVERABLE_TYPES.map(type =>
     deliverablesMap[type] || { type, output_markdown: '' }
   );
 
   const [editing, setEditing] = useState({});
   const [loading, setLoading] = useState({});
+  const [allEmpty, setAllEmpty] = useState(false);
+  
+  // Verificar se todos os entregáveis estão vazios
+  useEffect(() => {
+    const isEmpty = safeDeliverables.every(d => !d.output_markdown || d.output_markdown.trim() === '');
+    setAllEmpty(isEmpty);
+    console.log('Todos os entregáveis estão vazios:', isEmpty);
+  }, [safeDeliverables]);
 
   function handleEditChange(type, value) {
     setEditing({ ...editing, [type]: value });
@@ -41,7 +52,7 @@ export default function Deliverables({ deliverables }) {
   function handleRegenerate(type) {
     setLoading({ ...loading, [type]: true });
     router.post(
-      `/sales-intelligence/deliverable/${type}/generate`,
+      route('client.salesintelligence.generate', { type }),
       {},
       {
         onSuccess: (page) => {
@@ -57,11 +68,51 @@ export default function Deliverables({ deliverables }) {
       }
     );
   }
+  
+  function handleGenerateAll() {
+    setLoading({ all: true });
+    toast.info('Iniciando geração de todos os entregáveis. Isso pode levar alguns minutos...');
+    
+    let processedCount = 0;
+    
+    // Gerar entregáveis sequencialmente para evitar sobrecarga
+    const generateNext = (index = 0) => {
+      if (index >= DELIVERABLE_TYPES.length) {
+        setLoading({ all: false });
+        toast.success('Todos os entregáveis foram gerados!');
+        // Recarregar a página para mostrar os novos entregáveis
+        router.reload();
+        return;
+      }
+      
+      const type = DELIVERABLE_TYPES[index];
+      router.post(
+        route('client.salesintelligence.generate', { type }),
+        {},
+        {
+          onSuccess: () => {
+            processedCount++;
+            toast.info(`Entregável ${processedCount} de ${DELIVERABLE_TYPES.length} gerado.`);
+            // Continuar com o próximo após um breve delay
+            setTimeout(() => generateNext(index + 1), 1000);
+          },
+          onError: () => {
+            toast.error(`Erro ao gerar entregável ${type}`);
+            // Continuar mesmo em caso de erro
+            setTimeout(() => generateNext(index + 1), 1000);
+          }
+        }
+      );
+    };
+    
+    // Iniciar a geração
+    generateNext();
+  }
 
   function handleSave(type) {
     setLoading({ ...loading, [type]: true });
     router.post(
-      `/sales-intelligence/deliverable/${type}/save`,
+      route('client.salesintelligence.save', { type }),
       { output_markdown: editing[type] },
       {
         onSuccess: () => {
@@ -83,6 +134,19 @@ export default function Deliverables({ deliverables }) {
         <div className="mb-8">
           <h2 className="text-3xl font-bold">Mapa de Inteligência</h2>
           <p className="text-muted-foreground">Gere, edite e salve cada entregável individualmente. Utilize o editor abaixo para formatar seu conteúdo em <b>Markdown</b> de forma visual (WYSIWYG). Todos os botões e instruções estão em português.</p>
+          
+          {allEmpty && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+              <p className="text-amber-800 mb-3">Nenhum entregável foi gerado ainda. Você pode gerar todos de uma vez clicando no botão abaixo.</p>
+              <Button 
+                onClick={handleGenerateAll} 
+                disabled={loading.all} 
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {loading.all ? 'Gerando entregáveis...' : 'Gerar Todos os Entregáveis'}
+              </Button>
+            </div>
+          )}
         </div>
         <div className="space-y-6">
           {safeDeliverables.map((d) => (

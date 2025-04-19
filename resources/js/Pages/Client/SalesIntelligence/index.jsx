@@ -94,7 +94,7 @@ export default function SalesIntelligence({ existing }) {
     
     let completedItems = 0;
     let checkAttempts = 0;
-    const maxAttempts = 40; // Limitar o número de tentativas (20 segundos × 40 = 800s ou ~13min)
+    const maxAttempts = 5; // Limitar o número de tentativas
     
     const typeMessages = {
       'product_definition': "Processando definição do produto...",
@@ -115,12 +115,18 @@ export default function SalesIntelligence({ existing }) {
     
     // Função para verificar o status atual
     const checkStatus = () => {
+      console.log('Verificando progresso da geração...');
+      
       axios.get(route('client.salesintelligence.check-progress'))
         .then(response => {
-          if (response.data && response.data.deliverables) {
+          console.log('Resposta de progresso:', response.data);
+          
+          if (response.data && response.data.deliverables && Object.keys(response.data.deliverables).length > 0) {
             // Contar itens concluídos
             const completedCount = Object.keys(response.data.deliverables).length;
             completedItems = completedCount;
+            
+            console.log(`${completedCount} de ${types.length} entregáveis foram gerados`);
             
             // Calcular o progresso baseado no número de tipos completados
             const progressPercentage = Math.min(
@@ -153,35 +159,46 @@ export default function SalesIntelligence({ existing }) {
               }, 1500);
               return;
             }
-            
-            // Continuar verificando
-            checkAttempts++;
-            setTimeout(checkStatus, 20000); // Verificar a cada 20 segundos
           } else {
-            // Se não houver dados de progresso, continuar verificando
-            checkAttempts++;
-            if (checkAttempts < maxAttempts) {
-              setTimeout(checkStatus, 20000);
-            } else {
-              // Após muitas tentativas, redirecionar mesmo assim
-              setProgress(100);
-              setCurrentStep("Tempo limite atingido. Redirecionando...");
-              setTimeout(() => {
-                router.visit(route('client.salesintelligence.deliverables'), {
-                  onSuccess: () => {
-                    setProcessing(false);
-                    setLoading(false);
-                  }
-                });
-              }, 1500);
-            }
+            console.log('Nenhum entregável encontrado ainda, continuando verificação...');
+            
+            // Simulação de progresso enquanto aguarda primeiro item
+            const simulatedProgress = Math.min(5 + (checkAttempts * 2), 50);
+            setProgress(simulatedProgress);
+          }
+          
+          // Continuar verificando
+          checkAttempts++;
+          
+          // Temporização adaptativa - aumenta o intervalo após algumas tentativas
+          const checkInterval = checkAttempts < 5 ? 5000 : 10000; // 5s iniciais, depois 10s
+          
+          if (checkAttempts < maxAttempts) {
+            setTimeout(checkStatus, checkInterval);
+          } else {
+            // Após muitas tentativas, redirecionar mesmo assim
+            console.log('Atingido número máximo de tentativas, redirecionando...');
+            setProgress(100);
+            setCurrentStep("Tempo limite atingido. Redirecionando...");
+            setTimeout(() => {
+              router.visit(route('client.salesintelligence.deliverables'), {
+                onSuccess: () => {
+                  setProcessing(false);
+                  setLoading(false);
+                }
+              });
+            }, 1500);
           }
         })
         .catch(error => {
           console.error('Erro ao verificar progresso:', error);
           checkAttempts++;
+          
+          // Temporização adaptativa
+          const checkInterval = checkAttempts < 5 ? 5000 : 10000;
+          
           if (checkAttempts < maxAttempts) {
-            setTimeout(checkStatus, 20000);
+            setTimeout(checkStatus, checkInterval);
           } else {
             // Após muitas tentativas, redirecionar mesmo assim
             setProgress(100);
