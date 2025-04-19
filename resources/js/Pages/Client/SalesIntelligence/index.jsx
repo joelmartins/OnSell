@@ -10,6 +10,15 @@ import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
+// Dialog/Modal e Progress para mostrar o status de processamento
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/Components/ui/dialog";
+import { Progress } from "@/Components/ui/progress";
+
 const sections = [
   {
     title: '🔥 Parte 1: Sobre o que você vende',
@@ -61,6 +70,57 @@ export default function SalesIntelligence({ existing }) {
   const [answers, setAnswers] = useState(existing?.answers || {});
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  
+  // Estados para a modal de processamento
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState('');
+  
+  // Função para simular o progresso da geração
+  const simulateProgress = () => {
+    const steps = [
+      { message: "Iniciando geração dos entregáveis...", progress: 5 },
+      { message: "Processando definição do produto...", progress: 15 },
+      { message: "Analisando perfil do cliente ideal (ICP)...", progress: 25 },
+      { message: "Criando perfil do tomador de decisão...", progress: 35 },
+      { message: "Identificando gatilhos mentais principais...", progress: 45 },
+      { message: "Mapeando objeções comuns de venda...", progress: 55 },
+      { message: "Definindo barreiras e estratégias...", progress: 65 },
+      { message: "Elaborando estratégias de prospecção...", progress: 75 },
+      { message: "Criando scripts de vendas personalizados...", progress: 85 },
+      { message: "Gerando âncoras de comunicação...", progress: 90 },
+      { message: "Definindo padrão de comunicação...", progress: 95 },
+      { message: "Finalizando todos os entregáveis...", progress: 97 },
+      { message: "Pronto! Redirecionando para os resultados...", progress: 100 }
+    ];
+    
+    let currentIndex = 0;
+    
+    // Inicia com o primeiro passo
+    setCurrentStep(steps[0].message);
+    setProgress(steps[0].progress);
+    
+    // Timer para avançar os passos
+    const timer = setInterval(() => {
+      if (currentIndex < steps.length - 1) {
+        currentIndex++;
+        setCurrentStep(steps[currentIndex].message);
+        setProgress(steps[currentIndex].progress);
+        
+        // Quando chegar no último passo, redireciona após um breve delay
+        if (currentIndex === steps.length - 1) {
+          setTimeout(() => {
+            setProcessing(false);
+            router.visit(route('client.salesintelligence.deliverables'));
+          }, 1500);
+        }
+      } else {
+        clearInterval(timer);
+      }
+    }, 1200); // Cada passo leva 1.2 segundos
+    
+    return timer;
+  };
 
   function handleChange(e) {
     setAnswers({ ...answers, [e.target.name]: e.target.value });
@@ -88,15 +148,21 @@ export default function SalesIntelligence({ existing }) {
     }
     setLoading(true);
     
+    // Enviar os dados para o servidor
     axios.post(route('client.salesintelligence.answers'), { answers })
       .then(response => {
-        toast.success('Respostas salvas com sucesso!');
-        setLoading(false);
-        
         if (response.data && response.data.success) {
-          router.visit(route('client.salesintelligence.deliverables'));
+          toast.success('Respostas salvas com sucesso!');
+          
+          // Mostrar a modal de processamento e iniciar a simulação de progresso
+          setProcessing(true);
+          const progressTimer = simulateProgress();
+          
+          // Limpar o timer se o componente for desmontado
+          return () => clearInterval(progressTimer);
         } else {
           toast.error('Erro ao processar respostas.');
+          setLoading(false);
         }
       })
       .catch(error => {
@@ -109,6 +175,23 @@ export default function SalesIntelligence({ existing }) {
   return (
     <ClientLayout title="Sales Intelligence Capture">
       <Head title="Sales Intelligence Capture" />
+      
+      {/* Modal de processamento */}
+      <Dialog open={processing} onOpenChange={setProcessing}>
+        <DialogContent className="sm:max-w-md" hideClose={true}>
+          <DialogHeader>
+            <DialogTitle className="text-xl">Gerando Mapa de Inteligência</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <Progress value={progress} className="h-2 mb-4" />
+            <p className="text-center text-muted-foreground">{currentStep}</p>
+            <p className="text-center text-sm mt-6 text-muted-foreground">
+              Isso pode levar alguns minutos. Por favor, não feche esta janela.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
       <motion.form
         onSubmit={handleSubmit}
         initial={{ opacity: 0, y: 40 }}
