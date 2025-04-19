@@ -293,7 +293,7 @@ export default function ClientLayout({ children, title }) {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Mobile sidebar */}
-      <div className="lg:hidden fixed top-0 w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
+      <div className="lg:hidden w-full bg-white dark:bg-gray-800 border-b z-40 py-3 px-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -473,7 +473,7 @@ export default function ClientLayout({ children, title }) {
       <div className="lg:pl-64">
         {/* Desktop header */}
         <div 
-          className="hidden lg:flex lg:sticky lg:top-0 lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"
+          className="hidden lg:flex lg:z-40 lg:h-16 lg:border-b lg:items-center lg:justify-between lg:px-6"
           style={{ 
             background: 'linear-gradient(135deg, var(--sidebar-bg-start), var(--sidebar-bg-end))'
           }}
@@ -483,7 +483,7 @@ export default function ClientLayout({ children, title }) {
         </div>
 
         {/* Page content */}
-        <main className="py-6 px-4 sm:px-6 lg:px-8 mt-12 lg:mt-0">
+        <main className="py-6 px-4 sm:px-6 lg:px-8">
           <div 
             className="animate-fadeIn" 
             style={{ 
