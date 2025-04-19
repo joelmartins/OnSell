@@ -1,0 +1,61 @@
+################################################################################
+# Stack Técnico                                                                
+################################################################################
+- **Back‑end:** Laravel 12, PHP 8.3 (strict_types=1, PSR‑12).  
+- **Front‑end:** React 18 + TypeScript estrito, shadcn/ui, Tailwind CSS 3, Vite 5.  
+- **Estado:** Zustand + SWR pattern (Axios).  
+- **Filas & Jobs:** Laravel Horizon.  
+- **Agendamentos:** Scheduler no Console Kernel.  
+- **Integrações externas:** Inngest para jobs assíncronos.  
+
+################################################################################
+# Convenções Laravel / PHP                                                     
+################################################################################
+1. **Arquitetura**  
+   - Controllers finos → lógica em **Actions** ou **Services** invocáveis.  
+   - Domínio limpo: Eloquent Models + DTOs (Laravel Data).  
+   - Versionar API em `/api/v1`; usar API Resources.  
+
+2. **Validação & Segurança**  
+   - Sempre usar **FormRequest** para validar entrada.  
+   - Policies/Gates para autorização; nunca lógica de permissões no Controller.  
+   - Observers para manter integridade (cache‑busting, índices).  
+
+3. **Impersonação (Regra adicional)**  
+   - Sistema possui três papéis: **Admin → Agência → Cliente**.  
+   - Admin pode impersonar qualquer agência ou cliente;  
+     agência pode impersonar apenas seus clientes.  
+   - Ao criar rotas, middleware, policies ou componentes React,  
+     verifique **sempre** o contexto de impersonação (`session()->get('impersonated_by')`).  
+   - Interfaces devem exibir banner/alerta identificando o modo impersonado  
+     e fornecer ação rápida de "Sair da impersonação".  
+
+4. **Eventos, Filas e Cache**  
+   - Use Events + Listeners para desacoplamento; despache jobs demorados para fila.  
+   - Cache Redis com tags; invalidar via Events/Observers.  
+
+5. **Frontend**  
+   - Componentes UI via shadcn/ui (sem CSS fora do Tailwind).  
+   - `use client` só onde houver estado/efeitos.  
+   - Toasts universais via `react-toastify`.  
+   - Dark mode controlado pela classe `dark` no `<html>`.  
+   - Animações Framer Motion (variants + spring).  
+
+6. **Build & Assets**  
+   - Alias `@` → `/resources/js`.  
+   - `vite.config.ts` inclui plugins `laravel()`, `react()`, `tsconfigPaths()`.  
+   - Remover `console.*` em produção (`terser drop_console`).  
+
+################################################################################
+# Ferramentas Auxiliares                                                       
+################################################################################
+- **Inngest**: configure em `inngest.config.ts`; endpoint `/api/inngest/route.ts`;  
+  UI de jobs atualiza por polling.  
+- **AI helpers**:  
+  - `architect` para planejamento de mudanças grandes.  
+  - `codeReview` para revisar PRs extensos.  
+  - `screenshot` para gerar diff visual de UI.  
+
+################################################################################
+# Fim das regras específicas                                                   
+################################################################################ 
