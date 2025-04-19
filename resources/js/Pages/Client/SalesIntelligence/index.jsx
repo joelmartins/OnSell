@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/Components/ui/dialog";
 import { Progress } from "@/Components/ui/progress";
 
@@ -256,17 +257,24 @@ export default function SalesIntelligence({ existing }) {
       
       {/* Modal de processamento */}
       <Dialog open={processing} onOpenChange={setProcessing}>
-        <DialogContent className="sm:max-w-md" hideClose={true}>
+        <DialogContent className="sm:max-w-md processing-dialog">
           <DialogHeader>
             <DialogTitle className="text-xl">Gerando Mapa de Inteligência</DialogTitle>
+            <DialogDescription className="text-center text-sm text-muted-foreground">
+              Isso pode levar alguns minutos. Por favor, não feche esta janela.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-6">
             <Progress value={progress} className="h-2 mb-4" />
             <p className="text-center text-muted-foreground">{currentStep}</p>
-            <p className="text-center text-sm mt-6 text-muted-foreground">
-              Isso pode levar alguns minutos. Por favor, não feche esta janela.
-            </p>
           </div>
+          
+          {/* CSS para esconder o botão de fechar */}
+          <style>{`
+            .processing-dialog [aria-label="Close"] {
+              display: none !important;
+            }
+          `}</style>
         </DialogContent>
       </Dialog>
       
