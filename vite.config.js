@@ -10,6 +10,12 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+        cors: true,
+    },
     build: {
         chunkSizeWarningLimit: 1500,
         rollupOptions: {

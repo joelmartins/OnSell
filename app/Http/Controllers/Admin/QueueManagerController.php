@@ -158,4 +158,47 @@ class QueueManagerController extends Controller
         
         return 'Aguardando';
     }
+
+    /**
+     * Força o processamento imediato dos jobs pendentes
+     */
+    public function forceProcess(Request $request)
+    {
+        $queue = $request->input('queue', 'default');
+        $count = $request->input('count', 5);
+        
+        // Limita a quantidade de jobs para evitar timeout
+        $count = min($count, 20);
+        
+        // Executa o comando para processar os jobs imediatamente
+        // --once processa apenas um job por worker
+        // --stop-when-empty para quando não houver mais jobs
+        Artisan::call('queue:work', [
+            '--queue' => $queue,
+            '--once' => true,
+            '--tries' => 1,
+            '--stop-when-empty' => true,
+        ]);
+        
+        // Para processar múltiplos jobs, chamamos o comando várias vezes
+        $processed = 1;
+        for ($i = 1; $i < $count; $i++) {
+            // Verifica se ainda há jobs na fila
+            $pendingCount = DB::table('jobs')->where('queue', $queue)->count();
+            if ($pendingCount === 0) {
+                break;
+            }
+            
+            Artisan::call('queue:work', [
+                '--queue' => $queue,
+                '--once' => true,
+                '--tries' => 1,
+                '--stop-when-empty' => true,
+            ]);
+            
+            $processed++;
+        }
+        
+        return back()->with('success', "Processamento forçado de {$processed} job(s) na fila '{$queue}'.");
+    }
 } 

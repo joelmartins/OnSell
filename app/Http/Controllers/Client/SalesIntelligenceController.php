@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\IntelligenceAnswer;
-use App\Models\SalesIntelligence as IntelligenceDeliverable;
+use App\Models\IntelligenceDeliverable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -275,13 +275,35 @@ class SalesIntelligenceController extends Controller
         $result = OpenAI::chat()->create([
             'model' => 'gpt-4-turbo-preview',
             'messages' => [
-                ['role' => 'system', 'content' => 'Você é um especialista em vendas B2B e copywriting.'],
+                ['role' => 'system', 'content' => 'Você é um especialista em vendas B2B e copywriting. Formate sua resposta em markdown limpo e bem estruturado.'],
                 ['role' => 'user', 'content' => $prompt],
             ],
             'temperature' => 0.7,
             'max_tokens' => 800,
         ]);
         $content = $result['choices'][0]['message']['content'] ?? null;
+        
+        // Limpar e processar o markdown para garantir formatação adequada
+        if ($content) {
+            // Remover blocos de código markdown que possam estar envolvendo o conteúdo
+            $content = preg_replace('/^```markdown\s*|\s*```$/m', '', $content);
+            $content = preg_replace('/^```md\s*|\s*```$/m', '', $content);
+            $content = preg_replace('/^```\s*|\s*```$/m', '', $content);
+            
+            // Garantir quebras de linha adequadas
+            $content = str_replace("\r\n", "\n", $content);
+            
+            // Remover espaços em branco extras no início e fim
+            $content = trim($content);
+            
+            // Log para debug
+            Log::channel('sales_intelligence')->debug('Conteúdo markdown processado:', [
+                'type' => $type,
+                'content_length' => strlen($content),
+                'first_50_chars' => substr($content, 0, 50)
+            ]);
+        }
+        
         // Salvar como markdown
         $deliverable = IntelligenceDeliverable::updateOrCreate(
             ['client_id' => $clientId, 'type' => $type],
@@ -341,7 +363,7 @@ class SalesIntelligenceController extends Controller
     public function checkProgress(Request $request)
     {
         $clientId = $this->getImpersonatedClientId();
-        $deliverables = SalesIntelligence::where('client_id', $clientId)
+        $deliverables = IntelligenceDeliverable::where('client_id', $clientId)
             ->whereNotNull('output_markdown')
             ->where('output_markdown', '!=', '')
             ->get()
@@ -359,6 +381,38 @@ class SalesIntelligenceController extends Controller
             'deliverables' => $deliverables,
             'total_types' => 10, // Número total de tipos
             'completed' => count($deliverables)
+        ]);
+    }
+
+    // Força o reprocessamento dos entregáveis faltantes
+    public function reprocessDeliverables(Request $request)
+    {
+        $clientId = $this->getImpersonatedClientId();
+        $forceAll = $request->has('force_all') && $request->force_all == 'true';
+        
+        // Adicionar log para debug
+        Log::channel('sales_intelligence')->info('Solicitação de reprocessamento', [
+            'client_id' => $clientId,
+            'force_all' => $forceAll
+        ]);
+        
+        // Verificar se há respostas para este cliente
+        $hasAnswers = IntelligenceAnswer::where('client_id', $clientId)->exists();
+        
+        if (!$hasAnswers) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Não há respostas do formulário para processar. Por favor, preencha o formulário primeiro.'
+            ], 422);
+        }
+        
+        // Dispatch o job para reprocessar
+        \App\Jobs\ReprocessMissingDeliverables::dispatch($clientId, $forceAll);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Reprocessamento de entregáveis iniciado. Isso pode levar alguns minutos.',
+            'force_all' => $forceAll
         ]);
     }
 } 

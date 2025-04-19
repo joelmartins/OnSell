@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\IntelligenceAnswer;
 use App\Models\IntelligenceDeliverable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,25 +12,25 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use OpenAI;
 
-class GenerateAllDeliverables implements ShouldQueue
+class ReprocessMissingDeliverables implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $clientId;
-    protected $inputData;
+    protected $forceRegenerate;
     
-    // Aumentar as tentativas e tempo entre falhas
+    // Configuração para garantir execução confiável
     public $tries = 3;
     public $backoff = 10;
-    public $timeout = 300; // 5 minutos de timeout
+    public $timeout = 300; // 5 minutos
 
     /**
      * Create a new job instance.
      */
-    public function __construct($clientId, $inputData)
+    public function __construct($clientId, $forceRegenerate = false)
     {
         $this->clientId = $clientId;
-        $this->inputData = $inputData;
+        $this->forceRegenerate = $forceRegenerate;
     }
 
     /**
@@ -37,6 +38,17 @@ class GenerateAllDeliverables implements ShouldQueue
      */
     public function handle()
     {
+        // Obter dados do formulário
+        $answer = IntelligenceAnswer::where('client_id', $this->clientId)->first();
+        
+        if (!$answer) {
+            Log::error('Reprocessamento falhou: Respostas não encontradas para cliente ' . $this->clientId);
+            return;
+        }
+
+        $inputData = $answer->answers;
+        
+        // Tipos de entregáveis a serem processados
         $types = [
             'product_definition',
             'icp_profile',
@@ -50,15 +62,34 @@ class GenerateAllDeliverables implements ShouldQueue
             'communication_pattern',
         ];
 
-        Log::info('Iniciando geração de entregáveis para cliente ' . $this->clientId, [
-            'types_count' => count($types)
+        // Verificar quais entregáveis estão vazios ou precisam ser regerados
+        $reprocessTypes = [];
+        
+        foreach ($types as $type) {
+            $deliverable = IntelligenceDeliverable::where('client_id', $this->clientId)
+                ->where('type', $type)
+                ->first();
+            
+            // Se forceRegenerate=true, processa todos; caso contrário, apenas os vazios
+            if ($this->forceRegenerate || !$deliverable || !$deliverable->output_markdown) {
+                $reprocessTypes[] = $type;
+            }
+        }
+        
+        Log::info('Iniciando reprocessamento de entregáveis para cliente ' . $this->clientId, [
+            'types_to_reprocess' => $reprocessTypes,
+            'force_regenerate' => $this->forceRegenerate
         ]);
 
-        foreach ($types as $index => $type) {
+        // Processar cada tipo com delay para evitar sobrecarga na API
+        foreach ($reprocessTypes as $index => $type) {
             try {
-                Log::info("Gerando entregável {$type} (" . ($index + 1) . "/" . count($types) . ") para cliente {$this->clientId}");
+                Log::info("Reprocessando entregável {$type} (" . ($index + 1) . "/" . count($reprocessTypes) . ") para cliente {$this->clientId}");
                 
-                $prompt = $this->buildPrompt($type, $this->inputData);
+                // Construir o prompt apropriado para o tipo
+                $prompt = $this->buildPrompt($type, $inputData);
+                
+                // Gerar conteúdo via OpenAI
                 $result = OpenAI::chat()->create([
                     'model' => 'gpt-4-turbo-preview',
                     'messages' => [
@@ -75,33 +106,31 @@ class GenerateAllDeliverables implements ShouldQueue
                     throw new \Exception("Conteúdo vazio recebido da API para o tipo {$type}");
                 }
                 
+                // Salvar o conteúdo gerado
                 IntelligenceDeliverable::updateOrCreate(
                     ['client_id' => $this->clientId, 'type' => $type],
                     [
                         'prompt' => $prompt,
-                        'input_data' => $this->inputData,
+                        'input_data' => $inputData,
                         'output_markdown' => $content,
                         'version' => 1,
                     ]
                 );
                 
-                Log::info("Entregável {$type} gerado com sucesso para cliente {$this->clientId}");
+                Log::info("Entregável {$type} reprocessado com sucesso para cliente {$this->clientId}");
                 
-                // Adicionar delay entre as chamadas para evitar rate limiting
-                if ($index < count($types) - 1) {
-                    sleep(2); // 2 segundos de delay entre cada entregável
+                // Delay para evitar taxa limite da API
+                if ($index < count($reprocessTypes) - 1) {
+                    sleep(2);
                 }
-                
             } catch (\OpenAI\Exceptions\ErrorException $e) {
                 // Log específico para erros da API OpenAI
-                Log::error("Erro da API OpenAI ao gerar entregável {$type} para cliente {$this->clientId}", [
-                    'message' => $e->getMessage(),
+                Log::error("Erro da API OpenAI ao reprocessar entregável {$type} para cliente {$this->clientId}: " . $e->getMessage(), [
                     'code' => $e->getCode(),
                     'type' => $type
                 ]);
             } catch (\Exception $e) {
-                Log::error("Erro ao gerar entregável {$type} para cliente {$this->clientId}", [
-                    'message' => $e->getMessage(),
+                Log::error("Erro ao reprocessar entregável {$type} para cliente {$this->clientId}: " . $e->getMessage(), [
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
                     'type' => $type
@@ -109,9 +138,15 @@ class GenerateAllDeliverables implements ShouldQueue
             }
         }
         
-        Log::info('Finalizada geração de entregáveis para cliente ' . $this->clientId);
+        Log::info('Reprocessamento finalizado para cliente ' . $this->clientId, [
+            'types_processed' => $reprocessTypes,
+            'count' => count($reprocessTypes)
+        ]);
     }
 
+    /**
+     * Gera o prompt específico para cada tipo de entregável
+     */
     private function buildPrompt($type, $inputData)
     {
         switch ($type) {

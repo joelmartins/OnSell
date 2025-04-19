@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/Components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/Components/ui/alert";
-import { Info, AlertCircle, Trash2, RefreshCcw, XCircle, Play } from "lucide-react";
+import { Info, AlertCircle, Trash2, RefreshCcw, XCircle, Play, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/Components/ui/dialog";
 import { toast } from "react-toastify";
 
@@ -16,11 +16,15 @@ export default function QueueManager({ pendingJobs, failedJobs, batches, stats }
     const [activeTab, setActiveTab] = useState("overview");
     const [selectedJob, setSelectedJob] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [forceDialogOpen, setForceDialogOpen] = useState(false);
+    const [selectedQueue, setSelectedQueue] = useState(null);
+    const [jobCount, setJobCount] = useState(5);
     
     const { processing: processingFlush, post: postFlush } = useForm();
     const { processing: processingRetry, post: postRetry } = useForm();
     const { processing: processingPurge, post: postPurge } = useForm();
     const { processing: processingRestart, post: postRestart } = useForm();
+    const { processing: processingForce, post: postForce } = useForm();
     
     const flushFailed = () => {
         postFlush(route('admin.settings.queues.flush-failed'), {
@@ -57,9 +61,25 @@ export default function QueueManager({ pendingJobs, failedJobs, batches, stats }
         });
     };
     
+    const forceProcess = (queue, count = 5) => {
+        postForce(route('admin.settings.queues.force-process'), {
+            data: { queue, count },
+            onSuccess: () => {
+                toast.success(`Processamento forçado iniciado para fila '${queue}'.`);
+                setForceDialogOpen(false);
+            }
+        });
+    };
+    
     const showJobDetails = (job) => {
         setSelectedJob(job);
         setDialogOpen(true);
+    };
+
+    const showForceDialog = (queue) => {
+        setSelectedQueue(queue);
+        setJobCount(5);
+        setForceDialogOpen(true);
     };
 
     const getStatusColor = (status) => {
@@ -85,9 +105,18 @@ export default function QueueManager({ pendingJobs, failedJobs, batches, stats }
                         <div className="p-6 bg-white border-b border-gray-200">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-semibold text-gray-800">Gerenciador de Filas</h2>
-                                <Button onClick={restartWorker} disabled={processingRestart} className="bg-purple-600 hover:bg-purple-700">
-                                    <RefreshCcw className="mr-2 h-4 w-4" /> Reiniciar Worker
-                                </Button>
+                                <div className="flex space-x-2">
+                                    <Button 
+                                        onClick={() => pendingJobs.length > 0 && showForceDialog(pendingJobs[0].queue)} 
+                                        disabled={pendingJobs.length === 0} 
+                                        className="bg-amber-600 hover:bg-amber-700"
+                                    >
+                                        <Zap className="mr-2 h-4 w-4" /> Processar Jobs Pendentes
+                                    </Button>
+                                    <Button onClick={restartWorker} disabled={processingRestart} className="bg-purple-600 hover:bg-purple-700">
+                                        <RefreshCcw className="mr-2 h-4 w-4" /> Reiniciar Worker
+                                    </Button>
+                                </div>
                             </div>
 
                             <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
@@ -282,14 +311,24 @@ export default function QueueManager({ pendingJobs, failedJobs, batches, stats }
                                                                 <TableCell>{queue.count}</TableCell>
                                                                 <TableCell>{queue.next_job || '-'}</TableCell>
                                                                 <TableCell>
-                                                                    <Button 
-                                                                        variant="ghost" 
-                                                                        className="text-red-600 hover:text-red-800 hover:bg-red-50" 
-                                                                        onClick={() => purgeQueue(queue.queue)}
-                                                                        disabled={processingPurge}
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
+                                                                    <div className="flex space-x-2">
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            className="text-red-600 hover:text-red-800 hover:bg-red-50" 
+                                                                            onClick={() => purgeQueue(queue.queue)}
+                                                                            disabled={processingPurge}
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button 
+                                                                            variant="ghost" 
+                                                                            className="text-amber-600 hover:text-amber-800 hover:bg-amber-50" 
+                                                                            onClick={() => showForceDialog(queue.queue)}
+                                                                            disabled={processingForce}
+                                                                        >
+                                                                            <Zap className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
                                                                 </TableCell>
                                                             </TableRow>
                                                         ))}
@@ -526,6 +565,59 @@ export default function QueueManager({ pendingJobs, failedJobs, batches, stats }
                                 <RefreshCcw className="mr-2 h-4 w-4" /> Reprocessar
                             </Button>
                         )}
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={forceDialogOpen} onOpenChange={setForceDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Processar Jobs Pendentes</DialogTitle>
+                        <DialogDescription>
+                            Configure quantos jobs deseja processar da fila "{selectedQueue}".
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="py-4">
+                        <div className="mb-4">
+                            <label htmlFor="jobCount" className="block text-sm font-medium text-gray-700 mb-1">
+                                Quantidade de jobs a processar
+                            </label>
+                            <input
+                                type="number"
+                                id="jobCount"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                value={jobCount}
+                                onChange={(e) => setJobCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 1)))}
+                                min="1"
+                                max="20"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Valor entre 1 e 20 jobs. Um valor muito alto pode causar timeout.
+                            </p>
+                        </div>
+                        
+                        <Alert className="bg-amber-50 border-amber-200 mb-4">
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                            <AlertTitle className="text-amber-800">Atenção</AlertTitle>
+                            <AlertDescription className="text-amber-700">
+                                Esta operação força o processamento imediato dos jobs pendentes, ignorando o worker normal.
+                                Use apenas em caso de emergência ou se os jobs estiverem travados.
+                            </AlertDescription>
+                        </Alert>
+                    </div>
+                    
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setForceDialogOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button 
+                            onClick={() => forceProcess(selectedQueue, jobCount)} 
+                            disabled={processingForce} 
+                            className="bg-amber-600 hover:bg-amber-700"
+                        >
+                            {processingForce ? 'Processando...' : 'Processar Jobs'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

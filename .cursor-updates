@@ -76,3 +76,7 @@ Métodos emotional, access e map agora redirecionam para SalesIntelligenceCaptur
 
 # 🔄 Componente SalesIntelligenceCapture renomeado para index.jsx
 SalesIntelligenceCapture.jsx renomeado para index.jsx, atualizados todos os controllers e rotas para apontar para o novo arquivo. Mantida toda a funcionalidade existente, melhorando a organização do código.
+
+[2025-04-19] Criado o modelo IntelligenceDeliverable explícito e migração para substituir o alias do SalesIntelligence, melhorando a arquitetura do sistema.
+
+[2025-04-20] Corrigido o problema de geração parcial de entregáveis adicionando job ReprocessMissingDeliverables e botão para reprocessar entregáveis faltantes na interface.
