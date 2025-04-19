@@ -8,6 +8,7 @@ import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 const sections = [
   {
@@ -86,21 +87,23 @@ export default function SalesIntelligence({ existing }) {
       return;
     }
     setLoading(true);
-    router.post(
-      route('client.salesintelligence.answers'),
-      { answers },
-      {
-        onSuccess: () => {
-          toast.success('Respostas salvas com sucesso!');
-          setLoading(false);
+    
+    axios.post(route('client.salesintelligence.answers'), { answers })
+      .then(response => {
+        toast.success('Respostas salvas com sucesso!');
+        setLoading(false);
+        
+        if (response.data && response.data.success) {
           router.visit(route('client.salesintelligence.deliverables'));
-        },
-        onError: () => {
-          toast.error('Erro ao salvar respostas.');
-          setLoading(false);
-        },
-      }
-    );
+        } else {
+          toast.error('Erro ao processar respostas.');
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao enviar respostas:', error);
+        toast.error('Erro ao salvar respostas.');
+        setLoading(false);
+      });
   }
 
   return (
