@@ -76,50 +76,129 @@ export default function SalesIntelligence({ existing }) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
   
-  // Função para simular o progresso da geração
-  const simulateProgress = () => {
-    const steps = [
-      { message: "Iniciando geração dos entregáveis...", progress: 5 },
-      { message: "Processando definição do produto...", progress: 15 },
-      { message: "Analisando perfil do cliente ideal (ICP)...", progress: 25 },
-      { message: "Criando perfil do tomador de decisão...", progress: 35 },
-      { message: "Identificando gatilhos mentais principais...", progress: 45 },
-      { message: "Mapeando objeções comuns de venda...", progress: 55 },
-      { message: "Definindo barreiras e estratégias...", progress: 65 },
-      { message: "Elaborando estratégias de prospecção...", progress: 75 },
-      { message: "Criando scripts de vendas personalizados...", progress: 85 },
-      { message: "Gerando âncoras de comunicação...", progress: 90 },
-      { message: "Definindo padrão de comunicação...", progress: 95 },
-      { message: "Finalizando todos os entregáveis...", progress: 97 },
-      { message: "Pronto! Redirecionando para os resultados...", progress: 100 }
+  // Função para verificar o progresso real da geração dos entregáveis
+  const checkDeliverableProgress = (clientId, responseId) => {
+    const types = [
+      'product_definition',
+      'icp_profile',
+      'decision_maker',
+      'mental_triggers',
+      'common_objections',
+      'barriers_and_breaks',
+      'prospection_strategies',
+      'sales_scripts',
+      'copy_anchors',
+      'communication_pattern',
     ];
     
-    let currentIndex = 0;
+    let completedItems = 0;
+    let checkAttempts = 0;
+    const maxAttempts = 40; // Limitar o número de tentativas (20 segundos × 40 = 800s ou ~13min)
     
-    // Inicia com o primeiro passo
-    setCurrentStep(steps[0].message);
-    setProgress(steps[0].progress);
+    const typeMessages = {
+      'product_definition': "Processando definição do produto...",
+      'icp_profile': "Analisando perfil do cliente ideal (ICP)...",
+      'decision_maker': "Criando perfil do tomador de decisão...",
+      'mental_triggers': "Identificando gatilhos mentais principais...",
+      'common_objections': "Mapeando objeções comuns de venda...",
+      'barriers_and_breaks': "Definindo barreiras e estratégias...",
+      'prospection_strategies': "Elaborando estratégias de prospecção...",
+      'sales_scripts': "Criando scripts de vendas personalizados...",
+      'copy_anchors': "Gerando âncoras de comunicação...",
+      'communication_pattern': "Definindo padrão de comunicação...",
+    };
     
-    // Timer para avançar os passos
-    const timer = setInterval(() => {
-      if (currentIndex < steps.length - 1) {
-        currentIndex++;
-        setCurrentStep(steps[currentIndex].message);
-        setProgress(steps[currentIndex].progress);
-        
-        // Quando chegar no último passo, redireciona após um breve delay
-        if (currentIndex === steps.length - 1) {
-          setTimeout(() => {
-            setProcessing(false);
-            router.visit(route('client.salesintelligence.deliverables'));
-          }, 1500);
-        }
-      } else {
-        clearInterval(timer);
-      }
-    }, 1200); // Cada passo leva 1.2 segundos
+    // Iniciar com mensagem inicial
+    setCurrentStep("Iniciando geração dos entregáveis...");
+    setProgress(5);
     
-    return timer;
+    // Função para verificar o status atual
+    const checkStatus = () => {
+      axios.get(route('client.salesintelligence.check-progress'))
+        .then(response => {
+          if (response.data && response.data.deliverables) {
+            // Contar itens concluídos
+            const completedCount = Object.keys(response.data.deliverables).length;
+            completedItems = completedCount;
+            
+            // Calcular o progresso baseado no número de tipos completados
+            const progressPercentage = Math.min(
+              5 + Math.floor((completedItems / types.length) * 90), 
+              95
+            );
+            
+            setProgress(progressPercentage);
+            
+            // Atualizar a mensagem de acordo com o item atual sendo processado
+            if (completedItems < types.length) {
+              const currentType = types[completedItems];
+              setCurrentStep(typeMessages[currentType] || "Processando...");
+            }
+            
+            // Se todos os itens estiverem completos, finalizar
+            if (completedItems >= types.length || checkAttempts >= maxAttempts) {
+              setProgress(100);
+              setCurrentStep("Pronto! Redirecionando para os resultados...");
+              
+              // Redirecionar para a página de deliverables após um pequeno delay
+              setTimeout(() => {
+                router.visit(route('client.salesintelligence.deliverables'), {
+                  onSuccess: () => {
+                    // Fechar a modal apenas após a página ser carregada
+                    setProcessing(false);
+                    setLoading(false);
+                  }
+                });
+              }, 1500);
+              return;
+            }
+            
+            // Continuar verificando
+            checkAttempts++;
+            setTimeout(checkStatus, 20000); // Verificar a cada 20 segundos
+          } else {
+            // Se não houver dados de progresso, continuar verificando
+            checkAttempts++;
+            if (checkAttempts < maxAttempts) {
+              setTimeout(checkStatus, 20000);
+            } else {
+              // Após muitas tentativas, redirecionar mesmo assim
+              setProgress(100);
+              setCurrentStep("Tempo limite atingido. Redirecionando...");
+              setTimeout(() => {
+                router.visit(route('client.salesintelligence.deliverables'), {
+                  onSuccess: () => {
+                    setProcessing(false);
+                    setLoading(false);
+                  }
+                });
+              }, 1500);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao verificar progresso:', error);
+          checkAttempts++;
+          if (checkAttempts < maxAttempts) {
+            setTimeout(checkStatus, 20000);
+          } else {
+            // Após muitas tentativas, redirecionar mesmo assim
+            setProgress(100);
+            setCurrentStep("Falha ao verificar progresso. Redirecionando...");
+            setTimeout(() => {
+              router.visit(route('client.salesintelligence.deliverables'), {
+                onSuccess: () => {
+                  setProcessing(false);
+                  setLoading(false);
+                }
+              });
+            }, 1500);
+          }
+        });
+    };
+    
+    // Iniciar a verificação
+    setTimeout(checkStatus, 3000); // Primeira verificação após 3s
   };
 
   function handleChange(e) {
@@ -154,12 +233,11 @@ export default function SalesIntelligence({ existing }) {
         if (response.data && response.data.success) {
           toast.success('Respostas salvas com sucesso!');
           
-          // Mostrar a modal de processamento e iniciar a simulação de progresso
+          // Mostrar a modal de processamento
           setProcessing(true);
-          const progressTimer = simulateProgress();
           
-          // Limpar o timer se o componente for desmontado
-          return () => clearInterval(progressTimer);
+          // Iniciar o monitoramento do progresso real
+          checkDeliverableProgress();
         } else {
           toast.error('Erro ao processar respostas.');
           setLoading(false);

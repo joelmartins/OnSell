@@ -271,6 +271,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/sales-intelligence/diagnosis', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'showForm'])->name('salesintelligence.diagnosis');
         Route::post('/sales-intelligence/answers', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'storeAnswers'])->name('salesintelligence.answers');
         Route::get('/sales-intelligence/deliverables', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'listDeliverables'])->name('salesintelligence.deliverables');
+        Route::get('/sales-intelligence/check-progress', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'checkProgress'])->name('salesintelligence.check-progress');
         Route::post('/sales-intelligence/deliverable/{type}/generate', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'generateDeliverable'])->name('salesintelligence.generate');
         Route::post('/sales-intelligence/deliverable/{type}/save', [\App\Http\Controllers\Client\SalesIntelligenceController::class, 'saveDeliverable'])->name('salesintelligence.save');
     });

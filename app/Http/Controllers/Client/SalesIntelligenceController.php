@@ -336,4 +336,22 @@ class SalesIntelligenceController extends Controller
                 return "Gere um entregável de inteligência de vendas do tipo $type em markdown. Use os dados:\n" . json_encode($inputData, JSON_UNESCAPED_UNICODE);
         }
     }
+
+    // Verifica o progresso da geração dos entregáveis
+    public function checkProgress(Request $request)
+    {
+        $clientId = $this->getImpersonatedClientId();
+        $deliverables = IntelligenceDeliverable::where('client_id', $clientId)
+            ->whereNotNull('output_markdown')
+            ->where('output_markdown', '!=', '')
+            ->get()
+            ->keyBy('type');
+        
+        return response()->json([
+            'success' => true,
+            'deliverables' => $deliverables,
+            'total_types' => 10, // Número total de tipos
+            'completed' => count($deliverables)
+        ]);
+    }
 } 
