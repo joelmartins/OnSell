@@ -40,7 +40,7 @@ export default function IntegrationsIndex({ auth }) {
         is_active: true,
         is_configured: false,
         docs_url: 'https://github.com/evolution-api',
-        setup_route: 'admin.integrations.evolution.index'
+        setup_route: 'integrations.evolution.index'
       }
     ],
     email: [

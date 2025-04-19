@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use App\Models\Plan;
+use App\Models\Contact;
+use App\Policies\ContactPolicy;
 use Illuminate\Support\Facades\Log;
 
 class AuthServiceProvider extends ServiceProvider
@@ -19,10 +21,32 @@ class AuthServiceProvider extends ServiceProvider
     }
 
     /**
+     * The model to policy mappings for the application.
+     *
+     * @var array<class-string, class-string>
+     */
+    protected $policies = [
+        Contact::class => ContactPolicy::class,
+    ];
+
+    /**
+     * Register the application's policies.
+     */
+    public function registerPolicies(): void
+    {
+        foreach ($this->policies as $model => $policy) {
+            Gate::policy($model, $policy);
+        }
+    }
+
+    /**
      * Register any authentication / authorization services.
      */
     public function boot(): void
     {
+        // Registrar as políticas definidas na propriedade $policies
+        $this->registerPolicies();
+        
         // Registrar políticas adicionais para o modelo Plan
         Gate::define('canCreateForAgency', function (User $user, Plan $plan, $agencyId) {
             Log::channel('audit')->info('Verificando permissão canCreateForAgency', [

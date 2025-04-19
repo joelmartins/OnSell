@@ -55,7 +55,3 @@
   - `architect` para planejamento de mudanças grandes.  
   - `codeReview` para revisar PRs extensos.  
   - `screenshot` para gerar diff visual de UI.  
-
-################################################################################
-# Fim das regras específicas                                                   
-################################################################################ 

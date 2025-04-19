@@ -48,7 +48,7 @@ class ClientRole
         }
         
         // Verifica se o usuário tem o papel de cliente
-        if (auth()->user() && (auth()->user()->hasRole('client.user') || auth()->user()->hasRole('client.user'))) {
+        if (auth()->user() && (auth()->user()->hasRole('client.user') || auth()->user()->hasRole('client.admin'))) {
             Log::channel('audit')->info('Acesso permitido via papel de cliente', [
                 'path' => $request->path(),
                 'user_id' => auth()->id()

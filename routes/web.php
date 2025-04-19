@@ -105,9 +105,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Rotas de Integrações Específicas
         Route::get('/integrations/whatsapp', [\App\Http\Controllers\Admin\IntegrationsController::class, 'whatsapp'])->name('integrations.whatsapp');
-        Route::get('/integrations/evolution', [IntegrationsController::class, 'evolutionIndex'])->name('admin.integrations.evolution.index');
-        Route::get('/integrations/evolution/settings', [IntegrationsController::class, 'evolutionSettings'])->name('admin.integrations.evolution.settings');
-        Route::post('/integrations/evolution/webhook', [IntegrationsController::class, 'evolutionWebhook'])->name('admin.integrations.evolution.webhook');
+        Route::get('/integrations/evolution', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolutionIndex'])->name('integrations.evolution.index');
+        Route::get('/integrations/evolution/settings', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolutionSettings'])->name('integrations.evolution.settings');
+        Route::post('/integrations/evolution/webhook', [\App\Http\Controllers\Admin\IntegrationsController::class, 'evolutionWebhook'])->name('integrations.evolution.webhook');
         Route::get('/integrations/ses', [\App\Http\Controllers\Admin\IntegrationsController::class, 'ses'])->name('integrations.ses');
         Route::get('/integrations/twilio', [\App\Http\Controllers\Admin\IntegrationsController::class, 'twilio'])->name('integrations.twilio');
         Route::get('/integrations/vapi', [\App\Http\Controllers\Admin\IntegrationsController::class, 'vapi'])->name('integrations.vapi');
@@ -236,9 +236,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/landing-pages/{landingPage}/duplicate', [\App\Http\Controllers\Client\LandingPageController::class, 'duplicate'])->name('landing-pages.duplicate');
         
         // Contatos
-        Route::get('/contacts', function () {
-            return Inertia::render('Client/Contacts/Index');
-        })->name('contacts');
+        Route::get('/contacts', [\App\Http\Controllers\Client\ContactController::class, 'index'])->name('contacts.index');
+        Route::get('/contacts/create', [\App\Http\Controllers\Client\ContactController::class, 'create'])->name('contacts.create');
+        Route::post('/contacts', [\App\Http\Controllers\Client\ContactController::class, 'store'])->name('contacts.store');
+        Route::get('/contacts/import', [\App\Http\Controllers\Client\ContactController::class, 'importForm'])->name('contacts.import');
+        Route::post('/contacts/import/process', [\App\Http\Controllers\Client\ContactController::class, 'importProcess'])->name('contacts.import.process');
+        Route::get('/contacts/export', [\App\Http\Controllers\Client\ContactController::class, 'export'])->name('contacts.export');
+        Route::get('/contacts/{contact}/edit', [\App\Http\Controllers\Client\ContactController::class, 'edit'])->name('contacts.edit');
+        Route::put('/contacts/{contact}', [\App\Http\Controllers\Client\ContactController::class, 'update'])->name('contacts.update');
+        Route::delete('/contacts/{contact}', [\App\Http\Controllers\Client\ContactController::class, 'destroy'])->name('contacts.destroy');
+        Route::get('/contacts/{contact}', [\App\Http\Controllers\Client\ContactController::class, 'show'])->name('contacts.show');
         
         // Relatórios
         Route::get('/reports', function () {
