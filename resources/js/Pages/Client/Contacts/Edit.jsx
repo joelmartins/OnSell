@@ -29,7 +29,12 @@ export default function ContactEdit({ auth, contact }) {
     source: contact.source || '',
     status: contact.status || '',
     notes: contact.notes || '',
-    custom_fields: contact.custom_fields || {}
+    custom_fields: contact.custom_fields || {},
+    utm_source: contact.utm_source || '',
+    utm_medium: contact.utm_medium || '',
+    utm_campaign: contact.utm_campaign || '',
+    utm_term: contact.utm_term || '',
+    utm_content: contact.utm_content || ''
   });
 
   const handleChange = (e) => {
@@ -224,7 +229,7 @@ export default function ContactEdit({ auth, contact }) {
                     <Input 
                       id="city" 
                       name="city" 
-                      value={data.city} 
+                      value={data.city || ""} 
                       onChange={handleChange} 
                     />
                     {errors.city && <p className="text-red-500 text-sm">{errors.city}</p>}
@@ -235,7 +240,7 @@ export default function ContactEdit({ auth, contact }) {
                     <Input 
                       id="state" 
                       name="state" 
-                      value={data.state} 
+                      value={data.state || ""} 
                       onChange={handleChange} 
                     />
                     {errors.state && <p className="text-red-500 text-sm">{errors.state}</p>}
@@ -246,10 +251,76 @@ export default function ContactEdit({ auth, contact }) {
                     <Input 
                       id="postal_code" 
                       name="postal_code" 
-                      value={data.postal_code} 
+                      value={data.postal_code || ""} 
                       onChange={handleChange} 
                     />
                     {errors.postal_code && <p className="text-red-500 text-sm">{errors.postal_code}</p>}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                  <div className="col-span-2">
+                    <h3 className="text-md font-medium mb-2">Informações de Rastreamento (UTM)</h3>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="utm_source">UTM Source</Label>
+                    <Input 
+                      id="utm_source" 
+                      name="utm_source" 
+                      value={data.utm_source || ""} 
+                      onChange={handleChange} 
+                      placeholder="Ex: google, facebook, instagram"
+                    />
+                    {errors.utm_source && <p className="text-red-500 text-sm">{errors.utm_source}</p>}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="utm_medium">UTM Medium</Label>
+                    <Input 
+                      id="utm_medium" 
+                      name="utm_medium" 
+                      value={data.utm_medium || ""} 
+                      onChange={handleChange} 
+                      placeholder="Ex: cpc, organic, referral"
+                    />
+                    {errors.utm_medium && <p className="text-red-500 text-sm">{errors.utm_medium}</p>}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="utm_campaign">UTM Campaign</Label>
+                    <Input 
+                      id="utm_campaign" 
+                      name="utm_campaign" 
+                      value={data.utm_campaign || ""} 
+                      onChange={handleChange} 
+                      placeholder="Ex: spring_sale, black_friday"
+                    />
+                    {errors.utm_campaign && <p className="text-red-500 text-sm">{errors.utm_campaign}</p>}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="utm_term">UTM Term</Label>
+                    <Input 
+                      id="utm_term" 
+                      name="utm_term" 
+                      value={data.utm_term || ""} 
+                      onChange={handleChange} 
+                      placeholder="Ex: apartamentos, venda, aluguel"
+                    />
+                    {errors.utm_term && <p className="text-red-500 text-sm">{errors.utm_term}</p>}
+                  </div>
+                  
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="utm_content">UTM Content</Label>
+                    <Input 
+                      id="utm_content" 
+                      name="utm_content" 
+                      value={data.utm_content || ""} 
+                      onChange={handleChange} 
+                      placeholder="Ex: banner_top, sidebar"
+                    />
+                    {errors.utm_content && <p className="text-red-500 text-sm">{errors.utm_content}</p>}
                   </div>
                 </div>
                 
