@@ -194,30 +194,23 @@ export default function AgencyPlanForm({ plan, isEditing = false }) {
     }
   }
 
-  const handleSyncStripe = async () => {
+  const handleSyncStripe = () => {
     if (!plan?.id) return;
     setSyncLoading(true);
-    try {
-      const response = await fetch(`/agency/plans/${plan.id}/sync-stripe`, {
-        method: 'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-          'Accept': 'application/json',
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
+    
+    // Usar o Inertia router que já inclui o CSRF token automaticamente
+    router.post(route('agency.plans.sync-stripe', plan.id), {}, {
+      preserveScroll: true,
+      onSuccess: () => {
         toast.success('Plano sincronizado com sucesso com o Stripe!');
+        setSyncLoading(false);
         router.reload({ only: ['plan'] });
-      } else {
-        toast.error(data.message || 'Erro ao sincronizar com Stripe.');
+      },
+      onError: (errors) => {
+        toast.error(errors.message || 'Erro ao sincronizar com Stripe.');
+        setSyncLoading(false);
       }
-    } catch (e) {
-      toast.error('Erro de comunicação com Stripe.');
-    } finally {
-      setSyncLoading(false);
-    }
+    });
   };
 
   return (

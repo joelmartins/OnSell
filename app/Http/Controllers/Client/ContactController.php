@@ -313,9 +313,9 @@ class ContactController extends Controller
         $hasHeader = $request->boolean('has_header', true);
         $columnMapping = $request->input('column_mapping');
         
-        // Salvar o arquivo temporariamente
-        $path = $file->store('temp');
-        $fullPath = Storage::path($path);
+        // Salvar o arquivo temporariamente usando o disco 'local' explicitamente
+        $path = $file->store('temp', 'local');
+        $fullPath = Storage::disk('local')->path($path);
         
         // Ler o arquivo CSV
         $csv = Reader::createFromPath($fullPath, 'r');
@@ -392,8 +392,8 @@ class ContactController extends Controller
             }
         }
         
-        // Remover o arquivo temporário
-        Storage::delete($path);
+        // Remover o arquivo temporário explicitamente do disco 'local'
+        Storage::disk('local')->delete($path);
         
         // Registrar auditoria
         Log::channel('audit')->info('Importou contatos', [

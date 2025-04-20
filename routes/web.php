@@ -133,6 +133,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/queues/retry-failed', [\App\Http\Controllers\Admin\QueueManagerController::class, 'retryFailed'])->name('queues.retry-failed');
             Route::post('/queues/purge', [\App\Http\Controllers\Admin\QueueManagerController::class, 'purgeQueue'])->name('queues.purge');
             Route::post('/queues/restart-worker', [\App\Http\Controllers\Admin\QueueManagerController::class, 'restartWorker'])->name('queues.restart-worker');
+            Route::post('/queues/force-process', [\App\Http\Controllers\Admin\QueueManagerController::class, 'forceProcess'])->name('queues.force-process');
         });
 
         Route::resource('users', \App\Http\Controllers\Admin\UserController::class);

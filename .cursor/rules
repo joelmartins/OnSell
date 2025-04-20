@@ -4,7 +4,7 @@
 - **Back‑end:** Laravel 12, PHP 8.3 (strict_types=1, PSR‑12).  
 - **Front‑end:** React 18 + TypeScript estrito, shadcn/ui, Tailwind CSS 3, Vite 5.  
 - **Estado:** Zustand + SWR pattern (Axios).  
-- **Filas & Jobs:** Laravel Horizon.  
+- **Filas & Jobs:** Laravel Queue.  
 - **Agendamentos:** Scheduler no Console Kernel.  
 - **Integrações externas:** Inngest para jobs assíncronos.  
 

@@ -19,6 +19,9 @@ export default function Footer() {
                     <Link href={route('site.privacy')} className="text-sm text-gray-500 hover:underline underline-offset-4">
                         Privacidade
                     </Link>
+                    <Link href={route('site.agencies')} className="text-sm text-gray-500 hover:underline underline-offset-4">
+                        Agências Parceiras
+                    </Link>
                     <Link href={route('site.contact')} className="text-sm text-gray-500 hover:underline underline-offset-4">
                         Contato
                     </Link>

@@ -63,6 +63,20 @@ const DELIVERABLE_TYPES = [
   'communication_pattern',
 ];
 
+// Adicione um objeto para tradução dos nomes dos entregáveis
+const DELIVERABLE_NAMES = {
+  'product_definition': 'Definição de Produto',
+  'icp_profile': 'Perfil de Cliente Ideal',
+  'decision_maker': 'Tomador de Decisão',
+  'mental_triggers': 'Gatilhos Mentais',
+  'common_objections': 'Objeções Comuns',
+  'barriers_and_breaks': 'Barreiras e Quebras',
+  'prospection_strategies': 'Estratégias de Prospecção',
+  'sales_scripts': 'Scripts de Vendas',
+  'copy_anchors': 'Âncoras de Copy',
+  'communication_pattern': 'Padrão de Comunicação',
+};
+
 export default function Deliverables({ deliverables }) {
   console.log('Entregáveis recebidos:', deliverables);
   
@@ -88,11 +102,32 @@ export default function Deliverables({ deliverables }) {
   const prepareMarkdown = (markdown) => {
     if (!markdown) return '';
     
-    // Remover blocos de código markdown que possam estar envolvendo o conteúdo
     let processed = markdown;
+    
+    // Remover blocos de código markdown que possam estar envolvendo o conteúdo
     processed = processed.replace(/^```markdown\s*|\s*```$/gm, '');
     processed = processed.replace(/^```md\s*|\s*```$/gm, '');
     processed = processed.replace(/^```\s*|\s*```$/gm, '');
+    
+    // Substituir tags <br> por quebras de linha normais no markdown
+    processed = processed.replace(/<br\s*\/?>/gi, '\n');
+    
+    // Remover outras tags HTML potencialmente problemáticas
+    processed = processed.replace(/<[^>]*>/g, (match) => {
+      // Lista de tags comuns que podem ser mantidas
+      const safeTags = ['b', 'i', 'strong', 'em', 'u', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol', 'ul', 'li', 'p'];
+      // Verificar se é uma tag de abertura ou fechamento segura
+      const isOpeningSafeTag = safeTags.some(tag => new RegExp(`<${tag}(\\s|>)`, 'i').test(match));
+      const isClosingSafeTag = safeTags.some(tag => new RegExp(`</${tag}>`, 'i').test(match));
+      
+      // Manter apenas tags seguras
+      if (isOpeningSafeTag || isClosingSafeTag) {
+        return match;
+      }
+      
+      // Remover tags inseguras
+      return '';
+    });
     
     // Normalizar quebras de linha
     processed = processed.replace(/\r\n/g, '\n');
@@ -130,8 +165,9 @@ export default function Deliverables({ deliverables }) {
   }, [processedDeliverables]);
 
   function handleEditChange(type, value) {
-    // Não precisamos normalizar aqui para preservar a experiência de edição
-    setEditing({ ...editing, [type]: value });
+    // Sanitizar o valor para evitar problemas com tags HTML inválidas
+    const sanitizedValue = value ? value.replace(/<br\s*\/?>/gi, '\n') : '';
+    setEditing({ ...editing, [type]: sanitizedValue });
   }
 
   function handleViewModeToggle(type) {
@@ -143,26 +179,32 @@ export default function Deliverables({ deliverables }) {
 
   function handleRegenerate(type) {
     setLoading({ ...loading, [type]: true });
-    router.post(
-      route('client.salesintelligence.generate', { type }),
-      {},
-      {
-        onSuccess: (page) => {
-          toast.success('Entregável gerado!');
-          setLoading({ ...loading, [type]: false });
-          const novo = page.props?.deliverable || safeDeliverables.find(d => d.type === type);
-          setEditing({ ...editing, [type]: novo.output_markdown });
+    
+    // Usar Axios em vez de Inertia para evitar o erro de resposta JSON
+    axios.post(route('client.salesintelligence.generate', { type }))
+      .then(response => {
+        const data = response.data;
+        toast.success('Entregável gerado!');
+        setLoading({ ...loading, [type]: false });
+        
+        // Extrair o entregável da resposta
+        const deliverableData = data.deliverable || {};
+        
+        // Atualizar o editor
+        if (deliverableData.output_markdown) {
+          setEditing({ ...editing, [type]: deliverableData.output_markdown });
+          
           // Atualizar o editor diretamente se disponível
           if (editorRefs.current[type]) {
-            editorRefs.current[type].setMarkdown(novo.output_markdown);
+            editorRefs.current[type].setMarkdown(deliverableData.output_markdown);
           }
-        },
-        onError: () => {
-          toast.error('Erro ao gerar entregável.');
-          setLoading({ ...loading, [type]: false });
-        },
-      }
-    );
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao gerar entregável:', error);
+        toast.error('Erro ao gerar entregável.');
+        setLoading({ ...loading, [type]: false });
+      });
   }
   
   function handleGenerateAll() {
@@ -187,6 +229,14 @@ export default function Deliverables({ deliverables }) {
       axios.post(route('client.salesintelligence.generate', { type }))
         .then(response => {
           processedCount++;
+          
+          // Extrair e atualizar o entregável se disponível
+          const deliverableData = response.data.deliverable || {};
+          if (deliverableData.output_markdown && editorRefs.current[type]) {
+            editorRefs.current[type].setMarkdown(deliverableData.output_markdown);
+            setEditing({ ...editing, [type]: deliverableData.output_markdown });
+          }
+          
           toast.info(`Entregável ${processedCount} de ${DELIVERABLE_TYPES.length} gerado: ${type.replace(/_/g, ' ')}`);
           setLoading(prev => ({ ...prev, [type]: false }));
           
@@ -215,20 +265,19 @@ export default function Deliverables({ deliverables }) {
       ? prepareMarkdown(editorRefs.current[type].getMarkdown() || '')
       : (editing[type] ? prepareMarkdown(editing[type]) : '');
     
-    router.post(
-      route('client.salesintelligence.save', { type }),
-      { output_markdown: markdownToSave },
-      {
-        onSuccess: () => {
-          toast.success('Entregável salvo!');
-          setLoading({ ...loading, [type]: false });
-        },
-        onError: () => {
-          toast.error('Erro ao salvar entregável.');
-          setLoading({ ...loading, [type]: false });
-        },
-      }
-    );
+    // Usar Axios em vez de Inertia para evitar o erro de resposta JSON
+    axios.post(route('client.salesintelligence.save', { type }), { 
+      output_markdown: markdownToSave 
+    })
+      .then(response => {
+        toast.success('Entregável salvo!');
+        setLoading({ ...loading, [type]: false });
+      })
+      .catch(error => {
+        console.error('Erro ao salvar entregável:', error);
+        toast.error('Erro ao salvar entregável.');
+        setLoading({ ...loading, [type]: false });
+      });
   }
 
   function handleReprocessMissing() {
@@ -266,6 +315,14 @@ export default function Deliverables({ deliverables }) {
       axios.post(route('client.salesintelligence.generate', { type }))
         .then(response => {
           processedCount++;
+          
+          // Extrair e atualizar o entregável se disponível
+          const deliverableData = response.data.deliverable || {};
+          if (deliverableData.output_markdown && editorRefs.current[type]) {
+            editorRefs.current[type].setMarkdown(deliverableData.output_markdown);
+            setEditing({ ...editing, [type]: deliverableData.output_markdown });
+          }
+          
           toast.info(`Entregável pendente ${processedCount} de ${pendingTypes.length} processado: ${type.replace(/_/g, ' ')}`);
           setLoading(prev => ({ ...prev, [type]: false }));
           
@@ -296,13 +353,12 @@ export default function Deliverables({ deliverables }) {
           
           {allEmpty && (
             <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-              <p className="text-amber-800 mb-3">Nenhum entregável foi gerado ainda. Você pode gerar todos de uma vez clicando no botão abaixo.</p>
+              <p className="text-amber-800 mb-3">Nenhum entregável foi gerado ainda. Você precisa preencher o formulário de diagnóstico primeiro para que possamos gerar seu mapa de inteligência.</p>
               <Button 
-                onClick={handleGenerateAll} 
-                disabled={loading.all} 
+                onClick={() => router.visit(route('client.salesintelligence.diagnosis'))}
                 className="bg-amber-600 hover:bg-amber-700 text-white"
               >
-                {loading.all ? 'Gerando entregáveis...' : 'Gerar Todos os Entregáveis'}
+                Ir para o Formulário de Diagnóstico
               </Button>
             </div>
           )}
@@ -342,44 +398,17 @@ export default function Deliverables({ deliverables }) {
           {processedDeliverables.map((d) => (
             <Card key={d.type} className="w-full">
               <CardHeader>
-                <CardTitle>{d.type.replace(/_/g, ' ').toUpperCase()}</CardTitle>
+                <CardTitle>{DELIVERABLE_NAMES[d.type] || d.type.replace(/_/g, ' ')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-2 text-sm text-muted-foreground">
-                  Edite o conteúdo abaixo usando o editor visual. Você pode formatar títulos, listas, tabelas e visualizar em tempo real.
-                  <Button 
-                    onClick={() => handleViewModeToggle(d.type)} 
-                    variant="outline"
-                    size="sm"
-                    className="ml-2"
-                  >
-                    {viewMode[d.type] === 'edit' ? (
-                      <>
-                        <Eye className="h-4 w-4 mr-1" /> Visualizar
-                      </>
-                    ) : (
-                      <>
-                        <Edit className="h-4 w-4 mr-1" /> Editar
-                      </>
-                    )}
-                  </Button>
-                </div>
                 <div className="w-full" data-color-mode="light">
-                  {viewMode[d.type] === 'edit' ? (
-                    <MarkdownEditor
-                      ref={(el) => (editorRefs.current[d.type] = el)}
-                      markdown={editing[d.type] !== undefined ? editing[d.type] : d.output_markdown || ''}
-                      onChange={(val) => handleEditChange(d.type, val || '')}
-                      placeholder="Digite ou cole seu conteúdo em markdown aqui..."
-                      className="min-h-[300px]"
-                    />
-                  ) : (
-                    <div className="border rounded-md p-4 h-[300px] overflow-auto bg-white prose dark:prose-invert max-w-none">
-                      <ReactMarkdown>
-                        {editing[d.type] !== undefined ? editing[d.type] : d.output_markdown || ''}
-                      </ReactMarkdown>
-                    </div>
-                  )}
+                  <MarkdownEditor
+                    ref={(el) => (editorRefs.current[d.type] = el)}
+                    markdown={editing[d.type] !== undefined ? editing[d.type] : d.output_markdown || ''}
+                    onChange={(val) => handleEditChange(d.type, val || '')}
+                    placeholder="Digite ou cole seu conteúdo em markdown aqui..."
+                    className="min-h-[300px]"
+                  />
                 </div>
                 <div className="flex gap-2 justify-end mt-2">
                   <Button type="button" variant="secondary" disabled={loading[d.type]} onClick={() => handleRegenerate(d.type)}>

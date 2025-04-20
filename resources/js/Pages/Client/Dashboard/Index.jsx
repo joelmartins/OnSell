@@ -71,7 +71,7 @@ export default function DashboardIndex({ auth }) {
     { 
       title: 'Contatos',
       description: 'Gerencie sua base de contatos.', 
-      href: route('client.contacts.index'),
+      href: '/client/contacts',
       icon: <Users className="h-5 w-5" />,
       label: 'Ver Contatos'
     },

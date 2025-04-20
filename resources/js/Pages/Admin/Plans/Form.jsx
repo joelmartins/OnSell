@@ -99,6 +99,9 @@ export default function PlanForm({ plan, isEditing = false }) {
       setJsonFeatures(featuresArray);
       form.setValue('features', featuresObj);
 
+      // Definir explicitamente o valor is_agency_plan primeiro para garantir que as regras condicionais sejam aplicadas corretamente
+      form.setValue('is_agency_plan', Boolean(plan.is_agency_plan));
+
       form.reset({
         name: plan.name || '',
         description: plan.description || '',
@@ -110,7 +113,7 @@ export default function PlanForm({ plan, isEditing = false }) {
         max_landing_pages: plan.max_landing_pages || 1,
         max_pipelines: plan.max_pipelines || 1,
         features: featuresObj,
-        is_agency_plan: plan.is_agency_plan || false,
+        is_agency_plan: Boolean(plan.is_agency_plan),
         max_clients: plan.max_clients || 5,
         period: plan.period || 'monthly',
         price_id: plan.price_id || '',
@@ -118,9 +121,18 @@ export default function PlanForm({ plan, isEditing = false }) {
     }
   }, [plan]);
 
-  // Quando o tipo de plano muda, atualize o campo is_agency_plan
+  // Quando o tipo de plano muda, atualize os campos relacionados
   useEffect(() => {
-    form.setValue('is_agency_plan', isAgencyPlan);
+    if (isAgencyPlan) {
+      // Se for plano de agência, garantir que os campos de cliente estejam desabilitados ou vazios (não null)
+      form.setValue('monthly_leads', '');
+      form.setValue('total_leads', '');
+      form.setValue('max_landing_pages', '');
+      form.setValue('max_pipelines', '');
+    } else {
+      // Se for plano de cliente, garantir que os campos de agência estejam desabilitados ou vazios (não null)
+      form.setValue('max_clients', '');
+    }
   }, [isAgencyPlan]);
 
   // Efeito para mostrar os erros do servidor no formulário
@@ -197,7 +209,7 @@ export default function PlanForm({ plan, isEditing = false }) {
       // Se for plano de agência, ajustar campos adequadamente
       values.max_clients = values.max_clients || 5;
       
-      // Zerar campos não usados em planos de agência
+      // Para o servidor, campos vazios devem ser null
       values.monthly_leads = null;
       values.total_leads = null;
       values.max_landing_pages = null;
@@ -486,7 +498,12 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <FormItem>
                     <FormLabel>Leads Mensais</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        {...field} 
+                        value={field.value === null || field.value === undefined ? '' : field.value}
+                      />
                     </FormControl>
                     <FormDescription>
                       Número máximo de leads que podem ser capturados por mês
@@ -503,7 +520,12 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <FormItem>
                     <FormLabel>Leads Totais</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        {...field} 
+                        value={field.value === null || field.value === undefined ? '' : field.value}
+                      />
                     </FormControl>
                     <FormDescription>
                       Capacidade total de armazenamento de leads/contatos
@@ -522,7 +544,12 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <FormItem>
                     <FormLabel>Landing Pages</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        {...field} 
+                        value={field.value === null || field.value === undefined ? '' : field.value}
+                      />
                     </FormControl>
                     <FormDescription>
                       Número máximo de landing pages permitidas
@@ -539,7 +566,12 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <FormItem>
                     <FormLabel>Pipelines</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        {...field} 
+                        value={field.value === null || field.value === undefined ? '' : field.value}
+                      />
                     </FormControl>
                     <FormDescription>
                       Número máximo de pipelines de vendas permitidos
@@ -566,7 +598,12 @@ export default function PlanForm({ plan, isEditing = false }) {
                   <FormItem>
                     <FormLabel>Número máximo de clientes</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" {...field} />
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        {...field} 
+                        value={field.value === null || field.value === undefined ? '' : field.value}
+                      />
                     </FormControl>
                     <FormDescription>
                       Número máximo de clientes que a agência pode gerenciar

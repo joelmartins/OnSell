@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { router, Head } from "@inertiajs/react";
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/Components/ui/card';
@@ -19,6 +19,7 @@ import {
   DialogDescription
 } from "@/Components/ui/dialog";
 import { Progress } from "@/Components/ui/progress";
+import { Dialog as ConfirmDialog, DialogContent as ConfirmDialogContent, DialogHeader as ConfirmDialogHeader, DialogTitle as ConfirmDialogTitle, DialogDescription as ConfirmDialogDescription } from "@/Components/ui/dialog";
 
 const sections = [
   {
@@ -77,8 +78,26 @@ export default function SalesIntelligence({ existing }) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
   
+  // Estado para modal de confirmação de sobrescrita
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [hasDeliverables, setHasDeliverables] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
+  
+  // Checagem inicial de entregáveis existentes
+  useEffect(() => {
+    axios.get(route('client.salesintelligence.check-progress'))
+      .then(response => {
+        const existingDeliverables = response.data?.deliverables || {};
+        if (Object.keys(existingDeliverables).length > 0) {
+          setHasDeliverables(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  
   // Função para verificar o progresso real da geração dos entregáveis
-  const checkDeliverableProgress = () => {
+  const checkDeliverableProgress = (options = {}) => {
+    const { polling = false } = options;
     const types = [
       'product_definition',
       'icp_profile',
@@ -91,7 +110,6 @@ export default function SalesIntelligence({ existing }) {
       'copy_anchors',
       'communication_pattern',
     ];
-    
     const typeMessages = {
       'product_definition': "Processando definição do produto...",
       'icp_profile': "Analisando perfil do cliente ideal (ICP)...",
@@ -104,27 +122,16 @@ export default function SalesIntelligence({ existing }) {
       'copy_anchors': "Gerando âncoras de comunicação...",
       'communication_pattern': "Definindo padrão de comunicação...",
     };
-    
-    // Iniciar o processo
     setCurrentStep("Iniciando geração dos entregáveis...");
     setProgress(5);
-    
-    // Aguardar um momento para o job ser processado no backend
     setTimeout(() => {
-      // Verificar quais entregáveis já existem
       axios.get(route('client.salesintelligence.check-progress'))
         .then(response => {
           const existingDeliverables = response.data?.deliverables || {};
           const existingTypes = Object.keys(existingDeliverables);
-          
-          // Filtrar apenas os tipos que ainda precisam ser processados
           const pendingTypes = types.filter(type => !existingTypes.includes(type));
-          
-          // Atualizar o progresso inicial baseado no que já existe
           const initialProgress = Math.min(5 + Math.floor((existingTypes.length / types.length) * 90), 95);
           setProgress(initialProgress);
-          
-          // Se todos já estiverem processados, redirecionar
           if (pendingTypes.length === 0) {
             setProgress(100);
             setCurrentStep("Todos os entregáveis já estão prontos! Redirecionando...");
@@ -133,14 +140,10 @@ export default function SalesIntelligence({ existing }) {
             }, 1500);
             return;
           }
-          
-          // Processar recursivamente cada tipo pendente
           let processedCount = existingTypes.length;
           let remainingTypes = [...pendingTypes];
-          
           const processNext = () => {
             if (remainingTypes.length === 0) {
-              // Todos processados, redirecionar
               setProgress(100);
               setCurrentStep("Pronto! Redirecionando para os resultados...");
               setTimeout(() => {
@@ -153,46 +156,33 @@ export default function SalesIntelligence({ existing }) {
               }, 1500);
               return;
             }
-            
             const type = remainingTypes.shift();
             setCurrentStep(typeMessages[type] || `Processando ${type.replace(/_/g, ' ')}...`);
-            
-            // Atualizar o progresso
             processedCount++;
             const newProgress = Math.min(5 + Math.floor((processedCount / types.length) * 90), 95);
             setProgress(newProgress);
-            
-            // Solicitar a geração deste entregável específico
             axios.post(route('client.salesintelligence.generate', { type }))
               .then(() => {
-                // Continuar com o próximo após um breve delay
                 setTimeout(processNext, 2000);
               })
               .catch(error => {
                 console.error(`Erro ao gerar entregável ${type}:`, error);
-                // Continue com o próximo mesmo em caso de erro
                 setTimeout(processNext, 2000);
               });
           };
-          
-          // Iniciar o processamento recursivo
           processNext();
         })
         .catch(error => {
           console.error('Erro ao verificar progresso inicial:', error);
-          // Em caso de erro, tente gerar todos mesmo assim
           generateAllDirectly();
         });
     }, 3000);
-    
     // Função alternativa para gerar todos diretamente em caso de falha na verificação
     const generateAllDirectly = () => {
       let processedCount = 0;
       let remainingTypes = [...types];
-      
       const processNext = () => {
         if (remainingTypes.length === 0) {
-          // Todos processados, redirecionar
           setProgress(100);
           setCurrentStep("Pronto! Redirecionando para os resultados...");
           setTimeout(() => {
@@ -205,31 +195,44 @@ export default function SalesIntelligence({ existing }) {
           }, 1500);
           return;
         }
-        
         const type = remainingTypes.shift();
         setCurrentStep(typeMessages[type] || `Processando ${type.replace(/_/g, ' ')}...`);
-        
-        // Atualizar o progresso
         processedCount++;
         const newProgress = Math.min(5 + Math.floor((processedCount / types.length) * 90), 95);
         setProgress(newProgress);
-        
-        // Solicitar a geração deste entregável específico
         axios.post(route('client.salesintelligence.generate', { type }))
           .then(() => {
-            // Continuar com o próximo após um breve delay
             setTimeout(processNext, 2000);
           })
           .catch(error => {
             console.error(`Erro ao gerar entregável ${type}:`, error);
-            // Continue com o próximo mesmo em caso de erro
             setTimeout(processNext, 2000);
           });
       };
-      
-      // Iniciar o processamento recursivo
       processNext();
     };
+    // Se estiver em modo polling, repetir a checagem até todos estarem prontos
+    if (polling) {
+      let interval = setInterval(() => {
+        axios.get(route('client.salesintelligence.check-progress'))
+          .then(response => {
+            const existingDeliverables = response.data?.deliverables || {};
+            const existingTypes = Object.keys(existingDeliverables);
+            if (existingTypes.length === types.length) {
+              clearInterval(interval);
+              setProgress(100);
+              setCurrentStep("Todos os entregáveis já estão prontos! Redirecionando...");
+              setTimeout(() => {
+                router.visit(route('client.salesintelligence.deliverables'));
+              }, 1500);
+            } else {
+              setProgress(Math.min(5 + Math.floor((existingTypes.length / types.length) * 90), 95));
+              setCurrentStep(`Aguardando geração dos entregáveis... (${existingTypes.length}/${types.length})`);
+            }
+          })
+          .catch(() => {});
+      }, 5000);
+    }
   };
 
   function handleChange(e) {
@@ -253,22 +256,37 @@ export default function SalesIntelligence({ existing }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!validateAll()) {
-      toast.error('Preencha todos os campos obrigatórios.');
+      toast.error('Preencha todos os campos obrigatórios. Quanto mais completo e detalhado, maior a qualidade da nossa inteligência em vendas.');
       return;
     }
+    if (hasDeliverables) {
+      setShowConfirm(true);
+      setPendingSubmit(true);
+      return;
+    }
+    submitAnswers();
+  }
+
+  function submitAnswers(forceAll = false) {
     setLoading(true);
-    
-    // Enviar os dados para o servidor
     axios.post(route('client.salesintelligence.answers'), { answers })
       .then(response => {
         if (response.data && response.data.success) {
           toast.success('Respostas salvas com sucesso!');
-          
-          // Mostrar a modal de processamento
           setProcessing(true);
-          
-          // Iniciar o monitoramento do progresso real
-          checkDeliverableProgress();
+          if (forceAll) {
+            // Chamar rota de reprocessamento com force_all=true
+            axios.post(route('client.salesintelligence.reprocess'), { force_all: true })
+              .then(() => {
+                // Iniciar polling para aguardar reprocessamento
+                checkDeliverableProgress({ polling: true });
+              })
+              .catch(() => {
+                checkDeliverableProgress({ polling: true });
+              });
+          } else {
+            checkDeliverableProgress();
+          }
         } else {
           toast.error('Erro ao processar respostas.');
           setLoading(false);
@@ -281,9 +299,37 @@ export default function SalesIntelligence({ existing }) {
       });
   }
 
+  function handleConfirmGenerate() {
+    setShowConfirm(false);
+    setPendingSubmit(false);
+    submitAnswers(true); // Forçar sobrescrita
+  }
+
+  function handleCancelGenerate() {
+    setShowConfirm(false);
+    setPendingSubmit(false);
+  }
+
   return (
     <ClientLayout title="Sales Intelligence Capture">
       <Head title="Sales Intelligence Capture" />
+      
+      {/* Modal de confirmação para sobrescrever entregáveis */}
+      <ConfirmDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <ConfirmDialogContent className="sm:max-w-md">
+          <ConfirmDialogHeader>
+            <ConfirmDialogTitle className="text-xl">Entregáveis já existem</ConfirmDialogTitle>
+            <ConfirmDialogDescription className="text-center text-sm text-muted-foreground">
+              Já existem entregáveis gerados anteriormente. Deseja gerar novos entregáveis e sobrescrever os atuais?<br />
+              <span className="font-semibold text-red-600">Esta ação irá substituir os entregáveis anteriores.</span>
+            </ConfirmDialogDescription>
+          </ConfirmDialogHeader>
+          <div className="flex justify-center gap-4 mt-6">
+            <Button variant="outline" onClick={handleCancelGenerate} disabled={loading}>Cancelar</Button>
+            <Button onClick={handleConfirmGenerate} disabled={loading} className="bg-red-600 hover:bg-red-700 text-white">Gerar Novos</Button>
+          </div>
+        </ConfirmDialogContent>
+      </ConfirmDialog>
       
       {/* Modal de processamento */}
       <Dialog open={processing} onOpenChange={setProcessing}>
@@ -316,8 +362,8 @@ export default function SalesIntelligence({ existing }) {
         className="w-full py-8 space-y-10"
       >
         <div className="mb-8">
-          <h2 className="text-3xl font-bold">Novo Formulário Simples — Sales Intelligence Capture</h2>
-          <p className="text-muted-foreground">Responda as 19 perguntas abaixo para gerar seu mapa de inteligência de vendas.</p>
+          <h2 className="text-3xl font-bold">Sales Intelligence Capture</h2>
+          <p className="text-muted-foreground">Responda as 19 perguntas abaixo para gerar seu mapa de inteligência de vendas.<br /><span className='font-semibold text-orange-600'>Atenção: quanto mais completas e detalhadas suas respostas, maior a qualidade da inteligência gerada para o seu negócio.</span></p>
         </div>
         {sections.map((section, idx) => (
           <Card key={section.title} className="w-full">

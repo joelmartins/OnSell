@@ -71,11 +71,27 @@ export default function ContactShow({ auth, contact }) {
   
   return (
     <ClientLayout
-      user={auth.user}
+      auth={auth}
       header={
-        <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-          Detalhes do Contato
-        </h2>
+        <div className="flex justify-between items-center">
+          <h2 className="font-semibold text-xl text-gray-800 leading-tight">Detalhes do Contato</h2>
+          <div className="flex gap-2">
+            <Link
+              href={route('client.contacts.edit', contact.id)}
+              className="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Link>
+            <Link
+              href={route('client.contacts.index')}
+              className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Link>
+          </div>
+        </div>
       }
     >
       <Head title={`Contato: ${contact.name}`} />
@@ -249,134 +265,134 @@ export default function ContactShow({ auth, contact }) {
                       <TabsTrigger value="history">Histórico</TabsTrigger>
                       <TabsTrigger value="opportunities">Oportunidades</TabsTrigger>
                     </TabsList>
+                  
+                    <TabsContent value="info" className="mt-0">
+                      <CardContent>
+                        <div className="space-y-6">
+                          <div>
+                            <h3 className="text-lg font-medium mb-2">Dados completos</h3>
+                            <div className="rounded border overflow-hidden">
+                              <Table>
+                                <TableBody>
+                                  {Object.entries({
+                                    'Nome': contact.name,
+                                    'E-mail': contact.email,
+                                    'Telefone': contact.phone,
+                                    'WhatsApp': contact.whatsapp,
+                                    'CPF/CNPJ': contact.document,
+                                    'Empresa': contact.company,
+                                    'Cargo': contact.position,
+                                    'Endereço': contact.address,
+                                    'Cidade': contact.city,
+                                    'Estado': contact.state,
+                                    'CEP': contact.postal_code,
+                                    'País': contact.country,
+                                    'Origem': contact.source,
+                                    'Status': contact.status,
+                                    'Data de criação': formatDate(contact.created_at),
+                                    'Última atualização': formatDate(contact.updated_at),
+                                    'Última interação': formatDate(contact.last_interaction_at),
+                                  }).map(([key, value]) => 
+                                    value && (
+                                      <TableRow key={key}>
+                                        <TableCell className="font-medium w-1/3">{key}</TableCell>
+                                        <TableCell>{value}</TableCell>
+                                      </TableRow>
+                                    )
+                                  )}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                          
+                          {contact.custom_fields && Object.keys(contact.custom_fields).length > 0 && (
+                            <div>
+                              <h3 className="text-lg font-medium mb-2">Campos personalizados</h3>
+                              <div className="rounded border overflow-hidden">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Campo</TableHead>
+                                      <TableHead>Valor</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {Object.entries(contact.custom_fields).map(([key, value]) => (
+                                      <TableRow key={key}>
+                                        <TableCell className="font-medium">{key}</TableCell>
+                                        <TableCell>{value}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </TabsContent>
+                    
+                    <TabsContent value="history" className="mt-0">
+                      <CardContent>
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Histórico de interações</h3>
+                        </div>
+                        
+                        {contact.interactions && contact.interactions.length > 0 ? (
+                          <div className="space-y-4">
+                            {contact.interactions.map((interaction) => (
+                              <div key={interaction.id} className="border rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4 text-gray-500" />
+                                    <span className="font-medium">{interaction.channel_label}</span>
+                                    <Badge variant="outline" className="ml-2">
+                                      {interaction.direction === 'incoming' ? 'Recebida' : 'Enviada'}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    <Clock className="h-3 w-3 inline mr-1" />
+                                    {formatDate(interaction.created_at)}
+                                  </div>
+                                </div>
+                                <div className="mt-2 pl-6 whitespace-pre-line">
+                                  {interaction.content}
+                                </div>
+                                {interaction.user && (
+                                  <div className="mt-2 pl-6 text-sm text-gray-500">
+                                    Por: {interaction.user.name}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                            <p>Nenhuma interação registrada para este contato</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </TabsContent>
+                    
+                    <TabsContent value="opportunities" className="mt-0">
+                      <CardContent>
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Oportunidades</h3>
+                          <Button className="flex items-center gap-1">
+                            <UserPlus className="h-4 w-4" />
+                            Nova Oportunidade
+                          </Button>
+                        </div>
+                        
+                        <div className="text-center py-8 text-gray-500">
+                          <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                          <p>Nenhuma oportunidade registrada para este contato</p>
+                        </div>
+                      </CardContent>
+                    </TabsContent>
                   </Tabs>
                 </CardHeader>
-                
-                <TabsContent value="info" className="mt-0">
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="text-lg font-medium mb-2">Dados completos</h3>
-                        <div className="rounded border overflow-hidden">
-                          <Table>
-                            <TableBody>
-                              {Object.entries({
-                                'Nome': contact.name,
-                                'E-mail': contact.email,
-                                'Telefone': contact.phone,
-                                'WhatsApp': contact.whatsapp,
-                                'CPF/CNPJ': contact.document,
-                                'Empresa': contact.company,
-                                'Cargo': contact.position,
-                                'Endereço': contact.address,
-                                'Cidade': contact.city,
-                                'Estado': contact.state,
-                                'CEP': contact.postal_code,
-                                'País': contact.country,
-                                'Origem': contact.source,
-                                'Status': contact.status,
-                                'Data de criação': formatDate(contact.created_at),
-                                'Última atualização': formatDate(contact.updated_at),
-                                'Última interação': formatDate(contact.last_interaction_at),
-                              }).map(([key, value]) => 
-                                value && (
-                                  <TableRow key={key}>
-                                    <TableCell className="font-medium w-1/3">{key}</TableCell>
-                                    <TableCell>{value}</TableCell>
-                                  </TableRow>
-                                )
-                              )}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </div>
-                      
-                      {contact.custom_fields && Object.keys(contact.custom_fields).length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-medium mb-2">Campos personalizados</h3>
-                          <div className="rounded border overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Campo</TableHead>
-                                  <TableHead>Valor</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {Object.entries(contact.custom_fields).map(([key, value]) => (
-                                  <TableRow key={key}>
-                                    <TableCell className="font-medium">{key}</TableCell>
-                                    <TableCell>{value}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </TabsContent>
-                
-                <TabsContent value="history" className="mt-0">
-                  <CardContent>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Histórico de interações</h3>
-                    </div>
-                    
-                    {contact.interactions && contact.interactions.length > 0 ? (
-                      <div className="space-y-4">
-                        {contact.interactions.map((interaction) => (
-                          <div key={interaction.id} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-gray-500" />
-                                <span className="font-medium">{interaction.channel_label}</span>
-                                <Badge variant="outline" className="ml-2">
-                                  {interaction.direction === 'incoming' ? 'Recebida' : 'Enviada'}
-                                </Badge>
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                <Clock className="h-3 w-3 inline mr-1" />
-                                {formatDate(interaction.created_at)}
-                              </div>
-                            </div>
-                            <div className="mt-2 pl-6 whitespace-pre-line">
-                              {interaction.content}
-                            </div>
-                            {interaction.user && (
-                              <div className="mt-2 pl-6 text-sm text-gray-500">
-                                Por: {interaction.user.name}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p>Nenhuma interação registrada para este contato</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </TabsContent>
-                
-                <TabsContent value="opportunities" className="mt-0">
-                  <CardContent>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Oportunidades</h3>
-                      <Button className="flex items-center gap-1">
-                        <UserPlus className="h-4 w-4" />
-                        Nova Oportunidade
-                      </Button>
-                    </div>
-                    
-                    <div className="text-center py-8 text-gray-500">
-                      <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>Nenhuma oportunidade registrada para este contato</p>
-                    </div>
-                  </CardContent>
-                </TabsContent>
               </Card>
             </div>
           </div>

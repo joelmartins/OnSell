@@ -156,7 +156,8 @@ export default function ClientLayout({ children, title }) {
         'client.messages': '/client/messages',
         'client.automation': '/client/automation',
         'client.landing-pages.index': '/client/landing-pages',
-        'client.contacts': '/client/contacts',
+        'contacts.index': '/client/contacts',
+        'client.contacts.index': '/client/contacts',
         'client.reports': '/client/reports',
         'client.integrations': '/client/integrations',
         'client.settings.index': '/client/settings',
@@ -193,7 +194,7 @@ export default function ClientLayout({ children, title }) {
     },
     { 
       name: 'Contatos', 
-      href: safeRoute('client.contacts'), 
+      href: safeRoute('client.contacts.index'), 
       icon: <Users className="h-5 w-5" />
     },
     { 
